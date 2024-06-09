@@ -294,6 +294,23 @@
             #side-menu.show {
                 left: 0;
             }
+
+            #overlay {
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                background-color: #000000;
+                z-index: 999;
+                overflow: hidden;
+                visibility: hidden;
+                opacity: 0;
+                transition: visibility 0s, opacity 0.3s linear;
+            }
+
+            #overlay.show {
+                visibility: visible;
+                opacity: 40%;
+            }
         }
         @media (min-width: 769px) {
             #main-editor {
@@ -311,9 +328,9 @@
             <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"><i class="fa-solid fa-circle-play"></i></button>
         </div>
         <div>
-            <!--button class="button" title="Connect WebSocket"     onclick="connectWebSocket()" id="btn-connect-ws"><i class="fa-solid fa-circle-nodes"></i></button>
-            <button class="button" title="Connect Bluetooth"     onclick="connectBluetooth()" id="btn-connect-ble"><i class="fa-brands fa-bluetooth-b"></i></button-->
-            <button class="button" title="Connect USB/Serial"    onclick="connect()" id="btn-connect"><i class="fa-brands fa-usb"></i></button>
+            <button class="button" title="Connect WebREPL"       onclick="connect('ws')"><i class="fa-solid fa-circle-nodes"></i></button>
+            <button class="button" title="Connect Bluetooth"     onclick="connect('ble')"><i class="fa-brands fa-bluetooth-b"></i></button>
+            <button class="button" title="Connect USB/Serial"    onclick="connect('usb')"><i class="fa-brands fa-usb"></i></button>
             <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"><i class="fa-solid fa-expand"></i></button>
         </div>
     </div>
@@ -330,7 +347,7 @@
                 <div><b>File Manager</b></div>
                 <div id="menu-file-tree">
                     <div><span class="folder name"><i class="fa-solid fa-folder"></i> /</span></div>
-                    <div onclick="connect()"><span class="name">&emsp;🤔 no files<span><span class="menu-action">connect <i class="fa-solid fa-plug"></i></span></div>
+                    <div onclick="connect('usb')"><span class="name">&emsp;🤔 no files<span><span class="menu-action">connect <i class="fa-solid fa-plug"></i></span></div>
                 </div>
             </div>
             <div id="menu-libs" class="tab-content">
@@ -360,6 +377,7 @@
             </div>
         </div>
         <div id="main-editor">
+            <div id="overlay" onclick="autoHideSideMenu()"></div>
             <div id="editor">
                 <!-- CodeMirror or MarkedJS editor content goes here -->
             </div>
@@ -411,27 +429,12 @@
 
     <script>
 
-        const VIPER_IDE_VERSION = "0.1.3"
+        const VIPER_IDE_VERSION = "0.1.4"
 
         function addCSS(css) { document.head.appendChild(document.createElement("style")).innerHTML = css }
 
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms))
-        }
-
-        function sizeFmt(size, places=1) {
-            const suffixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
-            let i = 0
-            while (size > 1024 && i < suffixes.length - 1) {
-                i++
-                size /= 1024
-            }
-            // Check if the size is in bytes and omit decimals in that case
-            if (i === 0) {
-                return `${size}${suffixes[i]}`
-            } else {
-                return `${(size).toFixed(places)}${suffixes[i]}`
-            }
         }
 
         class Mutex {
@@ -448,40 +451,344 @@
             }
         }
 
-        let editor, term, port, reader, writer, mipindex
-        let editorFn = ""
-        const mutex = new Mutex()
+        /*
+         * Transports
+         */
 
-        async function connect() {
-            if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
-                toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
-                return;
+        class Transport {
+            constructor() {
+                if (this.constructor === Transport) {
+                    throw new Error("Cannot instantiate abstract class Transport")
+                }
+                this.mutex = new Mutex()
+                this.receivedData = ''
             }
 
-            const btnConnect = document.getElementById('btn-connect')
-            let webserial
-            if (typeof navigator.serial === 'undefined' || document.getElementById('force-serial-poly').checked) {
-                console.log('Using WebSerial polyfill')
-                webserial = webSerialPolyfill
+            async connect() {
+                throw new Error("Method 'connect()' must be implemented.")
+            }
+
+            async disconnect() {
+                throw new Error("Method 'disconnect()' must be implemented.")
+            }
+
+            async write(data) {
+                throw new Error("Method 'write()' must be implemented.")
+            }
+
+            onReceive(callback) {
+                this.receiveCallback = callback
+            }
+
+            onDisconnect(callback) {
+                this.disconnectCallback = callback
+            }
+
+            async flushInput() {
+                this.receivedData = ''
+                /*while (1) {
+                    const { value, done } = await reader.read()
+                    console.log(value, done)
+                    if (done) { break }
+                    if (value.length == 0) { break }
+                }*/
+            }
+
+            async readExactly(n, timeout = 3000) {
+                const prevRecvCbk = this.receiveCallback
+                this.receiveCallback = (data) => this.receivedData += data;
+                const endTime = +Date.now() + timeout
+                try {
+                    while (+Date.now() < endTime) {
+                        if (this.receivedData.length >= n) {
+                            const res = this.receivedData.substring(0, n)
+                            this.receivedData = this.receivedData.substring(n)
+                            return res
+                        }
+                        await sleep(10)
+                    }
+                } finally {
+                    this.receiveCallback = prevRecvCbk
+                }
+                throw new Error('Timeout')
+            }
+
+            async readUntil(ending, timeout = 3000) {
+                const prevRecvCbk = this.receiveCallback
+                this.receiveCallback = (data) => this.receivedData += data;
+                const endTime = +Date.now() + timeout
+                try {
+                    while (+Date.now() < endTime) {
+                        const idx = this.receivedData.indexOf(ending) + ending.length
+                        if (idx >= ending.length) {
+                            const res = this.receivedData.substring(0, idx)
+                            this.receivedData = this.receivedData.substring(idx)
+                            return res
+                        }
+                        await sleep(10)
+                    }
+                } finally {
+                    this.receiveCallback = prevRecvCbk
+                }
+                throw new Error('Timeout reached before finding the ending sequence')
+            }
+        }
+
+        /*
+         * USB / Serial
+         */
+
+        class WebSerial extends Transport {
+            constructor(serial=null) {
+                super()
+                this.port = null
+                this.reader = null
+                this.writer = null
+                if (serial) {
+                    this.serial = serial
+                } else {
+                    if (typeof navigator.serial === 'undefined') {
+                        throw new Error('WebSerial not available')
+                    }
+                    this.serial = navigator.serial
+                }
+            }
+
+            async connect() {
+                this.port = await this.serial.requestPort()
+                await this.port.open({ baudRate: 115200 })
+
+                this.reader = this.port.readable.getReader()
+                this.writer = this.port.writable.getWriter()
+
+                this.listen()
+            }
+
+            async disconnect() {
+                await this.reader.cancel()
+                await this.port.close()
+            }
+
+            async write(data) {
+                const encoder = new TextEncoder()
+                await this.writer.write(encoder.encode(data))
+            }
+
+            async listen() {
+                const decoder = new TextDecoder()
+                try {
+                    while (true) {
+                        const { value, done } = await this.reader.read()
+                        if (done) break
+                        if (this.receiveCallback) {
+                            this.receiveCallback(decoder.decode(value))
+                        }
+                    }
+                } catch (error) {
+                    if (this.disconnectCallback) {
+                        this.disconnectCallback()
+                    }
+                }
+            }
+        }
+
+        /*
+         * Bluetooth
+         */
+
+        const NUS_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
+        const NUS_TX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+        const NUS_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
+
+        class WebBluetooth extends Transport {
+            constructor() {
+                super()
+                this.device = null
+                this.server = null
+                this.service = null
+                this.rx = null
+            }
+
+            async connect() {
+                this.device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [NUS_SERVICE] }]
+                })
+                this.server = await this.device.gatt.connect()
+                this.service = await this.server.getPrimaryService(NUS_SERVICE)
+                this.rx = await this.service.getCharacteristic(NUS_RX)
+                this.tx = await this.service.getCharacteristic(NUS_TX)
+
+                await this.rx.startNotifications()
+                this.rx.addEventListener('characteristicvaluechanged', this.handleNotifications.bind(this))
+            }
+
+            async disconnect() {
+                if (this.device && this.device.gatt.connected) {
+                    await this.device.gatt.disconnect()
+                }
+            }
+
+            async write(data) {
+                const encoder = new TextEncoder()
+                await this.tx.writeValue(encoder.encode(data))
+            }
+
+            handleNotifications(event) {
+                const decoder = new TextDecoder()
+                const value = event.target.value
+                if (this.receiveCallback) {
+                    this.receiveCallback(decoder.decode(value))
+                }
+            }
+        }
+
+        /*
+         * WebSocket
+         */
+
+        class WebSocketREPL extends Transport {
+            constructor(url, pass) {
+                super()
+                if (!url) {
+                    throw new Error("WebSocket URL is required")
+                }
+                this.url = url
+                this.pass = pass
+                this.socket = null
+            }
+
+            _connect(url) {
+                return new Promise(function(resolve, reject) {
+                    const ws = new WebSocket(url)
+                    ws.onopen = function() { resolve(ws) }
+                    ws.onerror = function(err) { reject(err) }
+                })
+            }
+
+            async connect() {
+                this.socket = await this._connect(this.url)
+                this.socket.binaryType = 'arraybuffer'
+                this.socket.onmessage = (event) => {
+                    if (this.receiveCallback) {
+                        this.receiveCallback(event.data)
+                    }
+                }
+
+                this.socket.onclose = () => {
+                    if (this.disconnectCallback) {
+                        this.disconnectCallback()
+                    }
+                }
+
+                const release = await this.mutex.acquire()
+                try {
+                    await this.readUntil('Password:')
+                    await this.write(this.pass + '\n')
+                    const rsp = await this.readUntil('\n')
+                } finally {
+                    release()
+                }
+            }
+
+            async disconnect() {
+                if (this.socket) {
+                    this.socket.close()
+                }
+            }
+
+            async write(data) {
+                if (this.socket) {
+                    this.socket.send(data)
+                }
+            }
+        }
+
+        /*
+         * MP Remote
+         */
+
+        function sizeFmt(size, places=1) {
+            const suffixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+            let i = 0
+            while (size > 1024 && i < suffixes.length - 1) {
+                i++
+                size /= 1024
+            }
+            // Check if the size is in bytes and omit decimals in that case
+            if (i === 0) {
+                return `${size}${suffixes[i]}`
             } else {
-                webserial = navigator.serial
+                return `${(size).toFixed(places)}${suffixes[i]}`
             }
+        }
+
+        let editor, term, port, mipindex
+        let editorFn = ""
+
+        async function connect(type) {
             if (port) {
-                //TODO: await port.close()
+                try {
+                    await port.disconnect()
+                } catch (error) {}
             }
+
+            if (type === 'ws') {
+                if (window.location.protocol === "https:") {
+                    //window.location.protocol = "http:"
+                    //window.location.reload()
+                    toastr.error('The WebREPL cannot be accessed over HTTPS connections')
+                    return;
+                }
+
+                const url = prompt('Device URL:', 'ws://192.168.1.123:8266')
+                if (!url) return;
+                const pass = prompt('Password:')
+                if (!pass || pass.length < 4) {
+                    toastr.error('Password is required')
+                    return
+                }
+                port = new WebSocketREPL(url, pass)
+            } else if (type === 'ble') {
+                if (typeof navigator.bluetooth === 'undefined') {
+                    toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+                    return;
+                }
+
+                port = new WebBluetooth()
+            } else if (type === 'usb') {
+                if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
+                    toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+                    return;
+                }
+
+                if (typeof navigator.serial === 'undefined' || document.getElementById('force-serial-poly').checked) {
+                    console.log('Using WebSerial polyfill')
+                    port = new WebSerial(webSerialPolyfill)
+                } else {
+                    port = new WebSerial()
+                }
+            } else {
+                toastr.error('Unknown connection type')
+                return
+            }
+
             try {
-                port = await webserial.requestPort()
-                await port.open({ baudRate: 115200 })
+                await port.connect()
             } catch(error) {
                 toastr.error('Cannot open port')
                 return
             }
-            const textEncoder = new TextEncoderStream()
-            const textDecoder = new TextDecoderStream()
-            const readableStreamClosed = port.readable.pipeTo(textDecoder.writable)
-            const writableStreamClosed = textEncoder.readable.pipeTo(port.writable)
-            reader = textDecoder.readable.getReader()
-            writer = textEncoder.writable.getWriter()
+
+            port.onReceive((data) => {
+                term.write(data)
+            })
+
+            port.onDisconnect(() => {
+                toastr.warning('Device disconnected')
+                //connect(type)
+            })
+
+            toastr.success('Device connected')
 
             if (document.getElementById('interrupt-device').checked) {
                 // TODO: detect WDT and disable it temporarily
@@ -497,30 +804,6 @@
                     toastr.error('Error reading board info', error)
                 }
             }
-
-            async function listen() {
-                try {
-                    while (true) {
-                        const release = await mutex.acquire()
-                        try {
-                            const { value, done } = await reader.read()
-                            if (done) break
-                            term.write(value)
-                        } finally {
-                            release()
-                        }
-                        await sleep(0.01)
-                    }
-                } catch(error) {
-                    toastr.warning('Device disconnected')
-                    btnConnect.innerHTML = '<i class="fa-solid fa-plug"></i>'
-                    await connect()
-                }
-            }
-            listen()
-
-            btnConnect.innerHTML = '<i class="fa-solid fa-plug-circle-check"></i>'
-            toastr.success('Device connected')
         }
 
         function splitPath(path) {
@@ -595,17 +878,17 @@ for d in '${path}'.split('/'):
         }
 
         async function enterRawRepl() {
-            await write('\r\x03\x03')       // Ctrl-C twice: interrupt any running program
-            const release = await mutex.acquire()
+            const release = await port.mutex.acquire()
             try {
-                await flushInput()
-                await write('\r\x01')       // Ctrl-A: enter raw REPL
-                await readUntil('raw REPL; CTRL-B to exit\r\n')
+                await port.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
+                await port.flushInput()
+                await port.write('\r\x01')       // Ctrl-A: enter raw REPL
+                await port.readUntil('raw REPL; CTRL-B to exit\r\n')
 
                 async function exitRawRepl() {
-                    await write('\x02')     // Ctrl-B: exit raw REPL
-                    await readUntil('>\r\n')
-                    const banner = await readUntil('>>> ')
+                    await port.write('\x02')     // Ctrl-B: exit raw REPL
+                    await port.readUntil('>\r\n')
+                    const banner = await port.readUntil('>>> ')
                     term.clear()
                     term.write(banner)
                     release()
@@ -620,15 +903,15 @@ for d in '${path}'.split('/'):
         }
 
         async function execCmd(cmd) {
-            await readUntil('>')
-            await write(cmd.trim())
-            await write('\x04')         // Ctrl-D: execute
-            const status = await readExactly(2)
+            await port.readUntil('>')
+            await port.write(cmd.trim())
+            await port.write('\x04')         // Ctrl-D: execute
+            const status = await port.readExactly(2)
             if (status != 'OK') {
                 throw new Error('Cannot exec command:' + status)
             }
-            const res = (await readUntil('\x04')).slice(0, -1)
-            const err = (await readUntil('\x04')).slice(0, -1)
+            const res = (await port.readUntil('\x04')).slice(0, -1)
+            const err = (await port.readUntil('\x04')).slice(0, -1)
 
             if (err.length) {
                 throw new Error('Cannot exec command: ' + err)
@@ -649,8 +932,8 @@ for d in '${path}'.split('/'):
         }
 
         async function execReplNoFollow(cmd) {
-            await write('\r\x03\x03')
-            await write(cmd.trim() + '\r\n')
+            await port.write('\r\x03\x03')
+            await port.write(cmd.trim() + '\r\n')
         }
 
         async function fetchFileList() {
@@ -788,6 +1071,7 @@ print('%s:%s:%s' % (fu, ff, fs))
 try:
  import binascii
  h=lambda x: binascii.hexlify(x).decode()
+ h(b'')
 except:
  h=lambda b: ''.join('{:02x}'.format(byte) for byte in b)
 with open('${fn}','rb') as f:
@@ -811,6 +1095,7 @@ import os
 try:
  import binascii
  h=binascii.unhexlify
+ h('')
 except:
  h=lambda s: bytes(int(s[i:i+2], 16) for i in range(0, len(s), 2))
 f=open('.viper.tmp','wb')
@@ -943,12 +1228,17 @@ if ms:
         }
 
         async function reboot(mode = "hard") {
-            if (mode === "soft") {
-                await write('\r\x03\x03\x04')
-            } else if (mode === "hard") {
-                await execReplNoFollow("import machine; machine.reset()")
-            } else if (mode === "bootloader") {
-                await execReplNoFollow("import machine; machine.bootloader()")
+            const release = await port.mutex.acquire()
+            try {
+                if (mode === "soft") {
+                    await port.write('\r\x03\x03\x04')
+                } else if (mode === "hard") {
+                    await execReplNoFollow("import machine; machine.reset()")
+                } else if (mode === "bootloader") {
+                    await execReplNoFollow("import machine; machine.bootloader()")
+                }
+            } finally {
+                release()
             }
         }
 
@@ -959,66 +1249,6 @@ if ms:
             } else {
                 toastr.error(`${editorFn} file is not executable`)
             }
-        }
-
-        /*
-         * Transport
-         */
-
-        async function write(data) {
-            await writer.write(data)
-        }
-
-        let receivedData = ''
-
-        async function flushInput() {
-            receivedData = ''
-            /*while (1) {
-                const { value, done } = await reader.read()
-                console.log(value, done)
-                if (done) { break }
-                if (value.length == 0) { break }
-            }*/
-        }
-
-        async function readExactly(n, timeout = 3000) {
-            const endTime = +Date.now() + timeout
-            try {
-                while (+Date.now() < endTime) {
-                    if (receivedData.length >= n) {
-                        const res = receivedData.substring(0, n)
-                        receivedData = receivedData.substring(n)
-                        return res
-                    }
-                    const { value, done } = await reader.read()
-                    if (done) { break }
-                    receivedData += value
-                }
-            } catch (error) {
-                toastr.error('Error reading from port', error)
-            }
-            throw new Error('Timeout')
-        }
-
-        async function readUntil(ending, timeout = 3000) {
-            const endTime = +Date.now() + timeout
-
-            try {
-                while (+Date.now() < endTime) {
-                    const idx = receivedData.indexOf(ending) + ending.length
-                    if (idx >= ending.length) {
-                        const res = receivedData.substring(0, idx)
-                        receivedData = receivedData.substring(idx)
-                        return res
-                    }
-                    const { value, done } = await reader.read()
-                    if (done) { break }
-                    receivedData += value
-                }
-            } catch (error) {
-                toastr.error('Error reading from port', error)
-            }
-            throw new Error('Timeout reached before finding the ending sequence')
         }
 
         /*
@@ -1146,21 +1376,25 @@ pj({'mpy':mpy,'path':sys.path})
             })
         }
 
+        const fileTree = document.getElementById('side-menu')
+        const overlay = document.getElementById('overlay')
+
         function toggleSideMenu() {
-            const fileTree = document.getElementById('side-menu')
             if (window.innerWidth <= 768) {
                 fileTree.classList.remove('hidden')
                 fileTree.classList.toggle('show')
+                overlay.classList.toggle('show')
             } else {
+                overlay.classList.toggle('show')
                 fileTree.classList.remove('show')
                 fileTree.classList.toggle('hidden')
             }
         }
 
         function autoHideSideMenu() {
-            const fileTree = document.getElementById('side-menu')
             if (window.innerWidth <= 768) {
                 fileTree.classList.remove('show')
+                overlay.classList.remove('show')
             }
         }
 
@@ -1329,7 +1563,14 @@ print("=" * 32)
                 allowProposedApi: true,
             })
             term.open(document.getElementById('xterm'))
-            term.onData(write)
+            term.onData(async (data) => {
+                const release = await port.mutex.acquire()
+                try {
+                    await port.write(data)
+                } finally {
+                    release()
+                }
+            })
 
             const fitAddon = new FitAddon.FitAddon()
             term.loadAddon(fitAddon)
@@ -1361,7 +1602,7 @@ print("=" * 32)
 
             document.getElementById('viper-ide-version').innerHTML = VIPER_IDE_VERSION
 
-            const manifest_rsp = await fetch('manifest.json', {cache: "no-store"})
+            const manifest_rsp = await fetch('https://vsh.pp.ua/ViperIDE/manifest.json', {cache: "no-store"})
             manifest = await manifest_rsp.json()
             if (manifest.version !== VIPER_IDE_VERSION) {
                 toastr.info(`New ViperIDE version ${manifest.version} is available`)
