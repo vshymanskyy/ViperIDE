@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViperIDE</title>
+
+    <link rel="icon" type="image/png" href="favicon.png"/>
+
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/lib/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/theme/monokai.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-fork-ribbon-css@0.2.3/gh-fork-ribbon.min.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overscroll-behavior: none;
+            box-sizing: border-box;
+            background: #272822;
+            color: white;
+            font-family: system-ui;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        ::-webkit-scrollbar {
+            height: .5rem;
+            width:  .5rem;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: transparent;
+            border-radius: 0px; /* 9999px; */
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: hsla(0, 0%, 60%, .8);
+            border-color: rgba(255,255,255,1);
+            border-radius: 0px; /* 9999px; */
+            border-width: 0px;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background-color: transparent;
+        }
+
+        .windows {
+            font-family: Segoe WPC,Segoe UI,sans-serif
+        }
+
+        .macos {
+            font-family: -apple-system,BlinkMacSystemFont,sans-serif
+        }
+
+        .linux {
+            font-family: system-ui,Ubuntu,Droid Sans,sans-serif
+        }
+
+        .github-fork-ribbon:before {
+            background-color: #333;
+        }
+
+        .fa-power-off { color: #ffcc4d; }
+        .fa-bug { color: #ffcc4d; }
+        .fa-download { color: #87c244; }
+        .fa-circle-play { color: #3b88c3; }
+        .fa-info { color: #3b88c3; }
+        .fa-file { color: #3b88c3; }
+        .fa-folder { color: #f2b45d; }
+        .fa-cube { color: #ba9066; }
+        .fa-arrows-rotate { color: #3b88c3; }
+        .fa-gear { color: #ccd6dd }
+        .fa-trash-can { color: #ccd6dd }
+        .fa-plug-circle-check { color: #87c244; }
+
+        logo {
+            font-weight: 200;
+        }
+
+        label {
+            user-select: none;
+        }
+
+        #tool-panel {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #333;
+            color: white;
+            padding: 0 10px;
+            user-select: none;
+        }
+
+        #container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #side-menu {
+            width: 300px;
+            background: #e4e4e4;
+            display: flex;
+            flex-direction: column-reverse;
+            color: black;
+            overflow-y: auto;
+            transition: width 0.3s, left 0.3s;
+            user-select: none;
+        }
+
+        #side-menu.hidden {
+            width: 0;
+        }
+
+        #side-menu.hidden .file-content {
+            display: none;
+        }
+
+        #side-menu .tabs {
+            user-select: none;
+        }
+
+        #main-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        #editor {
+            flex: 1;
+            overflow: auto;
+        }
+
+        #terminal-container {
+            height: 200px;
+            background: #272822;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #terminal-tabs {
+            flex: 0 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #444;
+            color: white;
+            cursor: row-resize;
+            user-select: none;
+            padding: 0 5px;
+        }
+
+        #menu-tabs {
+            flex: 0 0 24px;
+            background: #444;
+            padding: 5px 0;
+        }
+
+        #menu-about {
+            position: relative;
+        }
+
+        .tab {
+            color: white;
+            display: inline;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #666;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            padding: 5px 0px 5px 5px;
+        }
+
+        #xterm {
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .marked-viewer {
+            height: 100%;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .hexed-viewer {
+            font-family: monospace;
+            white-space: pre;
+        }
+        .hexed-line {
+            display: flex;
+        }
+        .hexed-address, .hexed-hex-part, .hexed-ascii-part {
+            padding: 0 8px;
+        }
+        .hexed-address {
+            color: #f92672;
+        }
+        .hexed-hex-part {
+            color: #f8f8f2;
+        }
+        .hexed-ascii-part {
+            color: #e6db74;
+        }
+
+        .CodeMirror {
+            height: 100%;
+            width: 100%;
+        }
+
+        .CodeMirror * {
+            font-family: "Droid Sans Mono", "monospace", monospace;
+            font-weight: normal;
+            font-size: 14px;
+            font-feature-settings: "liga" 0, "calt" 0;
+            font-variation-settings: normal;
+            line-height: 19px;
+            letter-spacing: 0px;
+        }
+
+        .CodeMirror-scrollbar-filler {
+            background: none;
+        }
+
+        .button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        #menu-file-tree {
+            margin: 10px;
+        }
+
+        #menu-file-tree div {
+            margin: 10px 0;
+            line-height: 1.2em;
+        }
+
+        #menu-file-tree div .name {
+            cursor: pointer;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        #menu-file-tree div .folder {
+            cursor: default;
+        }
+
+        .menu-action {
+            cursor: pointer;
+            float: right;
+            font-size: 12px;
+            padding: 0 0 0 5px;
+            opacity: 60%;
+        }
+
+        @media (max-width: 768px) {
+            #side-menu {
+                position: absolute;
+                left: -100%;
+                width: 75%;
+                height: calc(100% - 40px);
+                z-index: 1000;
+            }
+
+            #side-menu.show {
+                left: 0;
+            }
+        }
+        @media (min-width: 769px) {
+            #main-editor {
+                width: calc(100% - 300px);
+            }
+        }
+    </style>
+</head>
+<body id="app">
+    <div id="tool-panel">
+        <div>
+            <button class="button" title="Menu"                 onclick="toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
+            <span class="logo">ViperIDE</span>
+            <button class="button" title="Save File [Ctrl+S]"   onclick="saveCurrentFile()"><i class="fa-solid fa-download"></i></button>
+            <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"><i class="fa-solid fa-circle-play"></i></button>
+        </div>
+        <div>
+            <!--button class="button" title="Connect WebSocket"     onclick="connectWebSocket()" id="btn-connect-ws"><i class="fa-solid fa-circle-nodes"></i></button>
+            <button class="button" title="Connect Bluetooth"     onclick="connectBluetooth()" id="btn-connect-ble"><i class="fa-brands fa-bluetooth-b"></i></button-->
+            <button class="button" title="Connect USB/Serial"    onclick="connect()" id="btn-connect"><i class="fa-brands fa-usb"></i></button>
+            <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"><i class="fa-solid fa-expand"></i></button>
+        </div>
+    </div>
+    <div id="container">
+        <div id="side-menu">
+            <div class="tabs" id="menu-tabs">
+                <div class="tab active" data-target="menu-files" onclick="if (port) {fetchFileList()}"><i class="fa-solid fa-folder"></i></div>
+                <div class="tab" data-target="menu-libs" onclick="fetchPkgList()"><i class="fa-solid fa-cube"></i></div>
+                <div class="tab" data-target="menu-settings"><i class="fa-solid fa-gear"></i></div>
+                <div class="tab" data-target="menu-about"><i class="fa-solid fa-info"></i></div>
+            </div>
+
+            <div id="menu-files" class="tab-content active">
+                <div><b>File Manager</b></div>
+                <div id="menu-file-tree">
+                    <div><span class="folder name"><i class="fa-solid fa-folder"></i> /</span></div>
+                    <div onclick="connect()"><span class="name">&emsp;🤔 no files<span><span class="menu-action">connect <i class="fa-solid fa-plug"></i></span></div>
+                </div>
+            </div>
+            <div id="menu-libs" class="tab-content">
+                <div><b>Package Manager</b></div>
+                <div id="menu-pkg-list">
+                </div>
+            </div>
+            <div id="menu-settings" class="tab-content">
+                <div><b>Settings</b></div>
+                <div><input type="checkbox" id="dont-interrupt"/><label for="dont-interrupt">Don't interrupt the device on connection</label></div>
+                <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Expand + minify + validate JSON files</label></div>
+                <div><input type="checkbox" id="use-word-wrap" onclick="updateWordWrapping()" /><label for="use-word-wrap">Word wrapping</label></div>
+                <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
+                <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
+                <div><input type="checkbox" id="force-serial-poly"/><label for="force-serial-poly">Force WebSerial polyfill</label></div>
+            </div>
+            <div id="menu-about" class="tab-content">
+                <a class="github-fork-ribbon left-top" href="https://github.com/vshymanskyy" target="_blank" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+                <div style="text-align: center; padding: 50px 0 0 0;">
+                    <h1>ViperIDE</h1>
+                    <p id='viper-ide-version'></p>
+                    <p>
+                        MicroPython Web IDE<br>
+                        by <a href="https://x.com/vshymanskyy" target="_blank">Volodymyr Shymanskyy</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div id="main-editor">
+            <div id="editor">
+                <!-- CodeMirror or MarkedJS editor content goes here -->
+            </div>
+            <div id="terminal-container">
+                <div class="tabs" id="terminal-tabs" onmousedown="initDrag(event)" ontouchstart="initDrag(event)">
+                    <div>
+                        <div class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> Terminal</div>
+                        <!--div class="tab"        data-target="logs"><i class="fa-solid fa-bug"></i> IDE Logs</div-->
+                    </div>
+                    <div>
+                        <button class="button" title="Clear" onclick="term.clear()"><i class="fa-solid fa-trash-can"></i></button>
+                        <button class="button" title="Soft Reset" onclick="reboot('soft')"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        <button class="button" title="Hard Reset" onclick="reboot('hard')"><i class="fa-solid fa-power-off"></i></button>
+                        |
+                        <button class="button" title="Full Screen" onclick="toggleFullScreen('terminal-container')"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                </div>
+                <div id="xterm" class="tab-content active">
+                    <!-- Xterm.js terminal content goes here -->
+                </div>
+                <div id="logs" class="tab-content">
+                    <!-- Logs content goes here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/lib/codemirror.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/python/python.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/javascript/javascript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/markdown/markdown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/addon/mode/simple.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.js"></script>
+
+    <script type="module" crossorigin>
+        import { serial as webSerialPolyfill } from 'https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/+esm'
+        window.webSerialPolyfill = webSerialPolyfill
+    </script>
+
+    <script>
+
+        const VIPER_IDE_VERSION = "0.1.2"
+
+        function addCSS(css) { document.head.appendChild(document.createElement("style")).innerHTML = css }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms))
+        }
+
+        function sizeFmt(size, places=1) {
+            const suffixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+            let i = 0
+            while (size > 1024 && i < suffixes.length - 1) {
+                i++
+                size /= 1024
+            }
+            // Check if the size is in bytes and omit decimals in that case
+            if (i === 0) {
+                return `${size}${suffixes[i]}`
+            } else {
+                return `${(size).toFixed(places)}${suffixes[i]}`
+            }
+        }
+
+        class Mutex {
+            constructor() {
+                this._lock = Promise.resolve()
+            }
+
+            acquire() {
+                let release
+                const lock = new Promise(resolve => release = resolve)
+                const acquire = this._lock.then(() => release)
+                this._lock = this._lock.then(() => lock)
+                return acquire
+            }
+        }
+
+        let editor, term, port, reader, writer, mipindex
+        let editorFn = ""
+        const mutex = new Mutex()
+
+        async function connect() {
+            if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
+                toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+                return;
+            }
+
+            const btnConnect = document.getElementById('btn-connect')
+            let webserial
+            if (typeof navigator.serial === 'undefined' || document.getElementById('force-serial-poly').checked) {
+                console.log('Using WebSerial polyfill')
+                webserial = webSerialPolyfill
+            } else {
+                webserial = navigator.serial
+            }
+            if (port) {
+                //TODO: await port.close()
+            }
+            try {
+                port = await webserial.requestPort()
+                await port.open({ baudRate: 115200 })
+            } catch(error) {
+                toastr.error('Cannot open port')
+                return
+            }
+            const textEncoder = new TextEncoderStream()
+            const textDecoder = new TextDecoderStream()
+            const readableStreamClosed = port.readable.pipeTo(textDecoder.writable)
+            const writableStreamClosed = textEncoder.readable.pipeTo(port.writable)
+            reader = textDecoder.readable.getReader()
+            writer = textEncoder.writable.getWriter()
+
+            if (!document.getElementById('dont-interrupt').checked) {
+                // TODO: detect WDT and disable it temporarily
+
+                try {
+                    const files = await fetchFileList()
+                    if        (files.filter(x => x.name === 'main.py').length) {
+                        await readFileIntoEditor('main.py')
+                    } else if (files.filter(x => x.name === 'code.py').length) {
+                        await readFileIntoEditor('code.py')
+                    }
+                } catch(error) {
+                    toastr.error('Error reading board info', error)
+                }
+            }
+
+            async function listen() {
+                try {
+                    while (true) {
+                        const release = await mutex.acquire()
+                        try {
+                            const { value, done } = await reader.read()
+                            if (done) break
+                            term.write(value)
+                        } finally {
+                            release()
+                        }
+                        await sleep(0.01)
+                    }
+                } catch(error) {
+                    toastr.warning('Device disconnected')
+                    btnConnect.innerHTML = '<i class="fa-solid fa-plug"></i>'
+                    await connect()
+                }
+            }
+            listen()
+
+            btnConnect.innerHTML = '<i class="fa-solid fa-plug-circle-check"></i>'
+            toastr.success('Device connected')
+        }
+
+        function splitPath(path) {
+            const parts = path.split('/').filter(part => part !== '')
+            const filename = parts.pop()
+            const directoryPath = parts.join('/')
+            return [ directoryPath, filename ]
+        }
+
+        async function createNewFile(path) {
+            const fn = prompt(`Creating new file inside ${path}\nPlease enter the name:`)
+            if (fn == null || fn == "") return
+
+            if (fn.endsWith("/")) {
+                const full = path + fn.slice(0, -1)
+                await makePath(full)
+            } else {
+                const full = path + fn
+                if (fn.includes('/')) {
+                    // Ensure path exists
+                    const [dirname, _] = splitPath(full)
+                    await makePath(dirname)
+                }
+                await execRawRepl(`
+f=open('${full}','wb')
+f.close()
+`)
+            }
+            await fetchFileList()
+        }
+
+        async function removeFile(path) {
+            if (!confirm(`Remove ${path}?`)) return
+            await execRawRepl(`
+import os
+try:
+ os.unlink('${path}')
+except OSError as e:
+ if e.args[0] == 39:
+  raise Exception('Directory not empty')
+ else:
+  raise
+`)
+            await fetchFileList()
+        }
+
+        async function removeDir(path) {
+            if (!confirm(`Remove ${path}?`)) return
+            await execRawRepl(`
+import os
+try:
+ os.rmdir('${path}')
+except OSError as e:
+ if e.args[0] == 39:
+  raise Exception('Directory not empty')
+ else:
+  raise
+`)
+            await fetchFileList()
+        }
+
+        async function makePath(path) {
+            await execRawRepl(`
+import os
+p = ''
+for d in '${path}'.split('/'):
+    p += '/' + d if p else d
+    try: os.mkdir(p)
+    except OSError as e:
+        if e.args[0] != 17: raise
+`)
+        }
+
+        async function enterRawRepl() {
+            await write('\r\x03\x03')       // Ctrl-C twice: interrupt any running program
+            const release = await mutex.acquire()
+            try {
+                await flushInput()
+                await write('\r\x01')       // Ctrl-A: enter raw REPL
+                await readUntil('raw REPL; CTRL-B to exit\r\n')
+
+                async function exitRawRepl() {
+                    await write('\x02')     // Ctrl-B: exit raw REPL
+                    await readUntil('>\r\n')
+                    const banner = await readUntil('>>> ')
+                    term.clear()
+                    term.write(banner)
+                    release()
+                }
+                return exitRawRepl
+            } catch (error) {
+                toastr.error("Cannot enter RAW mode", error)
+                term.clear()
+                release()
+                throw error
+            }
+        }
+
+        async function execCmd(cmd) {
+            await readUntil('>')
+            await write(cmd.trim())
+            await write('\x04')         // Ctrl-D: execute
+            const status = await readExactly(2)
+            if (status != 'OK') {
+                throw new Error('Cannot exec command:' + status)
+            }
+            const res = (await readUntil('\x04')).slice(0, -1)
+            const err = (await readUntil('\x04')).slice(0, -1)
+
+            if (err.length) {
+                throw new Error('Cannot exec command: ' + err)
+            }
+
+            return res
+        }
+
+        async function execRawRepl(cmd) {
+            const exitRaw = await enterRawRepl()
+            try {
+                return await execCmd(cmd)
+            } catch (error) {
+                toastr.error("Execution failed", error)
+            } finally {
+                await exitRaw()
+            }
+        }
+
+        async function execReplNoFollow(cmd) {
+            await write('\r\x03\x03')
+            await write(cmd.trim() + '\r\n')
+        }
+
+        async function fetchFileList() {
+            const fileTree = document.getElementById('menu-file-tree')
+
+            let files
+            try {
+                files = await execRawRepl(`
+import os
+def walk(p):
+ for n in os.listdir(p):
+  fn=p+n
+  s=os.stat(fn)
+  if s[0] & 0x4000 == 0:
+   print('f:'+fn+':'+str(s[6]))
+  elif n not in ('.','..'):
+   print('d:'+fn+':'+str(s[6]))
+   walk(fn+'/')
+walk('')
+`)
+            } catch (error) {
+                files = await execRawRepl(`
+import os
+for n in os.listdir():
+ s=os.stat(n)
+ if s[0] & 0x4000 == 0:
+  print('f:'+n+':'+str(s[6]))
+`)
+            }
+
+            let stats = await execRawRepl(`
+import os
+s = os.statvfs("/")
+fs = s[1] * s[2]
+ff = s[3] * s[0]
+fu = fs - ff
+print('%s:%s:%s' % (fu, ff, fs))
+`)
+            const [fs_used, fs_free, fs_size] = stats.trim().split(':')
+
+            // Build file tree
+            let result = []
+            for (const line of files.split('\n')) {
+                if (line === '') continue
+                let current = result
+                let [type, fullpath, size] = line.trim().split(':')
+                let path = fullpath.split('/')
+                let file
+                if (type == 'f') {
+                    file = path.pop()
+                }
+                for (const segment of path) {
+                    if (segment === '') continue
+                    let next = current.filter(x => x.name === segment && "content" in x)
+                    if (next.length) {
+                        current = next[0].content
+                    } else {
+                        prev = current
+                        current = []
+                        prev.push({ name: segment, path: path.join('/'), content: current })
+                    }
+                }
+                if (type == 'f') {
+                    current.push({ name: file, path: fullpath, size: parseInt(size, 10) })
+                }
+            }
+
+            function sorted(content) {
+                // Natural sort by name
+                if (document.getElementById('use-natural-sort').checked) {
+                    // TODO: try ignorePunctuation: true
+                    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+                    content.sort((a,b) => collator.compare(a.name, b.name))
+                }
+
+                // Stable-sort folders first
+                content.sort((a,b) => (("content" in a)?0:1) - (("content" in b)?0:1))
+
+                return content
+            }
+
+            // Traverse file tree
+            fileTree.innerHTML = `<div>
+                <span class="folder name"><i class="fa-solid fa-folder"></i> /</span>
+                <span class="menu-action" onclick="createNewFile('/')"><i class="fa-solid fa-plus"></i></span>
+                <span class="menu-action">used ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
+            </div>`
+            function traverse(node, depth) {
+                const offset = "&emsp;".repeat(depth)
+                for (const n of sorted(node)) {
+                    if ("content" in n) {
+                        fileTree.insertAdjacentHTML('beforeend', `<div>
+                            <span class="folder name">${offset}<i class="fa-solid fa-folder"></i> ${n.name}</span>
+                            <span class="menu-action" onclick="removeDir('${n.path}')"><i class="fa-solid fa-xmark"></i></span>
+                            <span class="menu-action" onclick="createNewFile('${n.path}/')"><i class="fa-solid fa-plus"></i></span>
+                        </div>`)
+                        traverse(n.content, depth+1)
+                    } else {
+                        /* TODO ••• */
+                        let icon;
+                        if (n.name.endsWith('.mpy')) {
+                            icon = '<i class="fa-solid fa-cube"></i>'
+                        } else {
+                            icon = '<i class="fa-regular fa-file"></i>'
+                        }
+                        fileTree.insertAdjacentHTML('beforeend', `<div>
+                            <span class="name" onclick="readFileIntoEditor('${n.path}')">${offset}${icon} ${n.name}</span>
+                            <span class="menu-action" onclick="removeFile('${n.path}')"><i class="fa-solid fa-xmark"></i></span>
+                            <span class="menu-action">${sizeFmt(n.size)}</span>
+                        </div>`)
+                    }
+                }
+            }
+            traverse(result, 1)
+
+            fileTree.insertAdjacentHTML('beforeend', `<div>
+                <span class="name" onclick="readFileIntoEditor('~sysinfo.md')"><i class="fa-regular fa-message"></i> sysinfo.md</span>
+                <span class="menu-action">virtual</span>
+            </div>`)
+
+            return result
+        }
+
+        function toHex(data){
+            if (typeof data === 'string' || data instanceof String) {
+                const encoder = new TextEncoder('utf-8')
+                data = Array.from(encoder.encode(data))
+            }
+            return [...new Uint8Array(data)]
+                .map(x => x.toString(16).padStart(2, '0'))
+                .join('')
+        }
+
+        async function readFile(fn) {
+            const content = await execRawRepl(`
+try:
+ import binascii
+ h=lambda x: binascii.hexlify(x).decode()
+except:
+ h=lambda b: ''.join('{:02x}'.format(byte) for byte in b)
+with open('${fn}','rb') as f:
+ while 1:
+  b=f.read(255)
+  if not b:break
+  print(h(b),end='')
+`)
+            if (content.length) {
+                return new Uint8Array(content.match(/../g).map(h=>parseInt(h,16)))
+            } else {
+                return new Uint8Array()
+            }
+        }
+
+        async function writeFile(fn, data, chunk_size=256) {
+            const exitRaw = await enterRawRepl()
+            try {
+                await execCmd(`
+import os
+try:
+ import binascii
+ h=binascii.unhexlify
+except:
+ h=lambda s: bytes(int(s[i:i+2], 16) for i in range(0, len(s), 2))
+f=open('.viper.tmp','wb')
+def w(d):
+ f.write(h(d))
+`)
+
+                // Split into chunks and send
+                const hexData = toHex(data)
+                const chunkSize = 256
+                for (let i = 0; i < hexData.length; i += chunkSize) {
+                    const chunk = hexData.slice(i, i + chunkSize)
+                    await execCmd("w('" + chunk + "')")
+                }
+
+                await execCmd(`f.close()
+try: os.unlink('${fn}')
+except: pass
+os.rename('.viper.tmp','${fn}')
+`)
+            } finally {
+                await exitRaw()
+            }
+        }
+
+        async function readFileIntoEditor(fn) {
+            let content
+            let isBinary = false
+            if (fn == "~sysinfo.md") {
+                content = await execRawRepl(`
+import sys,os,gc
+gc.collect()
+mu = gc.mem_alloc()
+mf = gc.mem_free()
+ms = mu + mf
+uname=os.uname()
+p=print
+def size_fmt(size):
+ suffixes = ['B','KiB','MiB','GiB','TiB']
+ i = 0
+ while size > 1024 and i < len(suffixes)-1:
+  i += 1
+  size //= 1024
+ return "%d%s" % (size, suffixes[i])
+p('## Machine')
+p('- Name: \`'+uname.machine+'\`')
+try:
+ gc.collect()
+ import microcontroller as uc
+ p('- CPU: \`%s @ %s MHz\`' % (sys.platform, uc.cpu.frequency // 1_000_000))
+ p('- UID: \`%s\`' % (uc.cpu.uid.hex(),))
+ p('- Temp.: \`%s °C\`' % (uc.cpu.temperature,))
+ p('- Voltage: \`%s V\`' % (uc.cpu.voltage,))
+except:
+ try:
+  gc.collect()
+  import machine
+  p('- CPU: \`%s @ %s MHz\`' % (sys.platform, machine.freq() // 1_000_000))
+ except:
+  p('- CPU: \`'+sys.platform+'\`')
+p()
+p('## System')
+p('- Version: \`'+sys.version.split(";")[1].strip()+'\`')
+if ms:
+ p('- Memory use:  \`%s / %s, free: %d%%\`' % (size_fmt(mu), size_fmt(ms), (mf * 100) // ms))
+`)
+            } else {
+                content = await readFile(fn)
+                try {
+                    content = (new TextDecoder('utf-8', { fatal: true })).decode(content)
+                } catch (error) {
+                    isBinary = true
+                }
+            }
+
+            const editorElement = document.getElementById('editor')
+
+            if (isBinary) {
+                hexViewer(content.buffer, editorElement)
+                editor = null
+            } else if (fn.endsWith('.md') && document.getElementById('render-markdown').checked) {
+                editorElement.innerHTML = `<div class="marked-viewer">` + marked.marked(content) + `</div>`
+                editor = null
+            } else {
+                if (!editor) {
+                    editorElement.innerHTML = '' // Clear existing content
+                    createCodeMirror()
+                }
+                editor.setValue('')
+
+                if (fn.endsWith('.py')) {
+                  editor.setOption('mode', { name: 'python', version: 3, singleLineStringErrors: false })
+                } else if (fn.endsWith('.json')) {
+                  editor.setOption('mode', { name: 'application/ld+json' })
+
+                  if (document.getElementById('expand-minify-json').checked) {
+                    try {
+                        // Prettify JSON
+                        content = JSON.stringify(JSON.parse(content), null, 2)
+                    } catch (error) {
+                        toastr.warning('JSON is malformed')
+                    }
+                  }
+                } else if (fn.endsWith('.pem')) {
+                  editor.setOption('mode', 'pem')
+                } else if (fn.endsWith('.md')) {
+                  editor.setOption('mode', 'markdown')
+                } else {
+                  editor.setOption('mode', 'text')
+                }
+
+                editor.setValue(content)
+                editorFn = fn
+            }
+            autoHideSideMenu()
+            editorElement.scrollTop = 0
+        }
+
+        async function saveCurrentFile() {
+            let content = editor.getValue()
+            if (editorFn.endsWith(".json") && document.getElementById('expand-minify-json').checked) {
+              try {
+                // Minify JSON
+                content = JSON.stringify(JSON.parse(content))
+              } catch (error) {
+                toastr.error('JSON is malformed')
+                return
+              }
+            }
+            await writeFile(editorFn, content)
+        }
+
+        async function reboot(mode = "hard") {
+            if (mode === "soft") {
+                await write('\r\x03\x03\x04')
+            } else if (mode === "hard") {
+                await execReplNoFollow("import machine; machine.reset()")
+            } else if (mode === "bootloader") {
+                await execReplNoFollow("import machine; machine.bootloader()")
+            }
+        }
+
+        async function runCurrentFile() {
+            toastr.info('This function is under construction')
+            if (editorFn.endsWith(".py")) {
+                execRawRepl(editor.getValue())
+            } else {
+                toastr.error(`${editorFn} file is not executable`)
+            }
+        }
+
+        /*
+         * Transport
+         */
+
+        async function write(data) {
+            await writer.write(data)
+        }
+
+        let receivedData = ''
+
+        async function flushInput() {
+            receivedData = ''
+            /*while (1) {
+                const { value, done } = await reader.read()
+                console.log(value, done)
+                if (done) { break }
+                if (value.length == 0) { break }
+            }*/
+        }
+
+        async function readExactly(n, timeout = 1000) {
+            const endTime = +Date.now() + timeout
+            try {
+                while (+Date.now() < endTime) {
+                    if (receivedData.length >= n) {
+                        const res = receivedData.substring(0, n)
+                        receivedData = receivedData.substring(n)
+                        return res
+                    }
+                    const { value, done } = await reader.read()
+                    if (done) { break }
+                    receivedData += value
+                }
+            } catch (error) {
+                toastr.error('Error reading from port', error)
+            }
+            throw new Error('Timeout')
+        }
+
+        async function readUntil(ending, timeout = 1000) {
+            const endTime = +Date.now() + timeout
+
+            try {
+                while (+Date.now() < endTime) {
+                    const idx = receivedData.indexOf(ending) + ending.length
+                    if (idx >= ending.length) {
+                        const res = receivedData.substring(0, idx)
+                        receivedData = receivedData.substring(idx)
+                        return res
+                    }
+                    const { value, done } = await reader.read()
+                    if (done) { break }
+                    receivedData += value
+                }
+            } catch (error) {
+                toastr.error('Error reading from port', error)
+            }
+            throw new Error('Timeout reached before finding the ending sequence')
+        }
+
+        /*
+         * Package Management
+         */
+
+        const MIP_INDEX = 'https://micropython.org/pi/v2'
+
+        async function fetchPkgList() {
+            if (mipindex) return;
+
+            const index_rsp = await fetch(`${MIP_INDEX}/index.json`)
+            mipindex = await index_rsp.json()
+
+            const pkgList = document.getElementById('menu-pkg-list')
+            pkgList.innerHTML = ""
+            for (const pkg of mipindex.packages) {
+                pkgList.insertAdjacentHTML('beforeend', `<div>
+                    <span><i class="fa-solid fa-cube"></i> ${pkg.name}</span>
+                    <span class="menu-action" onclick="installPkg('${pkg.name}')">v${pkg.version} <i class="fa-regular fa-circle-down"></i></span>
+                </div>`)
+            }
+        }
+
+        function rewriteUrl(url, branch='HEAD') {
+            if (url.startsWith("github:")) {
+                url = url.slice(7).split("/")
+                url = "https://raw.githubusercontent.com/" + url[0] + "/" + url[1] + "/" + branch + "/" + url.slice(2).join("/")
+            } else if (url.startsWith("gitlab:")) {
+                url = url.slice(7).split("/")
+                url = "https://gitlab.com/" + url[0] + "/" + url[1] + "/-/raw/" + branch + "/" + url.slice(2).join("/")
+            }
+            return url
+        }
+
+        async function _installPkg(pkg, version='latest') {
+            const sys = JSON.parse(await execRawRepl(`
+import sys,json
+pj=lambda x:print(json.dumps(x,separators=(',',':')))
+mpy=getattr(sys.implementation, '_mpy', 0) & 0xFF
+pj({'mpy':mpy,'path':sys.path})
+`))
+
+            // Find `lib` filder in sys.path
+            const lib_path = sys.path.find(x => x.endsWith('/lib'))
+            if (!lib_path) {
+                toastr.error(`sys.path doesn't include the "lib" folder`)
+                return
+            }
+
+            const pkg_info_rsp = await fetch(`${MIP_INDEX}/package/${sys.mpy}/${pkg}/${version}.json`)
+            const pkg_info = await pkg_info_rsp.json()
+
+            for (const [fn, hash, ..._] of pkg_info.hashes) {
+                const file_rsp = await fetch(`${MIP_INDEX}/file/${hash.slice(0,2)}/${hash}`)
+                const content = await file_rsp.arrayBuffer()
+                const target_file = `${lib_path}/${fn}`
+
+                // Ensure path exists
+                const [dirname, _] = splitPath(target_file)
+                await makePath(dirname)
+
+                await writeFile(target_file, content)
+            }
+
+            if ("urls" in pkg_info) {
+                // TODO: for (const [fn, hash, ..._] of pkg_info.urls)
+                throw new Error('Installing from urls not supported yet')
+            }
+
+            if ("deps" in pkg_info) {
+                for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
+                    await installPkg(dep_pkg, dep_ver)
+                }
+            }
+            toastr.success(`Installed ${pkg}@${pkg_info.version} to ${lib_path}`)
+        }
+
+        async function installPkg(pkg, version='latest') {
+            try {
+                await _installPkg(pkg, version)
+            } catch (error) {
+                toastr.error(error, 'This function is under construction')
+            }
+        }
+
+        /*
+         * UI helpers
+         */
+
+        function toggleFullScreen(elementId) {
+            const element = document.getElementById(elementId)
+            if (!document.fullscreenElement) {
+                element.requestFullscreen().catch(err => {
+                    toastr.error('Error enabling full-screen mode', `${err.message} (${err.name})`)
+                })
+            } else {
+                document.exitFullscreen()
+            }
+        }
+
+        function setupTabs(containerNode) {
+            const tabs = containerNode.querySelectorAll('.tab')
+            const tabContents = containerNode.querySelectorAll('.tab-content')
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetId = tab.getAttribute('data-target')
+
+                    tabs.forEach(t => t.classList.remove('active'))
+                    tab.classList.add('active')
+
+                    tabContents.forEach(content => {
+                        if (content.id === targetId) {
+                            content.classList.add('active')
+                        } else {
+                            content.classList.remove('active')
+                        }
+                    })
+                })
+            })
+        }
+
+        function toggleSideMenu() {
+            const fileTree = document.getElementById('side-menu')
+            if (window.innerWidth <= 768) {
+                fileTree.classList.remove('hidden')
+                fileTree.classList.toggle('show')
+            } else {
+                fileTree.classList.remove('show')
+                fileTree.classList.toggle('hidden')
+            }
+        }
+
+        function autoHideSideMenu() {
+            const fileTree = document.getElementById('side-menu')
+            if (window.innerWidth <= 768) {
+                fileTree.classList.remove('show')
+            }
+        }
+
+        function hexViewer(arrayBuffer, targetElement) {
+            const containerDiv = document.createElement('div')
+            containerDiv.className = 'hexed-viewer'
+
+            const dataView = new DataView(arrayBuffer)
+            const numBytes = dataView.byteLength
+
+            function toHex(n) {
+                return ('00' + n.toString(16)).slice(-2)
+            }
+
+            function toPrintableAscii(n) {
+                return (n >= 32 && n <= 126) ? String.fromCharCode(n) : '.'
+            }
+
+            for (let offset = 0; offset < numBytes; offset += 16) {
+                const hexLine = document.createElement('div')
+                hexLine.className = 'hexed-line'
+
+                const addressSpan = document.createElement('span')
+                addressSpan.className = 'hexed-address'
+                addressSpan.textContent = offset.toString(16).padStart(8, '0')
+
+                const hexPartSpan = document.createElement('span')
+                hexPartSpan.className = 'hexed-hex-part'
+                let hexPart = ''
+                let asciiPart = ''
+
+                for (let i = 0; i < 16; i++) {
+                    if (offset + i < numBytes) {
+                        const byte = dataView.getUint8(offset + i)
+                        hexPart += toHex(byte) + ' '
+                        asciiPart += toPrintableAscii(byte)
+                    } else {
+                        hexPart += '   '
+                        asciiPart += ' '
+                    }
+                    if (i === 7) hexPart += ' '
+                }
+
+                hexPartSpan.textContent = hexPart.slice(0, -1)
+
+                const asciiPartSpan = document.createElement('span')
+                asciiPartSpan.className = 'hexed-ascii-part'
+                asciiPartSpan.textContent = asciiPart
+
+                hexLine.appendChild(addressSpan)
+                hexLine.appendChild(hexPartSpan)
+                hexLine.appendChild(asciiPartSpan)
+                containerDiv.appendChild(hexLine)
+            }
+
+            targetElement.innerHTML = ''  // Clear any existing content
+            targetElement.appendChild(containerDiv)
+        }
+
+
+        /*
+         * Initialization
+         */
+
+        if (navigator.appVersion.indexOf("Win") >= 0) {
+            document.body.classList.add('windows')
+        } else if (navigator.appVersion.indexOf("Mac") >= 0) {
+            document.body.classList.add('macos')
+        } else {
+            document.body.classList.add('linux')
+        }
+
+        CodeMirror.defineSimpleMode('pem', {
+            start: [
+                {regex: /-----BEGIN CERTIFICATE-----/, token: 'keyword', next: 'middle'},
+                {regex: /[^-]+/, token: 'comment'}
+            ],
+            middle: [
+                {regex: /[A-Za-z0-9+/=]+/, token: 'variable'},
+                {regex: /-----END CERTIFICATE-----/, token: 'keyword', next: 'start'},
+                {regex: /[^-]+/, token: 'comment'}
+            ],
+            end: [
+                {regex: /.+/, token: 'comment'}
+            ],
+            // The meta property contains global information about the mode
+            meta: {
+                lineComment: '#'
+            }
+        })
+
+        function updateWordWrapping() {
+            editor.setOption('lineWrapping', document.getElementById('use-word-wrap').checked)
+        }
+
+        function createCodeMirror() {
+            editor = CodeMirror(document.getElementById('editor'), {
+                theme: 'monokai',
+                lineNumbers: true,
+                lineWrapping: document.getElementById('use-word-wrap').checked,
+                indentUnit: 4,
+                matchBrackets: true,
+                extraKeys: {
+                    "F5": (cm) => runCurrentFile(),
+                    "Ctrl-S": (cm) => saveCurrentFile(),
+                }
+            })
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            setupTabs(document.getElementById('side-menu'))
+            setupTabs(document.getElementById('terminal-container'))
+
+            toastr.options.preventDuplicates = true;
+
+            createCodeMirror()
+            editorFn = "test.py"
+            editor.setValue(`
+# ViperIDE - MicroPython Web IDE
+
+colors = [
+    "\\033[31m", "\\033[32m", "\\033[33m", "\\033[34m",
+    "\\033[35m", "\\033[36m", "\\033[37m",
+]
+reset = "\\033[0m"
+
+text = " Привіт MicroPython! 𓆙"
+
+# Print each letter with a different color
+print("=" * 32)
+for i, char in enumerate(text):
+    color = colors[i % len(colors)]
+    print(f"{color}{char}", end="")
+print(reset)
+print("=" * 32)
+`)
+
+            const xtermTheme = {
+                foreground: '#F8F8F8',
+                background: '#272822',
+                selection: '#5DA5D533',
+                black: '#1E1E1D',
+                brightBlack: '#262625',
+                red: '#CE5C5C',
+                brightRed: '#FF7272',
+                green: '#5BCC5B',
+                brightGreen: '#72FF72',
+                yellow: '#CCCC5B',
+                brightYellow: '#FFFF72',
+                blue: '#5D5DD3',
+                brightBlue: '#7279FF',
+                magenta: '#BC5ED1',
+                brightMagenta: '#E572FF',
+                cyan: '#5DA5D5',
+                brightCyan: '#72F0FF',
+                white: '#F8F8F8',
+                brightWhite: '#FFFFFF'
+            }
+
+            term = new Terminal({
+                fontFamily: '"Droid Sans Mono", "monospace", monospace',
+                fontSize: 14,
+                theme: xtermTheme,
+                cursorBlink: true,
+                //convertEol: true,
+                allowProposedApi: true,
+            })
+            term.open(document.getElementById('xterm'))
+            term.onData(write)
+
+            const fitAddon = new FitAddon.FitAddon()
+            term.loadAddon(fitAddon)
+            fitAddon.fit()
+
+            addEventListener('resize', (event) => {
+                fitAddon.fit()
+                if (editor) editor.refresh()
+            })
+
+            new ResizeObserver(() => {
+                fitAddon.fit()
+                if (editor) editor.refresh()
+            }).observe(document.getElementById('xterm'))
+        })
+
+        /*
+         * App Updater
+         */
+
+        let lastUpdateCheck = 0;
+
+        async function checkForUpdates() {
+            const now = new Date()
+            if (now - lastUpdateCheck < 60*60*1000) {
+                return
+            }
+            lastUpdateCheck = now
+
+            document.getElementById('viper-ide-version').innerHTML = VIPER_IDE_VERSION
+
+            const manifest_rsp = await fetch('manifest.json', {cache: "no-store"})
+            manifest = await manifest_rsp.json()
+            if (manifest.version !== VIPER_IDE_VERSION) {
+                toastr.info(`New ViperIDE version ${manifest.version} is available`)
+                document.getElementById('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:updateApp()">update</a>)`
+            }
+        }
+
+        function updateApp() {
+            window.location.reload()
+        }
+
+        window.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "visible") {
+                console.log("APP resumed")
+                checkForUpdates()
+            }
+        })
+
+        checkForUpdates()
+
+        /*
+         * Splitter
+         */
+
+        let startY, startHeight
+
+        function initDrag(e) {
+            startY = e.clientY || e.touches[0].clientY
+            startHeight = parseInt(document.defaultView.getComputedStyle(document.getElementById('terminal-container')).height, 10)
+            document.documentElement.addEventListener('mousemove', doDrag, false)
+            document.documentElement.addEventListener('touchmove', doDrag, false)
+            document.documentElement.addEventListener('mouseup', stopDrag, false)
+            document.documentElement.addEventListener('touchend', stopDrag, false)
+        }
+
+        function doDrag(e) {
+            const clientY = e.clientY || e.touches[0].clientY
+            const terminalContainer = document.getElementById('terminal-container')
+            terminalContainer.style.height = (startHeight - (clientY - startY)) + 'px'
+        }
+
+        function stopDrag() {
+            document.documentElement.removeEventListener('mousemove', doDrag, false)
+            document.documentElement.removeEventListener('touchmove', doDrag, false)
+            document.documentElement.removeEventListener('mouseup', stopDrag, false)
+            document.documentElement.removeEventListener('touchend', stopDrag, false)
+        }
+    </script>
+</body>
+</html>

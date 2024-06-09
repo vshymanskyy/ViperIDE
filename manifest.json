@@ -1,0 +1,18 @@
+{
+    "lang": "en-us",
+    "name": "ViperIDE",
+    "short_name": "ViperIDE",
+    "description": "MicroPython Web IDE",
+    "version": "0.1.2",
+    "start_url": "ViperIDE.html",
+    "background_color": "#272822",
+    "theme_color": "#272822",
+    "orientation": "portrait-primary",
+    "display": "fullscreen",
+    "icons": [
+        {
+            "src": "favicon.png",
+            "sizes": "1024x1024"
+        }
+    ]
+}
