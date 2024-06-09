@@ -721,7 +721,6 @@ print('%s:%s:%s' % (fu, ff, fs))
             function sorted(content) {
                 // Natural sort by name
                 if (document.getElementById('use-natural-sort').checked) {
-                    // TODO: try ignorePunctuation: true
                     const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
                     content.sort((a,b) => collator.compare(a.name, b.name))
                 }
@@ -821,9 +820,8 @@ def w(d):
 
                 // Split into chunks and send
                 const hexData = toHex(data)
-                const chunkSize = 256
-                for (let i = 0; i < hexData.length; i += chunkSize) {
-                    const chunk = hexData.slice(i, i + chunkSize)
+                for (let i = 0; i < hexData.length; i += chunk_size) {
+                    const chunk = hexData.slice(i, i + chunk_size)
                     await execCmd("w('" + chunk + "')")
                 }
 
@@ -1087,8 +1085,12 @@ pj({'mpy':mpy,'path':sys.path})
             }
 
             if ("urls" in pkg_info) {
-                // TODO: for (const [fn, hash, ..._] of pkg_info.urls)
-                throw new Error('Installing from urls not supported yet')
+                for (const [fn, url, ..._] of pkg_info.urls) {
+                    const file_rsp = await fetch(rewriteUrl(url))
+                    const content = await file_rsp.arrayBuffer()
+                    const target_file = `${lib_path}/${fn}`
+                    await writeFile(target_file, content)
+                }
             }
 
             if ("deps" in pkg_info) {
