@@ -2,7 +2,7 @@
 
 A MicroPython IDE that works directly in the browser, leveraging modern web technologies.
 
-- Direct USB / Serial connection works on **Windows**, **MacOS**, **Linux**, **Android**
+- Direct USB / Serial connection works on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
 - No software installation required, works out of the box
 - `WebREPL` and `Bluetooth` connection support is planned
 - Covers most of the functionality of `mpremote`
