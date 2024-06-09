@@ -24,6 +24,7 @@ A MicroPython IDE that works directly in the browser, leveraging modern web tech
   - Syntax highlighting for `.py`, `.json`, `.pem` (based on `CodeMirror`)
   - Auto expand/minify of `.json` files
   - Viewer mode for `Markdown`
+  - Hex viewer for binary files
   - Unicode support (`UTF8`)
   - Run file without saving - *WIP*
 - **File Manager**
