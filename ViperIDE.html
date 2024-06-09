@@ -803,7 +803,7 @@ with open('${fn}','rb') as f:
             }
         }
 
-        async function writeFile(fn, data, chunk_size=256) {
+        async function writeFile(fn, data, chunk_size=128) {
             const exitRaw = await enterRawRepl()
             try {
                 await execCmd(`
@@ -981,7 +981,7 @@ if ms:
             }*/
         }
 
-        async function readExactly(n, timeout = 1000) {
+        async function readExactly(n, timeout = 3000) {
             const endTime = +Date.now() + timeout
             try {
                 while (+Date.now() < endTime) {
@@ -1000,7 +1000,7 @@ if ms:
             throw new Error('Timeout')
         }
 
-        async function readUntil(ending, timeout = 1000) {
+        async function readUntil(ending, timeout = 3000) {
             const endTime = +Date.now() + timeout
 
             try {
