@@ -340,8 +340,8 @@
             </div>
             <div id="menu-settings" class="tab-content">
                 <div><b>Settings</b></div>
-                <div><input type="checkbox" id="dont-interrupt"/><label for="dont-interrupt">Don't interrupt the device on connection</label></div>
-                <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Expand + minify + validate JSON files</label></div>
+                <div><input type="checkbox" id="interrupt-device" checked/><label for="interrupt-device">Interrupt the device on connection</label></div>
+                <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Auto expand/minify JSON</label></div>
                 <div><input type="checkbox" id="use-word-wrap" onclick="updateWordWrapping()" /><label for="use-word-wrap">Word wrapping</label></div>
                 <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
                 <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
@@ -483,7 +483,7 @@
             reader = textDecoder.readable.getReader()
             writer = textEncoder.writable.getWriter()
 
-            if (!document.getElementById('dont-interrupt').checked) {
+            if (document.getElementById('interrupt-device').checked) {
                 // TODO: detect WDT and disable it temporarily
 
                 try {
