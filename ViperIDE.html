@@ -607,11 +607,19 @@
                 this.server = null
                 this.service = null
                 this.rx = null
+                if (typeof navigator.bluetooth === 'undefined') {
+                    throw new Error('WebBluetooth not available')
+                }
             }
 
             async connect() {
                 this.device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [NUS_SERVICE] }]
+                    filters: [{
+                        //services: [NUS_SERVICE],
+                        namePrefix: "mpy-",
+                    }],
+                    //acceptAllDevices: true,
+                    optionalServices: [NUS_SERVICE],
                 })
                 this.server = await this.device.gatt.connect()
                 this.service = await this.server.getPrimaryService(NUS_SERVICE)
@@ -775,7 +783,7 @@
             try {
                 await port.connect()
             } catch(error) {
-                toastr.error('Cannot open port')
+                toastr.error(error, 'Cannot open port')
                 return
             }
 
