@@ -6,7 +6,7 @@
     }
     window.webrepl_url = 'ws://' + url
 
-    fetch('ViperIDE.html')
+    fetch('index.html')
         .then(rsp => rsp.text() )
         .then(data => document.write(data))
 })();

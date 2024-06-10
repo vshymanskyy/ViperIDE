@@ -496,6 +496,10 @@
                 this.receivedData = ''
             }
 
+            async requestAccess() {
+                throw new Error("Method 'requestAccess()' must be implemented.")
+            }
+
             async connect() {
                 throw new Error("Method 'connect()' must be implemented.")
             }
@@ -586,8 +590,11 @@
                 }
             }
 
-            async connect() {
+            async requestAccess() {
                 this.port = await this.serial.requestPort()
+            }
+
+            async connect() {
                 await this.port.open({ baudRate: 115200 })
 
                 this.reader = this.port.readable.getReader()
@@ -644,7 +651,7 @@
                 }
             }
 
-            async connect() {
+            async requestAccess() {
                 this.device = await navigator.bluetooth.requestDevice({
                     filters: [{
                         //services: [NUS_SERVICE],
@@ -653,6 +660,9 @@
                     //acceptAllDevices: true,
                     optionalServices: [NUS_SERVICE],
                 })
+            }
+
+            async connect() {
                 this.server = await this.device.gatt.connect()
                 this.service = await this.server.getPrimaryService(NUS_SERVICE)
                 this.rx = await this.service.getCharacteristic(NUS_RX)
@@ -697,16 +707,18 @@
                 this.socket = null
             }
 
-            _connect(url) {
-                return new Promise(function(resolve, reject) {
-                    const ws = new WebSocket(url)
-                    ws.onopen = function() { resolve(ws) }
-                    ws.onerror = function(err) { reject(err) }
-                })
+            async requestAccess() {
             }
 
             async connect() {
-                this.socket = await this._connect(this.url)
+                function _conn(url) {
+                    return new Promise(function(resolve, reject) {
+                        const ws = new WebSocket(url)
+                        ws.onopen = function() { resolve(ws) }
+                        ws.onerror = function(err) { reject(err) }
+                    })
+                }
+                this.socket = await _conn(this.url)
                 this.socket.binaryType = 'arraybuffer'
                 this.socket.onmessage = (event) => {
                     if (this.receiveCallback) {
@@ -793,7 +805,7 @@
                     url = prompt('WebREPL device address:', '192.168.1.123:8266')
                     if (!url) return;
 
-                    if (!url.contains("://")) { url = "ws://" + url }
+                    if (!url.includes("://")) { url = "ws://" + url }
 
                     if (window.location.protocol === "https:") {
                         /* Navigate to device, which should automatically reload and ask for WebREPL password */
@@ -804,8 +816,9 @@
                     url = webrepl_url
                 }
                 const pass = prompt('Password:')
-                if (!pass || pass.length < 4) {
-                    toastr.error('Password is required')
+                if (pass == null) { return }
+                if (pass.length < 4) {
+                    toastr.error('Password is too short')
                     return
                 }
                 await disconnect()
@@ -843,6 +856,12 @@
                 }
             } else {
                 toastr.error('Unknown connection type')
+                return
+            }
+
+            try {
+                await port.requestAccess()
+            } catch {
                 return
             }
 
