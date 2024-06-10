@@ -83,7 +83,6 @@
         .fa-arrows-rotate { color: #3b88c3; }
         .fa-gear { color: #ccd6dd }
         .fa-trash-can { color: #ccd6dd }
-        .fa-plug-circle-check { color: #87c244; }
 
         logo {
             font-weight: 200;
@@ -254,6 +253,10 @@
             font-size: 20px;
         }
 
+        .button.connected {
+            color: #87c244;
+        }
+
         #menu-file-tree {
             margin: 10px;
         }
@@ -328,9 +331,9 @@
             <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"><i class="fa-solid fa-circle-play"></i></button>
         </div>
         <div>
-            <button class="button" title="Connect WebREPL"       onclick="connect('ws')"><i class="fa-solid fa-circle-nodes"></i></button>
-            <button class="button" title="Connect Bluetooth"     onclick="connect('ble')"><i class="fa-brands fa-bluetooth-b"></i></button>
-            <button class="button" title="Connect USB/Serial"    onclick="connect('usb')"><i class="fa-brands fa-usb"></i></button>
+            <button class="button" title="Connect WebREPL"       onclick="connect('ws')"  id="btn-conn-ws"><i class="fa-solid fa-circle-nodes"></i></button>
+            <button class="button" title="Connect Bluetooth"     onclick="connect('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+            <button class="button" title="Connect USB/Serial"    onclick="connect('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
             <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"><i class="fa-solid fa-expand"></i></button>
         </div>
     </div>
@@ -748,6 +751,10 @@
                 } catch (error) {}
                 port = null
             }
+
+            for (const t of ["ws", "ble", "usb"]) {
+                document.getElementById(`btn-conn-${t}`).classList.remove('connected')
+            }
         }
 
         async function connect(type) {
@@ -820,11 +827,14 @@
             })
 
             port.onDisconnect(() => {
+                document.getElementById(`btn-conn-${type}`).classList.remove('connected')
                 toastr.warning('Device disconnected')
                 //connect(type)
             })
 
             toastr.success('Device connected')
+
+            document.getElementById(`btn-conn-${type}`).classList.add('connected')
 
             if (document.getElementById('interrupt-device').checked) {
                 // TODO: detect WDT and disable it temporarily
