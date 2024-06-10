@@ -1329,7 +1329,7 @@ if ms:
             for (const pkg of mipindex.packages) {
                 pkgList.insertAdjacentHTML('beforeend', `<div>
                     <span><i class="fa-solid fa-cube"></i> ${pkg.name}</span>
-                    <span class="menu-action" onclick="installPkg('${pkg.name}')">v${pkg.version} <i class="fa-regular fa-circle-down"></i></span>
+                    <span class="menu-action" onclick="installPkg('${pkg.name}')">${pkg.version} <i class="fa-regular fa-circle-down"></i></span>
                 </div>`)
             }
         }
