@@ -7,7 +7,7 @@ A MicroPython IDE that works directly in the browser, leveraging modern web tech
 - `WebREPL` and `Bluetooth LE` connection support
 - Covers most of the functionality of `mpremote`
 
-<a href="https://vsh.pp.ua/ViperIDE/ViperIDE.html" target="_blank">Open ViperIDE ↗️</a>
+<a href="https://viper-ide.org" target="_blank">Open ViperIDE ↗️</a>
 
 ## Tested with
 
