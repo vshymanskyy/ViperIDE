@@ -7,8 +7,7 @@
     "start_url": "ViperIDE.html",
     "background_color": "#272822",
     "theme_color": "#272822",
-    "orientation": "portrait-primary",
-    "display": "fullscreen",
+    "display": "standalone",
     "icons": [
         {
             "src": "favicon.png",
