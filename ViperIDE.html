@@ -361,7 +361,7 @@
     <div id="container">
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
-                <div class="tab active" data-target="menu-files" onclick="if (port) {fetchFileList()}"><i class="fa-solid fa-folder"></i></div>
+                <div class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder"></i></div>
                 <div class="tab" data-target="menu-libs" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube"></i></div>
                 <div class="tab" data-target="menu-settings"><i class="fa-solid fa-gear"></i></div>
                 <div class="tab" data-target="menu-about"><i class="fa-solid fa-info"></i></div>
@@ -883,6 +883,7 @@
             port.onDisconnect(() => {
                 document.getElementById(`btn-conn-${type}`).classList.remove('connected')
                 toastr.warning('Device disconnected')
+                port = null
                 //connect(type)
             })
 
@@ -1037,6 +1038,8 @@ for d in '${path}'.split('/'):
         }
 
         async function fetchFileList() {
+            if (!port) return;
+
             const fileTree = document.getElementById('menu-file-tree')
 
             let files
@@ -1326,6 +1329,8 @@ if ms:
         }
 
         async function saveCurrentFile() {
+            if (!port) return;
+
             let content = editor.getValue()
             if (editorFn.endsWith(".json") && document.getElementById('expand-minify-json').checked) {
               try {
@@ -1340,6 +1345,8 @@ if ms:
         }
 
         async function reboot(mode = "hard") {
+            if (!port) return;
+
             const release = await port.mutex.acquire()
             try {
                 if (mode === "soft") {
@@ -1355,6 +1362,8 @@ if ms:
         }
 
         async function runCurrentFile() {
+            if (!port) return;
+
             toastr.info('This function is under construction')
             if (editorFn.endsWith(".py")) {
                 execRawRepl(editor.getValue())
@@ -1410,6 +1419,8 @@ if ms:
         }
 
         async function installPkg(index_url, pkg, version='latest') {
+            if (!port) return;
+
             try {
                 const sys = JSON.parse(await execRawRepl(`
 import sys,json
