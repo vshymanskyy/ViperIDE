@@ -692,7 +692,15 @@
                 try {
                     await this.readUntil('Password:')
                     await this.write(this.pass + '\n')
-                    const rsp = await this.readUntil('\n')
+                    await this.readUntil('\n') // skip echo
+                    const rsp = (await this.readUntil('\n')).trim()
+                    if (rsp == "WebREPL connected") {
+                        // All good!
+                    } else if (rsp == "Access denied") {
+                        throw new Error("Invalid password")
+                    } else {
+                        throw new Error(rsp)
+                    }
                 } finally {
                     release()
                 }
@@ -733,42 +741,62 @@
         let editor, term, port, mipindex
         let editorFn = ""
 
-        async function connect(type) {
+        async function disconnect() {
             if (port) {
                 try {
                     await port.disconnect()
                 } catch (error) {}
+                port = null
             }
+        }
 
+        async function connect(type) {
             if (type === 'ws') {
-                if (window.location.protocol === "https:") {
-                    //window.location.protocol = "http:"
-                    //window.location.reload()
-                    toastr.error('The WebREPL cannot be accessed over HTTPS connections')
-                    return;
-                }
+                let url
+                if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
+                    url = prompt('Device URL:', 'ws://192.168.1.123:8266')
+                    if (!url) return;
 
-                const url = prompt('Device URL:', 'ws://192.168.1.123:8266')
-                if (!url) return;
+                    if (window.location.protocol === "https:") {
+                        /* Navigate to device, which should automatically reload and ask for WebREPL password */
+                        window.location.assing(url.replace("ws://", "http://"))
+                        return
+                    }
+                } else {
+                    url = webrepl_url
+                }
                 const pass = prompt('Password:')
                 if (!pass || pass.length < 4) {
                     toastr.error('Password is required')
                     return
                 }
+                await disconnect()
                 port = new WebSocketREPL(url, pass)
             } else if (type === 'ble') {
+                if (window.location.protocol === "http:") {
+                    toastr.error('WebBluetooth cannot be accessed with unsecure connection')
+                    return;
+                }
+
                 if (typeof navigator.bluetooth === 'undefined') {
                     toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
                     return;
                 }
 
+                await disconnect()
                 port = new WebBluetooth()
             } else if (type === 'usb') {
+                if (window.location.protocol === "http:") {
+                    toastr.error('WebSerial cannot be accessed with unsecure connection')
+                    return;
+                }
+
                 if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
                     toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
                     return;
                 }
 
+                await disconnect()
                 if (typeof navigator.serial === 'undefined' || document.getElementById('force-serial-poly').checked) {
                     console.log('Using WebSerial polyfill')
                     port = new WebSerial(webSerialPolyfill)
@@ -1512,7 +1540,7 @@ pj({'mpy':mpy,'path':sys.path})
             })
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        (async () => {
             setupTabs(document.getElementById('side-menu'))
             setupTabs(document.getElementById('terminal-container'))
 
@@ -1584,6 +1612,8 @@ print("=" * 32)
             term.loadAddon(fitAddon)
             fitAddon.fit()
 
+            term.loadAddon(new WebLinksAddon.WebLinksAddon())
+
             addEventListener('resize', (event) => {
                 fitAddon.fit()
                 if (editor) editor.refresh()
@@ -1593,7 +1623,12 @@ print("=" * 32)
                 fitAddon.fit()
                 if (editor) editor.refresh()
             }).observe(document.getElementById('xterm'))
-        })
+
+            if (typeof webrepl_url !== 'undefined') {
+                await sleep(500)
+                await connect('ws')
+            }
+        })();
 
         /*
          * App Updater
