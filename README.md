@@ -26,7 +26,7 @@ A MicroPython IDE that works directly in the browser, leveraging modern web tech
   - Viewer mode for `Markdown`
   - `Hex` viewer for binary files
   - Unicode support (`UTF8`)
-  - Run file without saving - *WIP*
+  - Run file without saving
 - **File Manager**
   - Add, remove files and directories
   - Root FS stats display
