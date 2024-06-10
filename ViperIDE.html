@@ -284,6 +284,10 @@
             white-space: nowrap;
         }
 
+        #menu-file-tree div .selected {
+            font-weight: bold;
+        }
+
         #menu-file-tree div .folder {
             cursor: default;
         }
@@ -815,7 +819,7 @@
                 } else {
                     url = webrepl_url
                 }
-                const pass = prompt('Password:')
+                const pass = prompt('WebREPL password:')
                 if (pass == null) { return }
                 if (pass.length < 4) {
                     toastr.error('Password is too short')
@@ -1135,7 +1139,7 @@ print('%s:%s:%s' % (fu, ff, fs))
                             icon = '<i class="fa-regular fa-file"></i>'
                         }
                         fileTree.insertAdjacentHTML('beforeend', `<div>
-                            <span class="name" onclick="readFileIntoEditor('${n.path}')">${offset}${icon} ${n.name}</span>
+                            <span class="name" onclick="fileClick('${n.path}')">${offset}${icon} ${n.name}</span>
                             <span class="menu-action" onclick="removeFile('${n.path}')"><i class="fa-solid fa-xmark"></i></span>
                             <span class="menu-action">${sizeFmt(n.size)}</span>
                         </div>`)
@@ -1145,11 +1149,23 @@ print('%s:%s:%s' % (fu, ff, fs))
             traverse(result, 1)
 
             fileTree.insertAdjacentHTML('beforeend', `<div>
-                <span class="name" onclick="readFileIntoEditor('~sysinfo.md')"><i class="fa-regular fa-message"></i> sysinfo.md</span>
+                <span class="name" onclick="fileClick('~sysinfo.md')"><i class="fa-regular fa-message"></i> sysinfo.md</span>
                 <span class="menu-action">virtual</span>
             </div>`)
 
             return result
+        }
+
+        async function fileClick(fn) {
+            const e = window.event.target || window.event.srcElement;
+
+            for (const el of document.getElementsByClassName("name")){
+                el.classList.remove('selected')
+            }
+
+            await readFileIntoEditor(fn)
+
+            e.classList.add('selected')
         }
 
         function toHex(data){
