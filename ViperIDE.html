@@ -776,8 +776,10 @@
             if (type === 'ws') {
                 let url
                 if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
-                    url = prompt('Device URL:', 'ws://192.168.1.123:8266')
+                    url = prompt('WebREPL device address:', '192.168.1.123:8266')
                     if (!url) return;
+
+                    if (!url.contains("://")) { url = "ws://" + url }
 
                     if (window.location.protocol === "https:") {
                         /* Navigate to device, which should automatically reload and ask for WebREPL password */
