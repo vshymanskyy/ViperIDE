@@ -447,7 +447,7 @@
 
     <script>
 
-        const VIPER_IDE_VERSION = "0.1.5"
+        const VIPER_IDE_VERSION = "0.1.6"
 
         function addCSS(css) { document.head.appendChild(document.createElement("style")).innerHTML = css }
 
@@ -1672,7 +1672,7 @@ print("=" * 32)
 
             document.getElementById('viper-ide-version').innerHTML = VIPER_IDE_VERSION
 
-            const manifest_rsp = await fetch('https://vsh.pp.ua/ViperIDE/manifest.json', {cache: "no-store"})
+            const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: "no-store"})
             manifest = await manifest_rsp.json()
             if (manifest.version !== VIPER_IDE_VERSION) {
                 toastr.info(`New ViperIDE version ${manifest.version} is available`)

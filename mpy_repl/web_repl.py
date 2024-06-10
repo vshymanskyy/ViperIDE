@@ -75,7 +75,7 @@ def send_html(cl):
         b"""\
 HTTP/1.0 200 OK\r
 \r
-<base href=\"https://vsh.pp.ua/ViperIDE/ViperIDE.html\"></base>\r
+<base href=\"https://viper-ide.org/\"></base>\r
 <script src="webrepl_content.js"></script>\r
 """
     )
