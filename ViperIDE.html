@@ -354,7 +354,7 @@
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
                 <div class="tab active" data-target="menu-files" onclick="if (port) {fetchFileList()}"><i class="fa-solid fa-folder"></i></div>
-                <div class="tab" data-target="menu-libs" onclick="fetchPkgList()"><i class="fa-solid fa-cube"></i></div>
+                <div class="tab" data-target="menu-libs" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube"></i></div>
                 <div class="tab" data-target="menu-settings"><i class="fa-solid fa-gear"></i></div>
                 <div class="tab" data-target="menu-about"><i class="fa-solid fa-info"></i></div>
             </div>
@@ -766,7 +766,7 @@
             }
         }
 
-        let editor, term, port, mipindex
+        let editor, term, port
         let editorFn = ""
 
         async function disconnect() {
@@ -1328,21 +1328,20 @@ if ms:
          * Package Management
          */
 
-        const MIP_INDEX = 'https://micropython.org/pi/v2'
+        let loadedPackages = false
 
-        async function fetchPkgList() {
-            if (mipindex) return;
+        const MIP_INDEXES = [
+            'https://micropython.org/pi/v2'
+        ]
 
-            const index_rsp = await fetch(`${MIP_INDEX}/index.json`)
-            mipindex = await index_rsp.json()
-
-            const pkgList = document.getElementById('menu-pkg-list')
-            pkgList.innerHTML = ""
-            for (const pkg of mipindex.packages) {
-                pkgList.insertAdjacentHTML('beforeend', `<div>
-                    <span><i class="fa-solid fa-cube"></i> ${pkg.name}</span>
-                    <span class="menu-action" onclick="installPkg('${pkg.name}')">${pkg.version} <i class="fa-regular fa-circle-down"></i></span>
-                </div>`)
+        async function loadAllPkgIndexes() {
+            if (!loadedPackages) {
+                for (const index of MIP_INDEXES) {
+                    try {
+                        await fetchPkgList(index)
+                    } catch {}
+                }
+                loadedPackages = true
             }
         }
 
@@ -1357,58 +1356,68 @@ if ms:
             return url
         }
 
-        async function _installPkg(pkg, version='latest') {
-            const sys = JSON.parse(await execRawRepl(`
+        async function fetchPkgList(index_url) {
+            const index_rsp = await fetch(rewriteUrl(`${index_url}/index.json`))
+            const mipindex = await index_rsp.json()
+
+            const pkgList = document.getElementById('menu-pkg-list')
+            pkgList.innerHTML = ""
+            for (const pkg of mipindex.packages) {
+                pkgList.insertAdjacentHTML('beforeend', `<div>
+                    <span><i class="fa-solid fa-cube"></i> ${pkg.name}</span>
+                    <span class="menu-action" onclick="installPkg('${index_url}', '${pkg.name}')">${pkg.version} <i class="fa-regular fa-circle-down"></i></span>
+                </div>`)
+            }
+        }
+
+        async function installPkg(index_url, pkg, version='latest') {
+            try {
+                const sys = JSON.parse(await execRawRepl(`
 import sys,json
 pj=lambda x:print(json.dumps(x,separators=(',',':')))
 mpy=getattr(sys.implementation, '_mpy', 0) & 0xFF
 pj({'mpy':mpy,'path':sys.path})
 `))
 
-            // Find `lib` filder in sys.path
-            const lib_path = sys.path.find(x => x.endsWith('/lib'))
-            if (!lib_path) {
-                toastr.error(`sys.path doesn't include the "lib" folder`)
-                return
-            }
+                // Find `lib` filder in sys.path
+                const lib_path = sys.path.find(x => x.endsWith('/lib'))
+                if (!lib_path) {
+                    toastr.error(`sys.path doesn't include the "lib" folder`)
+                    return
+                }
 
-            const pkg_info_rsp = await fetch(`${MIP_INDEX}/package/${sys.mpy}/${pkg}/${version}.json`)
-            const pkg_info = await pkg_info_rsp.json()
+                const pkg_info_rsp = await fetch(rewriteUrl(`${index_url}/package/${sys.mpy}/${pkg}/${version}.json`))
+                const pkg_info = await pkg_info_rsp.json()
 
-            for (const [fn, hash, ..._] of pkg_info.hashes) {
-                const file_rsp = await fetch(`${MIP_INDEX}/file/${hash.slice(0,2)}/${hash}`)
-                const content = await file_rsp.arrayBuffer()
-                const target_file = `${lib_path}/${fn}`
-
-                // Ensure path exists
-                const [dirname, _] = splitPath(target_file)
-                await makePath(dirname)
-
-                await writeFile(target_file, content)
-            }
-
-            if ("urls" in pkg_info) {
-                for (const [fn, url, ..._] of pkg_info.urls) {
-                    const file_rsp = await fetch(rewriteUrl(url))
+                for (const [fn, hash, ..._] of pkg_info.hashes) {
+                    const file_rsp = await fetch(rewriteUrl(`${index_url}/file/${hash.slice(0,2)}/${hash}`))
                     const content = await file_rsp.arrayBuffer()
                     const target_file = `${lib_path}/${fn}`
+
+                    // Ensure path exists
+                    const [dirname, _] = splitPath(target_file)
+                    await makePath(dirname)
+
                     await writeFile(target_file, content)
                 }
-            }
 
-            if ("deps" in pkg_info) {
-                for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
-                    await installPkg(dep_pkg, dep_ver)
+                if ("urls" in pkg_info) {
+                    for (const [fn, url, ..._] of pkg_info.urls) {
+                        const file_rsp = await fetch(rewriteUrl(url))
+                        const content = await file_rsp.arrayBuffer()
+                        const target_file = `${lib_path}/${fn}`
+                        await writeFile(target_file, content)
+                    }
                 }
-            }
-            toastr.success(`Installed ${pkg}@${pkg_info.version} to ${lib_path}`)
-        }
 
-        async function installPkg(pkg, version='latest') {
-            try {
-                await _installPkg(pkg, version)
+                if ("deps" in pkg_info) {
+                    for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
+                        await installPkg(index_url, dep_pkg, dep_ver)
+                    }
+                }
+                toastr.success(`Installed ${pkg}@${pkg_info.version} to ${lib_path}`)
             } catch (error) {
-                toastr.error(error, 'This function is under construction')
+                toastr.error(error, 'Installing failed')
             }
         }
 
