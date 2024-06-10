@@ -9,9 +9,6 @@ WIFI_PASS='WiFi-Password'
 
 REPL_PASS='1234'
 
-import web_repl
-web_repl.start(password=REPL_PASS)
-
 import network
 sta = network.WLAN(network.STA_IF)
 if not sta.isconnected():
@@ -20,6 +17,9 @@ if not sta.isconnected():
     sta.connect(WIFI_SSID, WIFI_PASS)
     while not sta.isconnected():
         pass
+
+import web_repl
+web_repl.start(password=REPL_PASS)
 ```
 
 In the terminal, you should see:
