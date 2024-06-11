@@ -494,7 +494,7 @@
 
     <script>
 
-        const VIPER_IDE_VERSION = "0.1.8"
+        const VIPER_IDE_VERSION = "0.2.0"
 
         function addCSS(css) { document.head.appendChild(document.createElement("style")).innerHTML = css }
 
@@ -1470,7 +1470,7 @@ if ms:
 
             pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
             pkgList.insertAdjacentHTML('beforeend', `<div>
-                <span><i class="fa-solid fa-cube"></i> viper-repl</span>
+                <span><i class="fa-solid fa-cube"></i> viper-tools</span>
                 <span class="menu-action" onclick="installReplTools()">0.1.0 <i class="fa-regular fa-circle-down"></i></span>
             </div>`)
             pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
@@ -1540,7 +1540,7 @@ pj({'mpy':mpy,'path':sys.path})
         }
 
         async function installReplTools() {
-            await installPkg(null, "viper-repl", "latest", {
+            await installPkg(null, "viper-tools", "latest", {
                 v: 1,
                 version: "0.1.0",
                 urls: [
