@@ -40,7 +40,8 @@
         }
 
         a:visited, a:hover, a:link {
-            color: #0056b3;
+            color: white;
+            font-weight: 600;
         }
 
         ::-webkit-scrollbar {
@@ -123,10 +124,10 @@
 
         #side-menu {
             width: 300px;
-            background: #e4e4e4;
+            background: #333;
             display: flex;
             flex-direction: column-reverse;
-            color: black;
+            color: white;
             overflow-y: auto;
             transition: width 0.3s, left 0.3s;
             user-select: none;
@@ -170,7 +171,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #444;
+            background: #333;
             color: white;
             cursor: row-resize;
             user-select: none;
@@ -179,12 +180,34 @@
 
         #menu-tabs {
             flex: 0 0 24px;
-            background: #444;
             padding: 5px 0;
         }
 
         #menu-about {
             position: relative;
+        }
+
+        .title-lines {
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            text-align: center;
+            font-family: arial;
+            padding: 5px 0 0 0;
+        }
+        .title-lines:before, .title-lines:after {
+            position: absolute;
+            top: 51%;
+            overflow: hidden;
+            width: 48%;
+            height: 1px;
+            content: '\a0';
+            background-color: #cccccc88;
+            margin-left: 2%;
+        }
+        .title-lines:before {
+            margin-left: -50%;
+            text-align: right;
         }
 
         .tab {
@@ -320,17 +343,17 @@
                 position: fixed;
                 width: 100%;
                 height: 100%;
-                background-color: #000000;
                 z-index: 999;
+                background-color: transparent;
                 overflow: hidden;
                 visibility: hidden;
-                opacity: 0;
-                transition: visibility 0s, opacity 0.3s linear;
+                transition: visibility 0s, background-color 0.3s, backdrop-filter 0.3s linear;
             }
 
             #overlay.show {
                 visibility: visible;
-                opacity: 40%;
+                background-color: #00000088;
+                backdrop-filter: blur(1px);
             }
         }
         @media (max-width: 768px) and (display-mode: standalone) {
@@ -362,6 +385,7 @@
         </div>
     </div>
     <div id="container">
+        <div id="overlay" onclick="autoHideSideMenu()"></div>
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
                 <div class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder"></i></div>
@@ -384,12 +408,15 @@
             </div>
             <div id="menu-settings" class="tab-content">
                 <div><b>Settings</b></div>
-                <div><input type="checkbox" id="interrupt-device" checked/><label for="interrupt-device">Interrupt the device on connection</label></div>
+                <div class="title-lines">connection</div>
+                <div><input type="checkbox" id="interrupt-device" checked/><label for="interrupt-device">Interrupt device</label></div>
+                <div><input type="checkbox" id="force-serial-poly"/><label for="force-serial-poly">Force WebSerial polyfill</label></div>
+                <div class="title-lines">editor</div>
                 <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Auto expand/minify JSON</label></div>
                 <div><input type="checkbox" id="use-word-wrap" onclick="updateWordWrapping()" /><label for="use-word-wrap">Word wrapping</label></div>
                 <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
+                <div class="title-lines">other</div>
                 <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
-                <div><input type="checkbox" id="force-serial-poly"/><label for="force-serial-poly">Force WebSerial polyfill</label></div>
             </div>
             <div id="menu-about" class="tab-content">
                 <a class="github-fork-ribbon left-top" href="https://github.com/vshymanskyy/ViperIDE" target="_blank" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
@@ -417,7 +444,6 @@
             </div>
         </div>
         <div id="main-editor">
-            <div id="overlay" onclick="autoHideSideMenu()"></div>
             <div id="editor">
                 <!-- CodeMirror or MarkedJS editor content goes here -->
             </div>
@@ -468,7 +494,7 @@
 
     <script>
 
-        const VIPER_IDE_VERSION = "0.1.7"
+        const VIPER_IDE_VERSION = "0.1.8"
 
         function addCSS(css) { document.head.appendChild(document.createElement("style")).innerHTML = css }
 
