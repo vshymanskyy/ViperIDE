@@ -1,4 +1,4 @@
-# <a href="https://viper-ide.org" target="_blank">ViperIDE ⇱</a>
+# <a href="https://viper-ide.org" target="_blank">ViperIDE</a>
 
 [![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md) 
 [![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=success)](https://github.com/vshymanskyy/ViperIDE/issues) 
@@ -40,8 +40,9 @@ A MicroPython IDE that works directly in the browser, leveraging modern web tech
   - ANSI escape sequences support (based on `xterm.js`)
   - Snippet support - *WIP*
 - Improved UX
+  - Progressive Web App
   - Device and system info display
-  - Responsive layout, full screen mode
+  - Responsive layout, full screen mode, usable on smartphones
   - Use of natural sorting
 
 > [!TIP]
