@@ -388,10 +388,10 @@
         <div id="overlay" onclick="autoHideSideMenu()"></div>
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
-                <div class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder"></i></div>
-                <div class="tab" data-target="menu-libs" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube"></i></div>
-                <div class="tab" data-target="menu-settings"><i class="fa-solid fa-gear"></i></div>
-                <div class="tab" data-target="menu-about"><i class="fa-solid fa-info"></i></div>
+                <div tabindex="0" class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder"></i></div>
+                <div tabindex="0" class="tab" data-target="menu-libs" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube"></i></div>
+                <div tabindex="0" class="tab" data-target="menu-settings"><i class="fa-solid fa-gear"></i></div>
+                <div tabindex="0" class="tab" data-target="menu-about"><i class="fa-solid fa-info"></i></div>
             </div>
 
             <div id="menu-files" class="tab-content active">
@@ -450,7 +450,7 @@
             <div id="terminal-container">
                 <div class="tabs" id="terminal-tabs" onmousedown="initDrag(event)" ontouchstart="initDrag(event)">
                     <div>
-                        <div class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> Terminal</div>
+                        <div tabindex="0" class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> Terminal</div>
                         <!--div class="tab"        data-target="logs"><i class="fa-solid fa-bug"></i> IDE Logs</div-->
                     </div>
                     <div>
@@ -1182,8 +1182,8 @@ print('%s:%s:%s' % (fu, ff, fs))
                     if ("content" in n) {
                         fileTree.insertAdjacentHTML('beforeend', `<div>
                             <span class="folder name">${offset}<i class="fa-solid fa-folder"></i> ${n.name}</span>
-                            <span class="menu-action" onclick="removeDir('${n.path}')"><i class="fa-solid fa-xmark"></i></span>
-                            <span class="menu-action" onclick="createNewFile('${n.path}/')"><i class="fa-solid fa-plus"></i></span>
+                            <span tabindex="0" class="menu-action" onclick="removeDir('${n.path}')"><i class="fa-solid fa-xmark"></i></span>
+                            <span tabindex="0" class="menu-action" onclick="createNewFile('${n.path}/')"><i class="fa-solid fa-plus"></i></span>
                         </div>`)
                         traverse(n.content, depth+1)
                     } else {
@@ -1195,8 +1195,8 @@ print('%s:%s:%s' % (fu, ff, fs))
                             icon = '<i class="fa-regular fa-file"></i>'
                         }
                         fileTree.insertAdjacentHTML('beforeend', `<div>
-                            <span class="name" onclick="fileClick('${n.path}')">${offset}${icon} ${n.name}</span>
-                            <span class="menu-action" onclick="removeFile('${n.path}')"><i class="fa-solid fa-xmark"></i></span>
+                            <span tabindex="0" class="name" onclick="fileClick('${n.path}')">${offset}${icon} ${n.name}</span>
+                            <span tabindex="0" class="menu-action" onclick="removeFile('${n.path}')"><i class="fa-solid fa-xmark"></i></span>
                             <span class="menu-action">${sizeFmt(n.size)}</span>
                         </div>`)
                     }
@@ -1205,7 +1205,7 @@ print('%s:%s:%s' % (fu, ff, fs))
             traverse(result, 1)
 
             fileTree.insertAdjacentHTML('beforeend', `<div>
-                <span class="name" onclick="fileClick('~sysinfo.md')"><i class="fa-regular fa-message"></i> sysinfo.md</span>
+                <span tabindex="0" class="name" onclick="fileClick('~sysinfo.md')"><i class="fa-regular fa-message"></i> sysinfo.md</span>
                 <span class="menu-action">virtual</span>
             </div>`)
 
