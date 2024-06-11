@@ -823,15 +823,9 @@
                     if (!url.includes("://")) { url = "ws://" + url }
 
                     if (window.location.protocol === "https:") {
-                        if (!iOS) {
-                            /* Navigate to device, which should automatically reload and ask for WebREPL password */
-                            window.location.assign(url.replace("ws://", "http://"))
-                            return
-                        } else {
-                            // TODO: navigate to unsecure page somewhere, pass device url?
-                            //toastr.error('WebREPL client cannot be accessed over HTTPS connection on iOS')
-                            //return;
-                        }
+                        /* Navigate to device, which should automatically reload and ask for WebREPL password */
+                        window.location.assign(url.replace("ws://", "http://"))
+                        return
                     }
                 } else {
                     url = webrepl_url
