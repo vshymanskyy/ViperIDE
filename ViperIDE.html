@@ -469,6 +469,8 @@
 
         function addCSS(css) { document.head.appendChild(document.createElement("style")).innerHTML = css }
 
+        const iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent)
+
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms))
         }
@@ -813,12 +815,18 @@
                     url = prompt('WebREPL device address:', '192.168.1.123:8266')
                     if (!url) return;
 
+                    if (url.startsWith("http://")) { url = url.slice(7) }
+                    if (url.startsWith("https://")) { url = url.slice(8) }
                     if (!url.includes("://")) { url = "ws://" + url }
 
                     if (window.location.protocol === "https:") {
-                        /* Navigate to device, which should automatically reload and ask for WebREPL password */
-                        window.location.assign(url.replace("ws://", "http://"))
-                        return
+                        if (!iOS) {
+                            /* Navigate to device, which should automatically reload and ask for WebREPL password */
+                            window.location.assign(url.replace("ws://", "http://"))
+                            return
+                        } else {
+                            // TODO
+                        }
                     }
                 } else {
                     url = webrepl_url
@@ -832,6 +840,10 @@
                 await disconnect()
                 port = new WebSocketREPL(url, pass)
             } else if (type === 'ble') {
+                if (iOS) {
+                    toastr.error('WebBluetooth is not available on iOS')
+                    return;
+                }
                 if (window.location.protocol === "http:") {
                     toastr.error('WebBluetooth cannot be accessed with unsecure connection')
                     return;
@@ -845,6 +857,10 @@
                 await disconnect()
                 port = new WebBluetooth()
             } else if (type === 'usb') {
+                if (iOS) {
+                    toastr.error('WebSerial is not available on iOS')
+                    return;
+                }
                 if (window.location.protocol === "http:") {
                     toastr.error('WebSerial cannot be accessed with unsecure connection')
                     return;
