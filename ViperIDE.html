@@ -22,14 +22,17 @@
             padding: 0;
             height: 100%;
             width: 100%;
-            display: flex;
-            flex-direction: column;
             overscroll-behavior: none;
             touch-action: none;
             box-sizing: border-box;
             background: #272822;
             color: white;
             font-family: system-ui;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
         }
 
         *, *:before, *:after {
@@ -826,8 +829,8 @@
                             return
                         } else {
                             // TODO: navigate to unsecure page somewhere, pass device url?
-                            toastr.error('WebREPL client cannot be accessed over HTTPS connection on iOS')
-                            return;
+                            //toastr.error('WebREPL client cannot be accessed over HTTPS connection on iOS')
+                            //return;
                         }
                     }
                 } else {
