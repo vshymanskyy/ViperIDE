@@ -3,7 +3,7 @@
 
 #### 1. `Left panel` -> `Package Manager` -> install `viper-tools`
 
-#### 2. In your `main.py`:
+#### 2. In your `boot.py`:
 
 ```py
 import ble_repl

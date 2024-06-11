@@ -3,7 +3,7 @@
 
 #### 1. `Left panel` -> `Package Manager` -> install `viper-tools`
 
-#### 2. In your `main.py`:
+#### 2. In your `boot.py`:
 
 ```py
 # Set your WiFi network credentials
@@ -14,15 +14,17 @@ WIFI_PASS='WiFi_Password'
 REPL_PASS='1234'
 
 import network, time
-elapsed_ms = lambda x: time.ticks_diff(time.ticks_ms(), x)
 sta = network.WLAN(network.STA_IF)
 if not sta.isconnected():
     print('Connecting to WiFi...')
     sta.active(True)
     sta.connect(WIFI_SSID, WIFI_PASS)
     t = time.ticks_ms()
-    while not sta.isconnected() and elapsed_ms(t) < 15000:
-        time.sleep(100)
+    while time.ticks_diff(time.ticks_ms(), t) < 10000:
+        if sta.isconnected():
+            break
+    else:
+        print("No WiFi connection!")
 
 import web_repl
 web_repl.start(password=REPL_PASS)
