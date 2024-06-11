@@ -1024,13 +1024,18 @@ for d in '${path}'.split('/'):
 `)
         }
 
-        async function enterRawRepl() {
+        async function enterRawRepl(soft_reboot = false) {
             const release = await port.mutex.acquire()
             try {
                 await port.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
                 await port.flushInput()
                 await port.write('\r\x01')       // Ctrl-A: enter raw REPL
                 await port.readUntil('raw REPL; CTRL-B to exit\r\n')
+
+                if (soft_reboot) {
+                    await port.write('\x04\x03') // soft reboot in raw mode
+                    await port.readUntil('raw REPL; CTRL-B to exit\r\n')
+                }
 
                 async function exitRawRepl() {
                     await port.write('\x02')     // Ctrl-B: exit raw REPL
@@ -1066,8 +1071,8 @@ for d in '${path}'.split('/'):
             return res
         }
 
-        async function execRawRepl(cmd, emit = false) {
-            const exitRaw = await enterRawRepl()
+        async function execRawRepl(cmd, emit = false, soft_reboot = false) {
+            const exitRaw = await enterRawRepl(soft_reboot)
             try {
                 return await execCmd(cmd, emit)
             } catch (error) {
@@ -1418,7 +1423,10 @@ if ms:
             }
 
             term.write('\r\n')
-            await execRawRepl(editor.getValue(), true)
+
+            const emit = true
+            const soft_reboot = true
+            await execRawRepl(editor.getValue(), emit, soft_reboot)
         }
 
         /*
@@ -1722,7 +1730,7 @@ colors = [
 ]
 reset = "\\033[0m"
 
-text = " Привіт MicroPython! 𓆙"
+text = "  Привіт MicroPython! 𓆙"
 
 # Print each letter with a different color
 print("=" * 32)
