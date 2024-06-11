@@ -977,6 +977,7 @@
 f=open('${full}','wb')
 f.close()
 `)
+                await readFileIntoEditor(full)
             }
             await fetchFileList()
         }
