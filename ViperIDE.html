@@ -1467,6 +1467,13 @@ if ms:
 
             const pkgList = document.getElementById('menu-pkg-list')
             pkgList.innerHTML = ""
+
+            pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
+            pkgList.insertAdjacentHTML('beforeend', `<div>
+                <span><i class="fa-solid fa-cube"></i> viper-repl</span>
+                <span class="menu-action" onclick="installReplTools()">0.1.0 <i class="fa-regular fa-circle-down"></i></span>
+            </div>`)
+            pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
             for (const pkg of mipindex.packages) {
                 pkgList.insertAdjacentHTML('beforeend', `<div>
                     <span><i class="fa-solid fa-cube"></i> ${pkg.name}</span>
@@ -1475,7 +1482,7 @@ if ms:
             }
         }
 
-        async function installPkg(index_url, pkg, version='latest') {
+        async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
             if (!port) return;
 
             try {
@@ -1493,19 +1500,23 @@ pj({'mpy':mpy,'path':sys.path})
                     return
                 }
 
-                const pkg_info_rsp = await fetch(rewriteUrl(`${index_url}/package/${sys.mpy}/${pkg}/${version}.json`))
-                const pkg_info = await pkg_info_rsp.json()
+                if (!pkg_info) {
+                    const pkg_info_rsp = await fetch(rewriteUrl(`${index_url}/package/${sys.mpy}/${pkg}/${version}.json`))
+                    pkg_info = await pkg_info_rsp.json()
+                }
 
-                for (const [fn, hash, ..._] of pkg_info.hashes) {
-                    const file_rsp = await fetch(rewriteUrl(`${index_url}/file/${hash.slice(0,2)}/${hash}`))
-                    const content = await file_rsp.arrayBuffer()
-                    const target_file = `${lib_path}/${fn}`
+                if ("hashes" in pkg_info) {
+                    for (const [fn, hash, ..._] of pkg_info.hashes) {
+                        const file_rsp = await fetch(rewriteUrl(`${index_url}/file/${hash.slice(0,2)}/${hash}`))
+                        const content = await file_rsp.arrayBuffer()
+                        const target_file = `${lib_path}/${fn}`
 
-                    // Ensure path exists
-                    const [dirname, _] = splitPath(target_file)
-                    await makePath(dirname)
+                        // Ensure path exists
+                        const [dirname, _] = splitPath(target_file)
+                        await makePath(dirname)
 
-                    await writeFile(target_file, content)
+                        await writeFile(target_file, content)
+                    }
                 }
 
                 if ("urls" in pkg_info) {
@@ -1526,6 +1537,18 @@ pj({'mpy':mpy,'path':sys.path})
             } catch (error) {
                 toastr.error(error, 'Installing failed')
             }
+        }
+
+        async function installReplTools() {
+            await installPkg(null, "viper-repl", "latest", {
+                v: 1,
+                version: "0.1.0",
+                urls: [
+                    ["web_repl.py", "github:vshymanskyy/ViperIDE/mpy_repl/web_repl.py"],
+                    ["ble_repl.py", "github:vshymanskyy/ViperIDE/mpy_repl/ble_repl.py"],
+                    ["ble_nus.py",  "github:vshymanskyy/ViperIDE/mpy_repl/ble_nus.py"],
+                ]
+            })
         }
 
         /*
