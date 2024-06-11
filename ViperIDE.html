@@ -822,7 +822,7 @@
                     if (url.startsWith("https://")) { url = url.slice(8) }
                     if (!url.includes("://")) { url = "ws://" + url }
 
-                    if (window.location.protocol === "https:") {
+                    if (window.location.protocol === "https:" && url.startsWith("ws://")) {
                         /* Navigate to device, which should automatically reload and ask for WebREPL password */
                         window.location.assign(url.replace("ws://", "http://"))
                         return
