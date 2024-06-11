@@ -1,9 +1,11 @@
 
 ## Web REPL
 
-#### 1. `Left panel` -> `Package Manager` -> install `viper-tools`
+#### 1. Connect ViperIDE to your device using USB
 
-#### 2. In your `boot.py`:
+#### 2. In the left panel: `Package Manager` -> install `viper-tools`
+
+#### 3. In your `main.py`
 
 ```py
 # Set your WiFi network credentials
@@ -24,17 +26,21 @@ if not sta.isconnected():
         if sta.isconnected():
             break
     else:
-        print("No WiFi connection!")
+        print("Error: Could not connect to WiFi!")
 
 import web_repl
 web_repl.start(password=REPL_PASS)
 ```
 
-In the terminal, you should see:
+#### 4. Reset your device
+
+In the terminal, you should see something like:
 
 ```log
-WebREPL server started on http://192.168.20.125:8266/
+WebREPL server started on http://192.168.1.123:8266/
 ```
+
+#### 5. Connect ViperIDE to your device using `WebREPL`
 
 Visit the specified link to open the IDE.
 
