@@ -3,7 +3,7 @@
 
 #### 1. `Left panel` -> `Package Manager` -> install `viper-tools`
 
-#### 2. In your `boot.py`:
+#### 2. In your `main.py`:
 
 ```py
 # Set your WiFi network credentials
