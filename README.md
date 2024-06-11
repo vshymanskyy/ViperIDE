@@ -1,4 +1,4 @@
-# ViperIDE
+# <a href="https://viper-ide.org" target="_blank">ViperIDE ↗️</a>
 
 [![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md) 
 [![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=success)](https://github.com/vshymanskyy/ViperIDE/issues) 
@@ -6,14 +6,12 @@
 
 A MicroPython IDE that works directly in the browser, leveraging modern web technologies.
 
-![image](docs/images/screenshot-desktop-chrome.png)
-
 - No software installation required, works out of the box
 - Direct USB / Serial connection works on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
 - `WebREPL` and `Bluetooth LE` connection support
 - Covers most of the functionality of `mpremote`
 
-<a href="https://viper-ide.org" target="_blank">Open ViperIDE ↗️</a>
+![image](docs/images/screenshot-desktop-chrome.png)
 
 ## Tested with
 
