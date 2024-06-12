@@ -84,7 +84,7 @@
         "lang": "Локалізація"
       },
       "about": {
-        "cta": "Якщо вам подобається ViperIDE, вліпіть йому <a id='gh-star'>зірку на GitHub</a> ⭐ і поширюйте інформацію в соціальних мережах 📢",
+        "cta": "Якщо вам подобається ViperIDE, подаруйте йому <a id='gh-star'>зірку на GitHub</a> ⭐ і поширюйте відгук в соціальних мережах 📢",
         "report-bug": "Ви також можете <a id='gh-issues'>повідомити про помилку</a> 🐞"
       }
     }
@@ -162,8 +162,8 @@
         "used": "benutzt"
       },
       "settings": {
-        "conn": "Verbindung",
-        "editor": "Editor",
+        "conn": "verbindung",
+        "editor": "editor",
         "other": "andere",
         "interrupt-device": "Ausführung unterbrechen",
         "force-serial-poly": "Verwendung von WebSerial polyfill erzwingen",
