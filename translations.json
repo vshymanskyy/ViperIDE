@@ -5,8 +5,8 @@
         "hello": "Hello"
       },
       "tool": {
-        "run": "Run File [F5]",
-        "save": "Save File [Ctrl-S]",
+        "run": "Run File",
+        "save": "Save File",
         "fullscreen": "Full Screen",
         "clear": "Clear",
         "conn": {
@@ -35,7 +35,8 @@
         "expand-minify-json": "Auto-minification of JSON",
         "use-word-wrap": "Word wrap",
         "render-markdown": "Markdown viewer",
-        "use-natural-sort": "Natural sorting"
+        "use-natural-sort": "Natural sorting",
+        "lang": "Localization"
       },
       "about": {
         "cta": "If you like ViperIDE, please <a id='gh-star'>give it a GitHub star</a> ⭐ and spread the word on social media 📢",
@@ -49,8 +50,8 @@
         "hello": "Привіт"
       },
       "tool": {
-        "run": "Виконати [F5]",
-        "save": "Зберегти [Ctrl-S]",
+        "run": "Виконати",
+        "save": "Зберегти",
         "fullscreen": "Розгорнути",
         "clear": "Очистити",
         "conn": {
@@ -79,7 +80,8 @@
         "expand-minify-json": "Авто-стиснення JSON",
         "use-word-wrap": "Перенос слів",
         "render-markdown": "Переглядач Markdown",
-        "use-natural-sort": "Природне сортування"
+        "use-natural-sort": "Природне сортування",
+        "lang": "Локалізація"
       },
       "about": {
         "cta": "Якщо вам подобається ViperIDE, вліпіть йому <a id='gh-star'>зірку на GitHub</a> ⭐ і поширюйте інформацію в соціальних мережах 📢",
@@ -93,8 +95,8 @@
         "hello": "Bonjour"
       },
       "tool": {
-        "run": "Exécuter le fichier [F5]",
-        "save": "Enregistrer le fichier [Ctrl-S]",
+        "run": "Exécuter le fichier",
+        "save": "Enregistrer le fichier",
         "fullscreen": "Plein écran",
         "clear": "Effacer",
         "conn": {
@@ -123,7 +125,8 @@
         "expand-minify-json": "Minification automatique de JSON",
         "use-word-wrap": "Retour à la ligne",
         "render-markdown": "Visionneuse Markdown",
-        "use-natural-sort": "Tri naturel"
+        "use-natural-sort": "Tri naturel",
+        "lang": "Localisation"
       },
       "about": {
         "cta": "Si vous aimez ViperIDE, veuillez <a id='gh-star'>lui donner une étoile sur GitHub</a> ⭐ et en parler sur les réseaux sociaux 📢",
@@ -137,8 +140,8 @@
         "hello": "Hallo"
       },
       "tool": {
-        "run": "Datei ausführen [F5]",
-        "save": "Datei speichern [Ctrl-S]",
+        "run": "Datei ausführen",
+        "save": "Datei speichern",
         "fullscreen": "Vollbild",
         "clear": "Löschen",
         "conn": {
@@ -167,7 +170,8 @@
         "expand-minify-json": "Automatische Minifizierung von JSON",
         "use-word-wrap": "Zeilenumbruch",
         "render-markdown": "Markdown-Viewer",
-        "use-natural-sort": "Natürliche Sortierung"
+        "use-natural-sort": "Natürliche Sortierung",
+        "lang": "Lokalisierung"
       },
       "about": {
         "cta": "Wenn Ihnen ViperIDE gefällt, geben Sie ihm bitte <a id='gh-star'>einen Stern auf GitHub</a> ⭐ und verbreiten Sie die Nachricht in den sozialen Medien 📢",
@@ -181,8 +185,8 @@
         "hello": "Olá"
       },
       "tool": {
-        "run": "Executar arquivo [F5]",
-        "save": "Salvar arquivo [Ctrl-S]",
+        "run": "Executar arquivo",
+        "save": "Salvar arquivo",
         "fullscreen": "Tela cheia",
         "clear": "Limpar",
         "conn": {
@@ -211,7 +215,8 @@
         "expand-minify-json": "Minificação automática de JSON",
         "use-word-wrap": "Quebra de linha",
         "render-markdown": "Visualizador de Markdown",
-        "use-natural-sort": "Ordenação natural"
+        "use-natural-sort": "Ordenação natural",
+        "lang": "Localização"
       },
       "about": {
         "cta": "Se você gosta do ViperIDE, por favor <a id='gh-star'>dê uma estrela no GitHub</a> ⭐ e divulgue nas redes sociais 📢",
@@ -225,8 +230,8 @@
         "hello": "Hola"
       },
       "tool": {
-        "run": "Ejecutar archivo [F5]",
-        "save": "Guardar archivo [Ctrl-S]",
+        "run": "Ejecutar archivo",
+        "save": "Guardar archivo",
         "fullscreen": "Pantalla completa",
         "clear": "Limpiar",
         "conn": {
@@ -255,7 +260,8 @@
         "expand-minify-json": "Minificación automática de JSON",
         "use-word-wrap": "Ajuste de línea",
         "render-markdown": "Visualizador de Markdown",
-        "use-natural-sort": "Ordenación natural"
+        "use-natural-sort": "Ordenación natural",
+        "lang": "Localización"
       },
       "about": {
         "cta": "Si te gusta ViperIDE, por favor <a id='gh-star'>dale una estrella en GitHub</a> ⭐ y difúndelo en las redes sociales 📢",
@@ -269,8 +275,8 @@
         "hello": "שלום"
       },
       "tool": {
-        "run": "הפעל קובץ [F5]",
-        "save": "שמור קובץ [Ctrl-S]",
+        "run": "הפעל קובץ",
+        "save": "שמור קובץ",
         "fullscreen": "מסך מלא",
         "clear": "נקה",
         "conn": {
@@ -299,7 +305,8 @@
         "expand-minify-json": "מיניפיקציה אוטומטית של JSON",
         "use-word-wrap": "גלישת מילים",
         "render-markdown": "צופה Markdown",
-        "use-natural-sort": "מיון טבעי"
+        "use-natural-sort": "מיון טבעי",
+        "lang": "עברית"
       },
       "about": {
         "cta": "אם אתה אוהב את ViperIDE, אנא <a id='gh-star'>תן לו כוכב ב-GitHub</a> ⭐ והפיץ את המילה ברשתות החברתיות 📢",
@@ -313,8 +320,8 @@
         "hello": "你好"
       },
       "tool": {
-        "run": "執行檔案 [F5]",
-        "save": "保存文件 [Ctrl-S]",
+        "run": "執行檔案",
+        "save": "保存文件",
         "fullscreen": "全屏",
         "clear": "清除",
         "conn": {
@@ -343,7 +350,8 @@
         "expand-minify-json": "JSON 自動縮小",
         "use-word-wrap": "自動換行",
         "render-markdown": "Markdown 查看器",
-        "use-natural-sort": "自然排序"
+        "use-natural-sort": "自然排序",
+        "lang": "本地化"
       },
       "about": {
         "cta": "如果您喜歡 ViperIDE，請<a id='gh-star'>在 GitHub 上給它一顆星</a> ⭐ 並在社交媒體上傳播信息 📢",
@@ -357,8 +365,8 @@
         "hello": "Cześć"
       },
       "tool": {
-        "run": "Uruchom plik [F5]",
-        "save": "Zapisz plik [Ctrl-S]",
+        "run": "Uruchom plik",
+        "save": "Zapisz plik",
         "fullscreen": "Pełny ekran",
         "clear": "Wyczyść",
         "conn": {
@@ -387,7 +395,8 @@
         "expand-minify-json": "Automatyczna minifikacja JSON",
         "use-word-wrap": "Zawijanie wierszy",
         "render-markdown": "Przeglądarka Markdown",
-        "use-natural-sort": "Naturalne sortowanie"
+        "use-natural-sort": "Naturalne sortowanie",
+        "lang": "Lokalizacja"
       },
       "about": {
         "cta": "Jeśli podoba ci się ViperIDE, proszę <a id='gh-star'>daj mu gwiazdkę na GitHub</a> ⭐ i rozprzestrzeniaj informacje w mediach społecznościowych 📢",
@@ -401,8 +410,8 @@
         "hello": "こんにちは"
       },
       "tool": {
-        "run": "ファイルを実行 [F5]",
-        "save": "ファイルを保存 [Ctrl-S]",
+        "run": "ファイルを実行",
+        "save": "ファイルを保存",
         "fullscreen": "全画面表示",
         "clear": "クリア",
         "conn": {
@@ -431,7 +440,8 @@
         "expand-minify-json": "JSONの自動圧縮",
         "use-word-wrap": "ワードラップ",
         "render-markdown": "Markdownビューア",
-        "use-natural-sort": "自然な並び替え"
+        "use-natural-sort": "自然な並び替え",
+        "lang": "ローカリゼーション"
       },
       "about": {
         "cta": "ViperIDEが気に入ったら、<a id='gh-star'>GitHubでスターを付けてください</a> ⭐ そして、ソーシャルメディアで広めてください 📢",
@@ -445,8 +455,8 @@
         "hello": "Ciao"
       },
       "tool": {
-        "run": "Esegui file [F5]",
-        "save": "Salva file [Ctrl-S]",
+        "run": "Esegui file",
+        "save": "Salva file",
         "fullscreen": "Schermo intero",
         "clear": "Cancella",
         "conn": {
@@ -475,7 +485,8 @@
         "expand-minify-json": "Minificazione automatica di JSON",
         "use-word-wrap": "A capo automatico",
         "render-markdown": "Visualizzatore di Markdown",
-        "use-natural-sort": "Ordinamento naturale"
+        "use-natural-sort": "Ordinamento naturale",
+        "lang": "Localizzazione"
       },
       "about": {
         "cta": "Se ti piace ViperIDE, per favore <a id='gh-star'>dagli una stella su GitHub</a> ⭐ e spargi la voce sui social media 📢",
@@ -489,8 +500,8 @@
         "hello": "Hej"
       },
       "tool": {
-        "run": "Kör fil [F5]",
-        "save": "Spara fil [Ctrl-S]",
+        "run": "Kör fil",
+        "save": "Spara fil",
         "fullscreen": "Helskärm",
         "clear": "Rensa",
         "conn": {
@@ -519,7 +530,8 @@
         "expand-minify-json": "Automatisk minimisering av JSON",
         "use-word-wrap": "Ordbrytning",
         "render-markdown": "Markdown-visare",
-        "use-natural-sort": "Naturlig sortering"
+        "use-natural-sort": "Naturlig sortering",
+        "lang": "Lokalisering"
       },
       "about": {
         "cta": "Om du gillar ViperIDE, vänligen <a id='gh-star'>ge det en stjärna på GitHub</a> ⭐ och sprid ordet på sociala medier 📢",
