@@ -10,7 +10,7 @@
     "display": "standalone",
     "icons": [
         {
-            "src": "favicon.png",
+            "src": "appicon.png",
             "sizes": "1024x1024"
         }
     ]
