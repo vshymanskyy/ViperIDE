@@ -298,6 +298,10 @@
             color: #87c244;
         }
 
+        #menu-file-title, #menu-pkg-title, #menu-settings-title {
+            font-weight: bold;
+        }
+
         #menu-file-tree div {
             margin: 10px 0;
             line-height: 1.2em;
@@ -357,7 +361,7 @@
             }
         }
         @media (max-width: 768px) and (display-mode: standalone) {
-            #app_expand {
+            #app-expand {
                 display: none;
             }
         }
@@ -372,16 +376,16 @@
 <body id="app">
     <div id="tool-panel">
         <div>
-            <button class="button" title="Menu"                 onclick="toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
+            <button class="button" onclick="toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
             <span class="logo">ViperIDE</span>
-            <button class="button" title="Save File [Ctrl+S]"   onclick="saveCurrentFile()"><i class="fa-solid fa-download"></i></button>
-            <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"><i class="fa-solid fa-circle-play"></i></button>
+            <button class="button" title="Save File [Ctrl+S]"   onclick="saveCurrentFile()" id="btn-save"><i class="fa-solid fa-download"></i></button>
+            <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play"></i></button>
         </div>
         <div>
             <button class="button" title="Connect WebREPL"       onclick="connect('ws')"  id="btn-conn-ws"><i class="fa-solid fa-circle-nodes"></i></button>
             <button class="button" title="Connect Bluetooth"     onclick="connect('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
             <button class="button" title="Connect USB/Serial"    onclick="connect('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
-            <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"  id="app_expand"><i class="fa-solid fa-expand"></i></button>
+            <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
         </div>
     </div>
     <div id="container">
@@ -389,40 +393,42 @@
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
                 <div tabindex="0" class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder"></i></div>
-                <div tabindex="0" class="tab" data-target="menu-libs" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube"></i></div>
+                <div tabindex="0" class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube"></i></div>
                 <div tabindex="0" class="tab" data-target="menu-settings"><i class="fa-solid fa-gear"></i></div>
                 <div tabindex="0" class="tab" data-target="menu-about"><i class="fa-solid fa-info"></i></div>
             </div>
 
             <div id="menu-files" class="tab-content active">
-                <div><b>File Manager</b></div>
+                <div id="menu-file-title">File Manager</div>
                 <div id="menu-file-tree">
                     <div><span class="folder name"><i class="fa-solid fa-folder"></i> /</span></div>
-                    <div onclick="connect('usb')"><span class="name">&emsp;🤔 no files<span><span class="menu-action">connect <i class="fa-solid fa-plug"></i></span></div>
+                    <div onclick="connect('usb')">
+                        <span class="name">&emsp;🤔 <span id="no-files">no files</span></span>
+                        <span class="menu-action"><i class="fa-solid fa-plug"></i></span>
+                    </div>
                 </div>
             </div>
-            <div id="menu-libs" class="tab-content">
-                <div><b>Package Manager</b></div>
+            <div id="menu-pkg" class="tab-content">
+                <div id="menu-pkg-title">Package Manager</div>
                 <div id="menu-pkg-list">
                 </div>
             </div>
             <div id="menu-settings" class="tab-content">
-                <div><b>Settings</b></div>
-                <div class="title-lines">connection</div>
+                <div id="menu-settings-title">Settings</div>
+                <div class="title-lines" id="menu-line-conn">connection</div>
                 <div><input type="checkbox" id="interrupt-device" checked/><label for="interrupt-device">Interrupt device</label></div>
                 <div><input type="checkbox" id="force-serial-poly"/><label for="force-serial-poly">Force WebSerial polyfill</label></div>
-                <div class="title-lines">editor</div>
+                <div class="title-lines" id="menu-line-editor">editor</div>
                 <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Auto expand/minify JSON</label></div>
                 <div><input type="checkbox" id="use-word-wrap" onclick="updateWordWrapping()" /><label for="use-word-wrap">Word wrapping</label></div>
                 <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
-                <div class="title-lines">other</div>
+                <div class="title-lines" id="menu-line-other">other</div>
                 <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
                 <div>
                     <label for="lang">Language:</label>
                     <select id="lang">
-                      <option value="en">🇺🇸 USA</option>
-                      <option value="en">🇬🇧 Britain</option>
-                      <option value="zh">🇹🇼 繁體中文</option>
+                      <option value="en">🇺🇸 USA, 🇬🇧 British</option>
+                      <option value="zh-TW">🇹🇼 繁體中文</option>
                       <option value="es">🇪🇸 Español</option>
                       <option value="fr">🇫🇷 Français</option>
                       <option value="de">🇩🇪 Deutsch</option>
@@ -448,10 +454,10 @@
                 </div>
                 <div>
                     <hr/>
-                    <p>
+                    <p id="about-cta">
                         If you like ViperIDE, please <a id="gh-star">give it a GitHub star</a> ⭐ and spread the word on social media 📢
                     </p>
-                    <p>
+                    <p id="report-bug">
                         You can also <a id='gh-issues'>report a bug</a> 🐞
                     </p>
                     <hr/>
@@ -468,14 +474,14 @@
             <div id="terminal-container">
                 <div class="tabs" id="terminal-tabs" onmousedown="initDrag(event)" ontouchstart="initDrag(event)">
                     <div>
-                        <div tabindex="0" class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> <span>Terminal</span></div>
+                        <div tabindex="0" class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> <span id="tab-term">Terminal</span></div>
                         <!--div class="tab"        data-target="logs"><i class="fa-solid fa-bug"></i> IDE Logs</div-->
                     </div>
                     <div>
-                        <button class="button" title="Clear" onclick="term.clear()"><i class="fa-solid fa-trash-can"></i></button>
+                        <button class="button" title="Clear" onclick="term.clear()" id="term-clear"><i class="fa-solid fa-trash-can"></i></button>
                         <button class="button" title="Soft Reset" onclick="reboot('soft')"><i class="fa-solid fa-arrows-rotate"></i></button>
                         <button class="button" title="Hard Reset" onclick="reboot('hard')"><i class="fa-solid fa-power-off"></i></button>
-                        <button class="button" title="Full Screen" onclick="toggleFullScreen('terminal-container')" id="term_expand"><i class="fa-solid fa-expand"></i></button>
+                        <button class="button" title="Full Screen" onclick="toggleFullScreen('terminal-container')" id="term-expand"><i class="fa-solid fa-expand"></i></button>
                     </div>
                 </div>
                 <div id="xterm" class="tab-content active">
@@ -1205,7 +1211,7 @@ print('%s:%s:%s' % (fu, ff, fs))
             fileTree.innerHTML = `<div>
                 <span class="folder name"><i class="fa-solid fa-folder"></i> /</span>
                 <span class="menu-action" onclick="createNewFile('/')"><i class="fa-solid fa-plus"></i></span>
-                <span class="menu-action">used ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
+                <span class="menu-action">${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
             </div>`
             function traverse(node, depth) {
                 const offset = "&emsp;".repeat(depth)
@@ -1719,8 +1725,8 @@ pj({'mpy':mpy,'path':sys.path})
         }
 
         if (!document.fullscreenEnabled) {
-            QID('app_expand').style.display = 'none'
-            QID('term_expand').style.display = 'none'
+            QID('app-expand').style.display = 'none'
+            QID('term-expand').style.display = 'none'
         }
 
         CodeMirror.defineSimpleMode('pem', {
@@ -1765,14 +1771,46 @@ pj({'mpy':mpy,'path':sys.path})
                 // sanity check
                 if (!i18next.exists('example.hello')) return;
 
-                QS('[title="Save File [Ctrl+S]"]').setAttribute('title', T('tool.save'))
+                QID('btn-save').setAttribute('title',     T('tool.save') + " [Ctrl+S]")
+                QID('btn-run').setAttribute('title',      T('tool.run') + " [F5]")
+                QID('btn-conn-ws').setAttribute('title',  T('tool.conn.ws'))
+                QID('btn-conn-ble').setAttribute('title', T('tool.conn.ble'))
+                QID('btn-conn-usb').setAttribute('title', T('tool.conn.usb'))
+                QID('term-clear').setAttribute('title',   T('tool.clear'))
+                QID('tab-term').innerText = T('tool.terminal')
 
-                QSA("a[id='gh-star']").forEach(el => {
+                QSA('#app-expand, #term-expand').forEach(el => {
+                    el.setAttribute('title', T('tool.fullscreen'))
+                })
+
+                QS('#menu-file-title').innerText = T('menu.file-mgr')
+                QS('#menu-pkg-title').innerText = T('menu.package-mgr')
+                QS('#menu-settings-title').innerText = T('menu.settings')
+
+                QID('no-files').innerText = T('files.no-files')
+
+                QS('#menu-line-conn').innerText = T('settings.conn')
+                QS('#menu-line-editor').innerText = T('settings.editor')
+                QS('#menu-line-other').innerText = T('settings.other')
+
+                QS('label[for=interrupt-device]').innerText = T('settings.interrupt-device')
+                QS('label[for=force-serial-poly]').innerText = T('settings.force-serial-poly')
+                QS('label[for=expand-minify-json]').innerText = T('settings.expand-minify-json')
+                QS('label[for=use-word-wrap]').innerText = T('settings.use-word-wrap')
+                QS('label[for=render-markdown]').innerText = T('settings.render-markdown')
+                QS('label[for=use-natural-sort]').innerText = T('settings.use-natural-sort')
+
+                QS('label[for=lang]').innerText = T('settings.lang')
+
+                QS('#about-cta').innerHTML = T('about.cta')
+                QS('#report-bug').innerHTML = T('about.report-bug')
+
+                QSA("a[id=gh-star]").forEach(el => {
                     el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE")
                     el.setAttribute("target", "_blank")
                 })
 
-                QSA("a[id='gh-issues']").forEach(el => {
+                QSA("a[id=gh-issues]").forEach(el => {
                     el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE/issues")
                     el.setAttribute("target", "_blank")
                 })
