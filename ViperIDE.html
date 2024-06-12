@@ -357,7 +357,7 @@
             #overlay.show {
                 visibility: visible;
                 background-color: #00000088;
-                backdrop-filter: blur(1px);
+                backdrop-filter: blur(3px);
             }
         }
         @media (max-width: 768px) and (display-mode: standalone) {
@@ -423,7 +423,6 @@
                 <div><input type="checkbox" id="use-word-wrap" onclick="updateWordWrapping()" /><label for="use-word-wrap">Word wrapping</label></div>
                 <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
                 <div class="title-lines" id="menu-line-other">other</div>
-                <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
                 <div>
                     <label for="lang">Language:</label>
                     <select id="lang">
@@ -441,6 +440,7 @@
                       <option value="sv">🇸🇪 Svenska</option>
                     </select>
                 </div>
+                <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
             </div>
             <div id="menu-about" class="tab-content">
                 <a class="github-fork-ribbon left-top" href="https://github.com/vshymanskyy/ViperIDE" target="_blank" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
