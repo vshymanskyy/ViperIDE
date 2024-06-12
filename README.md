@@ -4,7 +4,7 @@
 [![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=success)](https://github.com/vshymanskyy/ViperIDE/issues) 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/vshymanskyy/ViperIDE) 
 
-A MicroPython IDE that works directly in the browser, leveraging modern web technologies.
+A MicroPython IDE for Web and Mobile
 
 - No software installation required, works out of the box
 - Direct USB / Serial connection works on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
