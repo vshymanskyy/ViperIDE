@@ -36,6 +36,7 @@ jobs:
           mkdir build
           curl --data-urlencode input@ViperIDE.html -X POST https://www.toptal.com/developers/html-minifier/api/raw -o ./build/index.html
           cp webrepl_content.js favicon.png manifest.json ./build/
+          jq -c . < translations.json > ./build/translations.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

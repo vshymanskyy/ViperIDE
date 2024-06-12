@@ -1,0 +1,530 @@
+{
+  "en": {
+    "translation": {
+      "example": {
+        "hello": "Hello"
+      },
+      "tool": {
+        "run": "Run File [F5]",
+        "save": "Save File [Ctrl-S]",
+        "fullscreen": "Full Screen",
+        "clear": "Clear",
+        "conn": {
+          "ws": "Connect WebREPL",
+          "ble": "Connect Bluetooth",
+          "usb": "Connect USB/Serial"
+        },
+        "terminal": "Terminal"
+      },
+      "menu": {
+        "package-mgr": "Package Manager",
+        "file-mgr": "File Manager",
+        "settings": "Settings"
+      },
+      "files": {
+        "no-files": "no files",
+        "connect": "connect",
+        "used": "used"
+      },
+      "settings": {
+        "conn": "connection",
+        "editor": "editor",
+        "other": "other",
+        "interrupt-device": "Interrupt execution",
+        "force-serial-poly": "Enforce using WebSerial polyfill",
+        "expand-minify-json": "Auto-minification of JSON",
+        "use-word-wrap": "Word wrap",
+        "render-markdown": "Markdown viewer",
+        "use-natural-sort": "Natural sorting"
+      },
+      "about": {
+        "cta": "If you like ViperIDE, please <a id='gh-star'>give it a GitHub star</a> ⭐ and spread the word on social media 📢",
+        "report-bug": "You can also <a id='gh-issues'>report a bug</a> 🐞"
+      }
+    }
+  },
+  "uk": {
+    "translation": {
+      "example": {
+        "hello": "Привіт"
+      },
+      "tool": {
+        "run": "Виконати [F5]",
+        "save": "Зберегти [Ctrl-S]",
+        "fullscreen": "Розгорнути",
+        "clear": "Очистити",
+        "conn": {
+          "ws": "Підключити WebREPL",
+          "ble": "Підключити Bluetooth",
+          "usb": "Підключити USB/Serial"
+        },
+        "terminal": "Термінал"
+      },
+      "menu": {
+        "package-mgr": "Менеджер пакетів",
+        "file-mgr": "Менеджер файлів",
+        "settings": "Налаштування"
+      },
+      "files": {
+        "no-files": "немає файлів",
+        "connect": "підключити",
+        "used": "зайнято"
+      },
+      "settings": {
+        "conn": "підключення",
+        "editor": "редактор",
+        "other": "решта",
+        "interrupt-device": "Переривати виконання",
+        "force-serial-poly": "Примусово WebSerial polyfill",
+        "expand-minify-json": "Авто-стиснення JSON",
+        "use-word-wrap": "Перенос слів",
+        "render-markdown": "Переглядач Markdown",
+        "use-natural-sort": "Природне сортування"
+      },
+      "about": {
+        "cta": "Якщо вам подобається ViperIDE, вліпіть йому <a id='gh-star'>зірку на GitHub</a> ⭐ і поширюйте інформацію в соціальних мережах 📢",
+        "report-bug": "Ви також можете <a id='gh-issues'>повідомити про помилку</a> 🐞"
+      }
+    }
+  },
+  "fr": {
+    "translation": {
+      "example": {
+        "hello": "Bonjour"
+      },
+      "tool": {
+        "run": "Exécuter le fichier [F5]",
+        "save": "Enregistrer le fichier [Ctrl-S]",
+        "fullscreen": "Plein écran",
+        "clear": "Effacer",
+        "conn": {
+          "ws": "Connecter WebREPL",
+          "ble": "Connecter Bluetooth",
+          "usb": "Connecter USB/Série"
+        },
+        "terminal": "Terminal"
+      },
+      "menu": {
+        "package-mgr": "Gestionnaire de paquets",
+        "file-mgr": "Gestionnaire de fichiers",
+        "settings": "Paramètres"
+      },
+      "files": {
+        "no-files": "pas de fichiers",
+        "connect": "connecter",
+        "used": "utilisé"
+      },
+      "settings": {
+        "conn": "connexion",
+        "editor": "éditeur",
+        "other": "autre",
+        "interrupt-device": "Interrompre l'exécution",
+        "force-serial-poly": "Imposer l'utilisation de WebSerial polyfill",
+        "expand-minify-json": "Minification automatique de JSON",
+        "use-word-wrap": "Retour à la ligne",
+        "render-markdown": "Visionneuse Markdown",
+        "use-natural-sort": "Tri naturel"
+      },
+      "about": {
+        "cta": "Si vous aimez ViperIDE, veuillez <a id='gh-star'>lui donner une étoile sur GitHub</a> ⭐ et en parler sur les réseaux sociaux 📢",
+        "report-bug": "Vous pouvez aussi <a id='gh-issues'>signaler un bug</a> 🐞"
+      }
+    }
+  },
+  "de": {
+    "translation": {
+      "example": {
+        "hello": "Hallo"
+      },
+      "tool": {
+        "run": "Datei ausführen [F5]",
+        "save": "Datei speichern [Ctrl-S]",
+        "fullscreen": "Vollbild",
+        "clear": "Löschen",
+        "conn": {
+          "ws": "WebREPL verbinden",
+          "ble": "Bluetooth verbinden",
+          "usb": "USB/Seriell verbinden"
+        },
+        "terminal": "Terminal"
+      },
+      "menu": {
+        "package-mgr": "Paketmanager",
+        "file-mgr": "Dateimanager",
+        "settings": "Einstellungen"
+      },
+      "files": {
+        "no-files": "keine Dateien",
+        "connect": "verbinden",
+        "used": "benutzt"
+      },
+      "settings": {
+        "conn": "Verbindung",
+        "editor": "Editor",
+        "other": "andere",
+        "interrupt-device": "Ausführung unterbrechen",
+        "force-serial-poly": "Verwendung von WebSerial polyfill erzwingen",
+        "expand-minify-json": "Automatische Minifizierung von JSON",
+        "use-word-wrap": "Zeilenumbruch",
+        "render-markdown": "Markdown-Viewer",
+        "use-natural-sort": "Natürliche Sortierung"
+      },
+      "about": {
+        "cta": "Wenn Ihnen ViperIDE gefällt, geben Sie ihm bitte <a id='gh-star'>einen Stern auf GitHub</a> ⭐ und verbreiten Sie die Nachricht in den sozialen Medien 📢",
+        "report-bug": "Sie können auch <a id='gh-issues'>einen Fehler melden</a> 🐞"
+      }
+    }
+  },
+  "pt": {
+    "translation": {
+      "example": {
+        "hello": "Olá"
+      },
+      "tool": {
+        "run": "Executar arquivo [F5]",
+        "save": "Salvar arquivo [Ctrl-S]",
+        "fullscreen": "Tela cheia",
+        "clear": "Limpar",
+        "conn": {
+          "ws": "Conectar WebREPL",
+          "ble": "Conectar Bluetooth",
+          "usb": "Conectar USB/Serial"
+        },
+        "terminal": "Terminal"
+      },
+      "menu": {
+        "package-mgr": "Gerenciador de Pacotes",
+        "file-mgr": "Gerenciador de Arquivos",
+        "settings": "Configurações"
+      },
+      "files": {
+        "no-files": "sem arquivos",
+        "connect": "conectar",
+        "used": "usado"
+      },
+      "settings": {
+        "conn": "conexão",
+        "editor": "editor",
+        "other": "outros",
+        "interrupt-device": "Interromper execução",
+        "force-serial-poly": "Forçar uso do WebSerial polyfill",
+        "expand-minify-json": "Minificação automática de JSON",
+        "use-word-wrap": "Quebra de linha",
+        "render-markdown": "Visualizador de Markdown",
+        "use-natural-sort": "Ordenação natural"
+      },
+      "about": {
+        "cta": "Se você gosta do ViperIDE, por favor <a id='gh-star'>dê uma estrela no GitHub</a> ⭐ e divulgue nas redes sociais 📢",
+        "report-bug": "Você também pode <a id='gh-issues'>relatar um bug</a> 🐞"
+      }
+    }
+  },
+  "es": {
+    "translation": {
+      "example": {
+        "hello": "Hola"
+      },
+      "tool": {
+        "run": "Ejecutar archivo [F5]",
+        "save": "Guardar archivo [Ctrl-S]",
+        "fullscreen": "Pantalla completa",
+        "clear": "Limpiar",
+        "conn": {
+          "ws": "Conectar WebREPL",
+          "ble": "Conectar Bluetooth",
+          "usb": "Conectar USB/Serial"
+        },
+        "terminal": "Terminal"
+      },
+      "menu": {
+        "package-mgr": "Administrador de paquetes",
+        "file-mgr": "Administrador de archivos",
+        "settings": "Configuraciones"
+      },
+      "files": {
+        "no-files": "sin archivos",
+        "connect": "conectar",
+        "used": "usado"
+      },
+      "settings": {
+        "conn": "conexión",
+        "editor": "editor",
+        "other": "otros",
+        "interrupt-device": "Interrumpir ejecución",
+        "force-serial-poly": "Forzar uso de WebSerial polyfill",
+        "expand-minify-json": "Minificación automática de JSON",
+        "use-word-wrap": "Ajuste de línea",
+        "render-markdown": "Visualizador de Markdown",
+        "use-natural-sort": "Ordenación natural"
+      },
+      "about": {
+        "cta": "Si te gusta ViperIDE, por favor <a id='gh-star'>dale una estrella en GitHub</a> ⭐ y difúndelo en las redes sociales 📢",
+        "report-bug": "También puedes <a id='gh-issues'>reportar un error</a> 🐞"
+      }
+    }
+  },
+  "he": {
+    "translation": {
+      "example": {
+        "hello": "שלום"
+      },
+      "tool": {
+        "run": "הפעל קובץ [F5]",
+        "save": "שמור קובץ [Ctrl-S]",
+        "fullscreen": "מסך מלא",
+        "clear": "נקה",
+        "conn": {
+          "ws": "חבר WebREPL",
+          "ble": "חבר Bluetooth",
+          "usb": "חבר USB/Serial"
+        },
+        "terminal": "טרמינל"
+      },
+      "menu": {
+        "package-mgr": "מנהל חבילות",
+        "file-mgr": "מנהל קבצים",
+        "settings": "הגדרות"
+      },
+      "files": {
+        "no-files": "אין קבצים",
+        "connect": "חבר",
+        "used": "בשימוש"
+      },
+      "settings": {
+        "conn": "חיבור",
+        "editor": "עורך",
+        "other": "אחרים",
+        "interrupt-device": "להפסיק את הביצוע",
+        "force-serial-poly": "הכרח שימוש ב-WebSerial polyfill",
+        "expand-minify-json": "מיניפיקציה אוטומטית של JSON",
+        "use-word-wrap": "גלישת מילים",
+        "render-markdown": "צופה Markdown",
+        "use-natural-sort": "מיון טבעי"
+      },
+      "about": {
+        "cta": "אם אתה אוהב את ViperIDE, אנא <a id='gh-star'>תן לו כוכב ב-GitHub</a> ⭐ והפיץ את המילה ברשתות החברתיות 📢",
+        "report-bug": "אתה יכול גם <a id='gh-issues'>לדווח על באג</a> 🐞"
+      }
+    }
+  },
+  "zh-TW": {
+    "translation": {
+      "example": {
+        "hello": "你好"
+      },
+      "tool": {
+        "run": "執行檔案 [F5]",
+        "save": "保存文件 [Ctrl-S]",
+        "fullscreen": "全屏",
+        "clear": "清除",
+        "conn": {
+          "ws": "連接 WebREPL",
+          "ble": "連接藍牙",
+          "usb": "連接 USB/串行"
+        },
+        "terminal": "終端"
+      },
+      "menu": {
+        "package-mgr": "包管理器",
+        "file-mgr": "文件管理器",
+        "settings": "設置"
+      },
+      "files": {
+        "no-files": "沒有文件",
+        "connect": "連接",
+        "used": "已使用"
+      },
+      "settings": {
+        "conn": "連接",
+        "editor": "編輯器",
+        "other": "其他",
+        "interrupt-device": "中斷執行",
+        "force-serial-poly": "強制使用 WebSerial polyfill",
+        "expand-minify-json": "JSON 自動縮小",
+        "use-word-wrap": "自動換行",
+        "render-markdown": "Markdown 查看器",
+        "use-natural-sort": "自然排序"
+      },
+      "about": {
+        "cta": "如果您喜歡 ViperIDE，請<a id='gh-star'>在 GitHub 上給它一顆星</a> ⭐ 並在社交媒體上傳播信息 📢",
+        "report-bug": "您還可以<a id='gh-issues'>報告錯誤</a> 🐞"
+      }
+    }
+  },
+  "pl": {
+    "translation": {
+      "example": {
+        "hello": "Cześć"
+      },
+      "tool": {
+        "run": "Uruchom plik [F5]",
+        "save": "Zapisz plik [Ctrl-S]",
+        "fullscreen": "Pełny ekran",
+        "clear": "Wyczyść",
+        "conn": {
+          "ws": "Połącz WebREPL",
+          "ble": "Połącz Bluetooth",
+          "usb": "Połącz USB/Szeregowe"
+        },
+        "terminal": "Terminal"
+      },
+      "menu": {
+        "package-mgr": "Menedżer pakietów",
+        "file-mgr": "Menedżer plików",
+        "settings": "Ustawienia"
+      },
+      "files": {
+        "no-files": "brak plików",
+        "connect": "połącz",
+        "used": "używane"
+      },
+      "settings": {
+        "conn": "połączenie",
+        "editor": "edytor",
+        "other": "inne",
+        "interrupt-device": "Przerwij wykonywanie",
+        "force-serial-poly": "Wymuś użycie WebSerial polyfill",
+        "expand-minify-json": "Automatyczna minifikacja JSON",
+        "use-word-wrap": "Zawijanie wierszy",
+        "render-markdown": "Przeglądarka Markdown",
+        "use-natural-sort": "Naturalne sortowanie"
+      },
+      "about": {
+        "cta": "Jeśli podoba ci się ViperIDE, proszę <a id='gh-star'>daj mu gwiazdkę na GitHub</a> ⭐ i rozprzestrzeniaj informacje w mediach społecznościowych 📢",
+        "report-bug": "Możesz także <a id='gh-issues'>zgłosić błąd</a> 🐞"
+      }
+    }
+  },
+  "ja": {
+    "translation": {
+      "example": {
+        "hello": "こんにちは"
+      },
+      "tool": {
+        "run": "ファイルを実行 [F5]",
+        "save": "ファイルを保存 [Ctrl-S]",
+        "fullscreen": "全画面表示",
+        "clear": "クリア",
+        "conn": {
+          "ws": "WebREPLを接続",
+          "ble": "Bluetoothを接続",
+          "usb": "USB/シリアルを接続"
+        },
+        "terminal": "ターミナル"
+      },
+      "menu": {
+        "package-mgr": "パッケージマネージャー",
+        "file-mgr": "ファイルマネージャー",
+        "settings": "設定"
+      },
+      "files": {
+        "no-files": "ファイルなし",
+        "connect": "接続",
+        "used": "使用中"
+      },
+      "settings": {
+        "conn": "接続",
+        "editor": "エディター",
+        "other": "その他",
+        "interrupt-device": "実行を中断",
+        "force-serial-poly": "WebSerial polyfillの使用を強制する",
+        "expand-minify-json": "JSONの自動圧縮",
+        "use-word-wrap": "ワードラップ",
+        "render-markdown": "Markdownビューア",
+        "use-natural-sort": "自然な並び替え"
+      },
+      "about": {
+        "cta": "ViperIDEが気に入ったら、<a id='gh-star'>GitHubでスターを付けてください</a> ⭐ そして、ソーシャルメディアで広めてください 📢",
+        "report-bug": "また、<a id='gh-issues'>バグを報告する</a> 🐞こともできます"
+      }
+    }
+  },
+  "it": {
+    "translation": {
+      "example": {
+        "hello": "Ciao"
+      },
+      "tool": {
+        "run": "Esegui file [F5]",
+        "save": "Salva file [Ctrl-S]",
+        "fullscreen": "Schermo intero",
+        "clear": "Cancella",
+        "conn": {
+          "ws": "Collega WebREPL",
+          "ble": "Collega Bluetooth",
+          "usb": "Collega USB/Seriale"
+        },
+        "terminal": "Terminale"
+      },
+      "menu": {
+        "package-mgr": "Gestore pacchetti",
+        "file-mgr": "Gestore file",
+        "settings": "Impostazioni"
+      },
+      "files": {
+        "no-files": "nessun file",
+        "connect": "connetti",
+        "used": "usato"
+      },
+      "settings": {
+        "conn": "connessione",
+        "editor": "editor",
+        "other": "altro",
+        "interrupt-device": "Interrompi esecuzione",
+        "force-serial-poly": "Forza utilizzo di WebSerial polyfill",
+        "expand-minify-json": "Minificazione automatica di JSON",
+        "use-word-wrap": "A capo automatico",
+        "render-markdown": "Visualizzatore di Markdown",
+        "use-natural-sort": "Ordinamento naturale"
+      },
+      "about": {
+        "cta": "Se ti piace ViperIDE, per favore <a id='gh-star'>dagli una stella su GitHub</a> ⭐ e spargi la voce sui social media 📢",
+        "report-bug": "Puoi anche <a id='gh-issues'>segnalare un bug</a> 🐞"
+      }
+    }
+  },
+  "sv": {
+    "translation": {
+      "example": {
+        "hello": "Hej"
+      },
+      "tool": {
+        "run": "Kör fil [F5]",
+        "save": "Spara fil [Ctrl-S]",
+        "fullscreen": "Helskärm",
+        "clear": "Rensa",
+        "conn": {
+          "ws": "Anslut WebREPL",
+          "ble": "Anslut Bluetooth",
+          "usb": "Anslut USB/Seriell"
+        },
+        "terminal": "Terminal"
+      },
+      "menu": {
+        "package-mgr": "Paketchef",
+        "file-mgr": "Filhanterare",
+        "settings": "Inställningar"
+      },
+      "files": {
+        "no-files": "inga filer",
+        "connect": "ansluta",
+        "used": "används"
+      },
+      "settings": {
+        "conn": "anslutning",
+        "editor": "redaktör",
+        "other": "andra",
+        "interrupt-device": "Avbryt körning",
+        "force-serial-poly": "Tvinga användning av WebSerial polyfill",
+        "expand-minify-json": "Automatisk minimisering av JSON",
+        "use-word-wrap": "Ordbrytning",
+        "render-markdown": "Markdown-visare",
+        "use-natural-sort": "Naturlig sortering"
+      },
+      "about": {
+        "cta": "Om du gillar ViperIDE, vänligen <a id='gh-star'>ge det en stjärna på GitHub</a> ⭐ och sprid ordet på sociala medier 📢",
+        "report-bug": "Du kan också <a id='gh-issues'>rapportera ett fel</a> 🐞"
+      }
+    }
+  }
+}

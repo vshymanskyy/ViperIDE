@@ -417,6 +417,24 @@
                 <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
                 <div class="title-lines">other</div>
                 <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
+                <div>
+                    <label for="lang">Language:</label>
+                    <select id="lang">
+                      <option value="en">🇺🇸 USA</option>
+                      <option value="en">🇬🇧 Britain</option>
+                      <option value="zh">🇹🇼 繁體中文</option>
+                      <option value="es">🇪🇸 Español</option>
+                      <option value="fr">🇫🇷 Français</option>
+                      <option value="de">🇩🇪 Deutsch</option>
+                      <option value="pt">🇵🇹 Português</option>
+                      <option value="ja">🇯🇵 日本語</option>
+                      <option value="pl">🇵🇱 Polski</option>
+                      <option value="it">🇮🇹 Italiano</option>
+                      <option value="he">🇮🇱 עברית</option>
+                      <option value="uk">🇺🇦 Українська</option>
+                      <option value="sv">🇸🇪 Svenska</option>
+                    </select>
+                </div>
             </div>
             <div id="menu-about" class="tab-content">
                 <a class="github-fork-ribbon left-top" href="https://github.com/vshymanskyy/ViperIDE" target="_blank" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
@@ -431,10 +449,10 @@
                 <div>
                     <hr/>
                     <p>
-                        If you like ViperIDE, please <a href="https://github.com/vshymanskyy/ViperIDE" target="_blank">give it a GitHub star</a> ⭐ and spread the word on social media 📢
+                        If you like ViperIDE, please <a id="gh-star">give it a GitHub star</a> ⭐ and spread the word on social media 📢
                     </p>
                     <p>
-                        You can also <a href="https://github.com/vshymanskyy/ViperIDE/issues" target="_blank">report a bug</a> 🐜
+                        You can also <a id='gh-issues'>report a bug</a> 🐞
                     </p>
                     <hr/>
                 </div>
@@ -475,6 +493,9 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.11.5/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.0.0/i18nextBrowserLanguageDetector.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/lib/codemirror.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/python/python.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/javascript/javascript.js"></script>
@@ -496,7 +517,17 @@
 
         const VIPER_IDE_VERSION = "0.2.0"
 
-        function addCSS(css) { document.head.appendChild(document.createElement("style")).innerHTML = css }
+        /*
+         * Helpers
+         */
+
+        const addCSS = (css) => { document.head.appendChild(document.createElement("style")).innerHTML = css }
+
+        const QSA = (x) => [...document.querySelectorAll(x)]
+        const QS  = document.querySelector.bind(document)
+        const QID = document.getElementById.bind(document)
+
+        const T = i18next.t.bind(i18next)
 
         const iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent)
 
@@ -833,7 +864,7 @@
             }
 
             for (const t of ["ws", "ble", "usb"]) {
-                document.getElementById(`btn-conn-${t}`).classList.remove('connected')
+                QID(`btn-conn-${t}`).classList.remove('connected')
             }
         }
 
@@ -897,7 +928,7 @@
                 }
 
                 await disconnect()
-                if (typeof navigator.serial === 'undefined' || document.getElementById('force-serial-poly').checked) {
+                if (typeof navigator.serial === 'undefined' || QID('force-serial-poly').checked) {
                     console.log('Using WebSerial polyfill')
                     port = new WebSerial(webSerialPolyfill)
                 } else {
@@ -926,7 +957,7 @@
             })
 
             port.onDisconnect(() => {
-                document.getElementById(`btn-conn-${type}`).classList.remove('connected')
+                QID(`btn-conn-${type}`).classList.remove('connected')
                 toastr.warning('Device disconnected')
                 port = null
                 //connect(type)
@@ -934,9 +965,9 @@
 
             toastr.success('Device connected')
 
-            document.getElementById(`btn-conn-${type}`).classList.add('connected')
+            QID(`btn-conn-${type}`).classList.add('connected')
 
-            if (document.getElementById('interrupt-device').checked) {
+            if (QID('interrupt-device').checked) {
                 // TODO: detect WDT and disable it temporarily
 
                 try {
@@ -1093,7 +1124,7 @@ for d in '${path}'.split('/'):
         async function fetchFileList() {
             if (!port) return;
 
-            const fileTree = document.getElementById('menu-file-tree')
+            const fileTree = QID('menu-file-tree')
 
             let files
             try {
@@ -1159,7 +1190,7 @@ print('%s:%s:%s' % (fu, ff, fs))
 
             function sorted(content) {
                 // Natural sort by name
-                if (document.getElementById('use-natural-sort').checked) {
+                if (QID('use-natural-sort').checked) {
                     const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
                     content.sort((a,b) => collator.compare(a.name, b.name))
                 }
@@ -1338,12 +1369,12 @@ if ms:
                 }
             }
 
-            const editorElement = document.getElementById('editor')
+            const editorElement = QID('editor')
 
             if (isBinary) {
                 hexViewer(content.buffer, editorElement)
                 editor = null
-            } else if (fn.endsWith('.md') && document.getElementById('render-markdown').checked) {
+            } else if (fn.endsWith('.md') && QID('render-markdown').checked) {
                 editorElement.innerHTML = `<div class="marked-viewer">` + marked.marked(content) + `</div>`
                 editor = null
             } else {
@@ -1358,7 +1389,7 @@ if ms:
                 } else if (fn.endsWith('.json')) {
                   editor.setOption('mode', { name: 'application/ld+json' })
 
-                  if (document.getElementById('expand-minify-json').checked) {
+                  if (QID('expand-minify-json').checked) {
                     try {
                         // Prettify JSON
                         content = JSON.stringify(JSON.parse(content), null, 2)
@@ -1385,7 +1416,7 @@ if ms:
             if (!port) return;
 
             let content = editor.getValue()
-            if (editorFn.endsWith(".json") && document.getElementById('expand-minify-json').checked) {
+            if (editorFn.endsWith(".json") && QID('expand-minify-json').checked) {
               try {
                 // Minify JSON
                 content = JSON.stringify(JSON.parse(content))
@@ -1465,7 +1496,7 @@ if ms:
             const index_rsp = await fetch(rewriteUrl(`${index_url}/index.json`))
             const mipindex = await index_rsp.json()
 
-            const pkgList = document.getElementById('menu-pkg-list')
+            const pkgList = QID('menu-pkg-list')
             pkgList.innerHTML = ""
 
             pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
@@ -1556,7 +1587,7 @@ pj({'mpy':mpy,'path':sys.path})
          */
 
         function toggleFullScreen(elementId) {
-            const element = document.getElementById(elementId)
+            const element = QID(elementId)
             if (!document.fullscreenElement) {
                 element.requestFullscreen().catch(err => {
                     toastr.error('Error enabling full-screen mode', `${err.message} (${err.name})`)
@@ -1588,8 +1619,8 @@ pj({'mpy':mpy,'path':sys.path})
             })
         }
 
-        const fileTree = document.getElementById('side-menu')
-        const overlay = document.getElementById('overlay')
+        const fileTree = QID('side-menu')
+        const overlay = QID('overlay')
 
         function toggleSideMenu() {
             if (window.innerWidth <= 768) {
@@ -1688,8 +1719,8 @@ pj({'mpy':mpy,'path':sys.path})
         }
 
         if (!document.fullscreenEnabled) {
-            document.getElementById('app_expand').style.display = 'none'
-            document.getElementById('term_expand').style.display = 'none'
+            QID('app_expand').style.display = 'none'
+            QID('term_expand').style.display = 'none'
         }
 
         CodeMirror.defineSimpleMode('pem', {
@@ -1712,14 +1743,14 @@ pj({'mpy':mpy,'path':sys.path})
         })
 
         function updateWordWrapping() {
-            editor.setOption('lineWrapping', document.getElementById('use-word-wrap').checked)
+            editor.setOption('lineWrapping', QID('use-word-wrap').checked)
         }
 
         function createCodeMirror() {
-            editor = CodeMirror(document.getElementById('editor'), {
+            editor = CodeMirror(QID('editor'), {
                 theme: 'monokai',
                 lineNumbers: true,
-                lineWrapping: document.getElementById('use-word-wrap').checked,
+                lineWrapping: QID('use-word-wrap').checked,
                 indentUnit: 4,
                 matchBrackets: true,
                 extraKeys: {
@@ -1727,6 +1758,25 @@ pj({'mpy':mpy,'path':sys.path})
                     "Ctrl-S": (cm) => saveCurrentFile(),
                 }
             })
+        }
+
+        function applyTranslation() {
+            try {
+                // sanity check
+                if (!i18next.exists('example.hello')) return;
+
+                QS('[title="Save File [Ctrl+S]"]').setAttribute('title', T('tool.save'))
+
+                QSA("a[id='gh-star']").forEach(el => {
+                    el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE")
+                    el.setAttribute("target", "_blank")
+                })
+
+                QSA("a[id='gh-issues']").forEach(el => {
+                    el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE/issues")
+                    el.setAttribute("target", "_blank")
+                })
+            } catch (err) {}
         }
 
         (async () => {
@@ -1737,8 +1787,30 @@ pj({'mpy':mpy,'path':sys.path})
                 toastr.error(e.reason, "Unhandled Rejection")
             })*/
 
-            setupTabs(document.getElementById('side-menu'))
-            setupTabs(document.getElementById('terminal-container'))
+            let lang_res
+            try {
+                lang_res = await (await fetch('translations.json')).json()
+            } catch (err) {
+                lang_res = {}
+            }
+            await i18next.use(i18nextBrowserLanguageDetector).init({
+                fallbackLng: 'en',
+                //debug: true,
+                resources: lang_res,
+            })
+
+            const lang_sel = QID('lang')
+            lang_sel.value = i18next.resolvedLanguage || "en"
+            lang_sel.addEventListener('change', async function() {
+                await i18next.changeLanguage(this.value)
+                applyTranslation()
+            })
+
+            applyTranslation()
+
+
+            setupTabs(QID('side-menu'))
+            setupTabs(QID('terminal-container'))
 
             toastr.options.preventDuplicates = true;
 
@@ -1753,7 +1825,7 @@ colors = [
 ]
 reset = "\\033[0m"
 
-text = "  Привіт MicroPython! 𓆙"
+text = "  ${T('example.hello', 'Привіт')} MicroPython! 𓆙"
 
 # Print each letter with a different color
 print("=" * 32)
@@ -1794,7 +1866,7 @@ print("=" * 32)
                 //convertEol: true,
                 allowProposedApi: true,
             })
-            term.open(document.getElementById('xterm'))
+            term.open(QID('xterm'))
             term.onData(async (data) => {
                 const release = await port.mutex.acquire()
                 try {
@@ -1818,7 +1890,7 @@ print("=" * 32)
             new ResizeObserver(() => {
                 fitAddon.fit()
                 if (editor) editor.refresh()
-            }).observe(document.getElementById('xterm'))
+            }).observe(QID('xterm'))
 
             if (typeof webrepl_url !== 'undefined') {
                 await sleep(500)
@@ -1839,13 +1911,13 @@ print("=" * 32)
             }
             lastUpdateCheck = now
 
-            document.getElementById('viper-ide-version').innerHTML = VIPER_IDE_VERSION
+            QID('viper-ide-version').innerHTML = VIPER_IDE_VERSION
 
             const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: "no-store"})
             manifest = await manifest_rsp.json()
             if (manifest.version !== VIPER_IDE_VERSION) {
                 toastr.info(`New ViperIDE version ${manifest.version} is available`)
-                document.getElementById('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:updateApp()">update</a>)`
+                QID('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:updateApp()">update</a>)`
             }
         }
 
@@ -1870,7 +1942,7 @@ print("=" * 32)
 
         function initDrag(e) {
             startY = e.clientY || e.touches[0].clientY
-            startHeight = parseInt(document.defaultView.getComputedStyle(document.getElementById('terminal-container')).height, 10)
+            startHeight = parseInt(document.defaultView.getComputedStyle(QID('terminal-container')).height, 10)
             document.documentElement.addEventListener('mousemove', doDrag, false)
             document.documentElement.addEventListener('touchmove', doDrag, false)
             document.documentElement.addEventListener('mouseup', stopDrag, false)
@@ -1879,7 +1951,7 @@ print("=" * 32)
 
         function doDrag(e) {
             const clientY = e.clientY || e.touches[0].clientY
-            const terminalContainer = document.getElementById('terminal-container')
+            const terminalContainer = QID('terminal-container')
             terminalContainer.style.height = (startHeight - (clientY - startY)) + 'px'
         }
 
