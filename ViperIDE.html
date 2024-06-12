@@ -1771,6 +1771,8 @@ pj({'mpy':mpy,'path':sys.path})
                 // sanity check
                 if (!i18next.exists('example.hello')) return;
 
+                document.body.dir = i18next.dir()
+
                 QID('btn-save').setAttribute('title',     T('tool.save') + " [Ctrl+S]")
                 QID('btn-run').setAttribute('title',      T('tool.run') + " [F5]")
                 QID('btn-conn-ws').setAttribute('title',  T('tool.conn.ws'))
