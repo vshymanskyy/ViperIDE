@@ -34,7 +34,8 @@
             "expand-minify-json": "JSON 自动缩小",
             "use-word-wrap": "自动换行",
             "render-markdown": "Markdown 查看器",
-            "use-natural-sort": "自然排序"
+            "use-natural-sort": "自然排序",
+            "lang": "本土化"
         },
         "about": {
             "cta": "如果您喜欢 ViperIDE，请<a id='gh-star'>在 GitHub 上给它一颗星</a> ⭐ 并在社交媒体上传播信息 📢",

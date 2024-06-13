@@ -34,7 +34,8 @@
             "expand-minify-json": "Αυτόματη σμίκρυνση JSON",
             "use-word-wrap": "Αναδίπλωση λέξεων",
             "render-markdown": "Προβολή Markdown",
-            "use-natural-sort": "Φυσική ταξινόμηση"
+            "use-natural-sort": "Φυσική ταξινόμηση",
+            "lang": "Εντοπισμός"
         },
         "about": {
             "cta": "Αν σας αρέσει το ViperIDE, παρακαλώ <a id='gh-star'>δώστε του ένα αστέρι στο GitHub</a> ⭐ και διαδώστε το στα κοινωνικά μέσα 📢",

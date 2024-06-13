@@ -34,7 +34,8 @@
             "expand-minify-json": "Minificarea automată a JSON",
             "use-word-wrap": "Împachetarea cuvintelor",
             "render-markdown": "Vizualizator Markdown",
-            "use-natural-sort": "Sortare naturală"
+            "use-natural-sort": "Sortare naturală",
+            "lang": "Localizare"
         },
         "about": {
             "cta": "Dacă vă place ViperIDE, vă rugăm <a id='gh-star'>dați-i o stea pe GitHub</a> ⭐ și răspândiți vestea pe rețelele sociale 📢",

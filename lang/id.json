@@ -34,7 +34,8 @@
             "expand-minify-json": "Minifikasi otomatis JSON",
             "use-word-wrap": "Bungkus kata",
             "render-markdown": "Penampil Markdown",
-            "use-natural-sort": "Penyortiran alami"
+            "use-natural-sort": "Penyortiran alami",
+            "lang": "Lokalisasi"
         },
         "about": {
             "cta": "Jika Anda menyukai ViperIDE, silakan <a id='gh-star'>beri bintang di GitHub</a> ⭐ dan sebarkan berita di media sosial 📢",

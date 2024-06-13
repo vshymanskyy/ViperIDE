@@ -34,7 +34,8 @@
             "expand-minify-json": "JSON 자동 축소",
             "use-word-wrap": "자동 줄 바꿈",
             "render-markdown": "Markdown 뷰어",
-            "use-natural-sort": "자연 정렬"
+            "use-natural-sort": "자연 정렬",
+            "lang": "현지화"
         },
         "about": {
             "cta": "ViperIDE가 마음에 들면 <a id='gh-star'>GitHub에서 별을 주세요</a> ⭐ 그리고 소셜 미디어에 소식을 전하세요 📢",
