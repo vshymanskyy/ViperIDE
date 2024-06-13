@@ -1,0 +1,44 @@
+{
+    "translation": {
+        "example": {
+            "hello": "Hallo"
+        },
+        "tool": {
+            "run": "Bestand uitvoeren",
+            "save": "Bestand opslaan",
+            "fullscreen": "Volledig scherm",
+            "clear": "Wissen",
+            "conn": {
+                "ws": "Verbind WebREPL",
+                "ble": "Verbind Bluetooth",
+                "usb": "Verbind USB/Serieel"
+            },
+            "terminal": "Terminal"
+        },
+        "menu": {
+            "package-mgr": "Pakketbeheerder",
+            "file-mgr": "Bestandsbeheerder",
+            "settings": "Instellingen"
+        },
+        "files": {
+            "no-files": "geen bestanden",
+            "connect": "verbinden",
+            "used": "gebruikt"
+        },
+        "settings": {
+            "conn": "verbinding",
+            "editor": "editor",
+            "other": "overige",
+            "interrupt-device": "Uitvoering onderbreken",
+            "force-serial-poly": "Gebruik van WebSerial polyfill afdwingen",
+            "expand-minify-json": "Automatische minimalisering van JSON",
+            "use-word-wrap": "Woorden afbreken",
+            "render-markdown": "Markdown viewer",
+            "use-natural-sort": "Natuurlijke sortering"
+        },
+        "about": {
+            "cta": "Als je ViperIDE leuk vindt, geef het dan alsjeblieft een <a id='gh-star'>ster op GitHub</a> ⭐ en vertel het verder op sociale media 📢",
+            "report-bug": "Je kunt ook een <a id='gh-issues'>fout melden</a> 🐞"
+        }
+    }
+}

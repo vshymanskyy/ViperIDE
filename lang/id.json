@@ -1,0 +1,44 @@
+{
+    "translation": {
+        "example": {
+            "hello": "Halo"
+        },
+        "tool": {
+            "run": "Jalankan File",
+            "save": "Simpan File",
+            "fullscreen": "Layar Penuh",
+            "clear": "Bersihkan",
+            "conn": {
+                "ws": "Hubungkan WebREPL",
+                "ble": "Hubungkan Bluetooth",
+                "usb": "Hubungkan USB/Serial"
+            },
+            "terminal": "Terminal"
+        },
+        "menu": {
+            "package-mgr": "Manajer Paket",
+            "file-mgr": "Manajer File",
+            "settings": "Pengaturan"
+        },
+        "files": {
+            "no-files": "tidak ada file",
+            "connect": "hubungkan",
+            "used": "digunakan"
+        },
+        "settings": {
+            "conn": "koneksi",
+            "editor": "editor",
+            "other": "lainnya",
+            "interrupt-device": "Hentikan eksekusi",
+            "force-serial-poly": "Paksa penggunaan WebSerial polyfill",
+            "expand-minify-json": "Minifikasi otomatis JSON",
+            "use-word-wrap": "Bungkus kata",
+            "render-markdown": "Penampil Markdown",
+            "use-natural-sort": "Penyortiran alami"
+        },
+        "about": {
+            "cta": "Jika Anda menyukai ViperIDE, silakan <a id='gh-star'>beri bintang di GitHub</a> ⭐ dan sebarkan berita di media sosial 📢",
+            "report-bug": "Anda juga dapat <a id='gh-issues'>melaporkan bug</a> 🐞"
+        }
+    }
+}

@@ -1,0 +1,45 @@
+{
+    "translation": {
+        "example": {
+            "hello": "你好"
+        },
+        "tool": {
+            "run": "執行檔案",
+            "save": "保存文件",
+            "fullscreen": "全屏",
+            "clear": "清除",
+            "conn": {
+                "ws": "連接 WebREPL",
+                "ble": "連接藍牙",
+                "usb": "連接 USB/串行"
+            },
+            "terminal": "終端"
+        },
+        "menu": {
+            "package-mgr": "包管理器",
+            "file-mgr": "文件管理器",
+            "settings": "設置"
+        },
+        "files": {
+            "no-files": "沒有文件",
+            "connect": "連接",
+            "used": "已使用"
+        },
+        "settings": {
+            "conn": "連接",
+            "editor": "編輯器",
+            "other": "其他",
+            "interrupt-device": "中斷執行",
+            "force-serial-poly": "強制使用 WebSerial polyfill",
+            "expand-minify-json": "JSON 自動縮小",
+            "use-word-wrap": "自動換行",
+            "render-markdown": "Markdown 查看器",
+            "use-natural-sort": "自然排序",
+            "lang": "本地化"
+        },
+        "about": {
+            "cta": "如果您喜歡 ViperIDE，請<a id='gh-star'>在 GitHub 上給它一顆星</a> ⭐ 並在社交媒體上傳播信息 📢",
+            "report-bug": "您還可以<a id='gh-issues'>報告錯誤</a> 🐞"
+        }
+    }
+}

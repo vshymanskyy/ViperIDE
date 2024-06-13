@@ -1,0 +1,44 @@
+{
+    "translation": {
+        "example": {
+            "hello": "안녕하세요"
+        },
+        "tool": {
+            "run": "파일 실행",
+            "save": "파일 저장",
+            "fullscreen": "전체 화면",
+            "clear": "지우기",
+            "conn": {
+                "ws": "WebREPL 연결",
+                "ble": "Bluetooth 연결",
+                "usb": "USB/시리얼 연결"
+            },
+            "terminal": "터미널"
+        },
+        "menu": {
+            "package-mgr": "패키지 관리자",
+            "file-mgr": "파일 관리자",
+            "settings": "설정"
+        },
+        "files": {
+            "no-files": "파일 없음",
+            "connect": "연결",
+            "used": "사용 중"
+        },
+        "settings": {
+            "conn": "연결",
+            "editor": "편집기",
+            "other": "기타",
+            "interrupt-device": "실행 중단",
+            "force-serial-poly": "WebSerial polyfill 사용 강제",
+            "expand-minify-json": "JSON 자동 축소",
+            "use-word-wrap": "자동 줄 바꿈",
+            "render-markdown": "Markdown 뷰어",
+            "use-natural-sort": "자연 정렬"
+        },
+        "about": {
+            "cta": "ViperIDE가 마음에 들면 <a id='gh-star'>GitHub에서 별을 주세요</a> ⭐ 그리고 소셜 미디어에 소식을 전하세요 📢",
+            "report-bug": "또한 <a id='gh-issues'>버그를 보고할 수 있습니다</a> 🐞"
+        }
+    }
+}

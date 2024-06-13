@@ -1,0 +1,44 @@
+{
+    "translation": {
+        "example": {
+            "hello": "Bună"
+        },
+        "tool": {
+            "run": "Rulați fișierul",
+            "save": "Salvați fișierul",
+            "fullscreen": "Ecran complet",
+            "clear": "Curățați",
+            "conn": {
+                "ws": "Conectați WebREPL",
+                "ble": "Conectați Bluetooth",
+                "usb": "Conectați USB/Serial"
+            },
+            "terminal": "Terminal"
+        },
+        "menu": {
+            "package-mgr": "Manager de Pachete",
+            "file-mgr": "Manager de Fișiere",
+            "settings": "Setări"
+        },
+        "files": {
+            "no-files": "fără fișiere",
+            "connect": "conectați",
+            "used": "folosit"
+        },
+        "settings": {
+            "conn": "conexiune",
+            "editor": "editor",
+            "other": "alte",
+            "interrupt-device": "Întrerupeți execuția",
+            "force-serial-poly": "Forțați utilizarea WebSerial polyfill",
+            "expand-minify-json": "Minificarea automată a JSON",
+            "use-word-wrap": "Împachetarea cuvintelor",
+            "render-markdown": "Vizualizator Markdown",
+            "use-natural-sort": "Sortare naturală"
+        },
+        "about": {
+            "cta": "Dacă vă place ViperIDE, vă rugăm <a id='gh-star'>dați-i o stea pe GitHub</a> ⭐ și răspândiți vestea pe rețelele sociale 📢",
+            "report-bug": "Puteți de asemenea să <a id='gh-issues'>raportați o eroare</a> 🐞"
+        }
+    }
+}

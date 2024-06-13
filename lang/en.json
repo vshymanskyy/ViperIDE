@@ -1,0 +1,45 @@
+{
+    "translation": {
+        "example": {
+            "hello": "Hello"
+        },
+        "tool": {
+            "run": "Run File",
+            "save": "Save File",
+            "fullscreen": "Full Screen",
+            "clear": "Clear",
+            "conn": {
+                "ws": "Connect WebREPL",
+                "ble": "Connect Bluetooth",
+                "usb": "Connect USB/Serial"
+            },
+            "terminal": "Terminal"
+        },
+        "menu": {
+            "package-mgr": "Package Manager",
+            "file-mgr": "File Manager",
+            "settings": "Settings"
+        },
+        "files": {
+            "no-files": "no files",
+            "connect": "connect",
+            "used": "used"
+        },
+        "settings": {
+            "conn": "connection",
+            "editor": "editor",
+            "other": "other",
+            "interrupt-device": "Interrupt execution",
+            "force-serial-poly": "Enforce using WebSerial polyfill",
+            "expand-minify-json": "Auto-minification of JSON",
+            "use-word-wrap": "Word wrap",
+            "render-markdown": "Markdown viewer",
+            "use-natural-sort": "Natural sorting",
+            "lang": "Localization"
+        },
+        "about": {
+            "cta": "If you like ViperIDE, please <a id='gh-star'>give it a GitHub star</a> ⭐ and spread the word on social media 📢",
+            "report-bug": "You can also <a id='gh-issues'>report a bug</a> 🐞"
+        }
+    }
+}
