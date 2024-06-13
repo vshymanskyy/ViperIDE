@@ -196,6 +196,8 @@ const NUS_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
 const ADA_NUS_SERVICE = 'adaf0001-4369-7263-7569-74507974686e'
 const ADA_NUS_TX = 'adaf0002-4369-7263-7569-74507974686e'
 const ADA_NUS_RX = 'adaf0003-4369-7263-7569-74507974686e'
+const ADA_VER = 'adaf0100-4669-6c65-5472-616e73666572'
+const ADA_FT = 'adaf0200-4669-6c65-5472-616e73666572'
 
 class WebBluetooth extends Transport {
     constructor() {
@@ -242,6 +244,20 @@ class WebBluetooth extends Transport {
             this.service = await this.server.getPrimaryService(ADA_NUS_SERVICE)
             this.rx = await this.service.getCharacteristic(ADA_NUS_RX)
             this.tx = await this.service.getCharacteristic(ADA_NUS_TX)
+
+            // Check version
+            const ada_fts = await this.server.getPrimaryService(0xfebb)
+            const versionChar = await ada_fts.getCharacteristic(ADA_VER)
+            const version = (await versionChar.readValue()).getUint32(0, true)
+            if (version != 4) {
+                throw new Error(`Unsupported version: ${version}`)
+            }
+
+            // Register file transfer char
+            const ft = await ada_fts.getCharacteristic(ADA_FT)
+            //ft.removeEventListener('characteristicvaluechanged', () => {})
+            ft.addEventListener('characteristicvaluechanged', () => {})
+            await ft.startNotifications()
         }
 
         await this.rx.startNotifications()
