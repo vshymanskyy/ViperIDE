@@ -1,0 +1,364 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overscroll-behavior: none;
+    touch-action: none;
+    box-sizing: border-box;
+    background: #272822;
+    color: white;
+    font-family: system-ui;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+body.loaded {
+    opacity: 1;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+a {
+    color: white;
+    font-weight: 600;
+    text-decoration-thickness: 1px;
+    text-decoration-style: dashed;
+}
+
+::-webkit-scrollbar {
+    height: .5rem;
+    width:  .5rem;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+    border-radius: 0px; /* 9999px; */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: hsla(0, 0%, 60%, .8);
+    border-color: rgba(255,255,255,1);
+    border-radius: 0px; /* 9999px; */
+    border-width: 0px;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+}
+
+.windows {
+    font-family: Segoe WPC,Segoe UI,sans-serif
+}
+
+.macos {
+    font-family: -apple-system,BlinkMacSystemFont,sans-serif
+}
+
+.linux {
+    font-family: system-ui,Ubuntu,Droid Sans,sans-serif
+}
+
+.github-fork-ribbon:before {
+    background-color: #666;
+}
+
+.fa-power-off { color: #ffcc4d; }
+.fa-bug { color: #ffcc4d; }
+.fa-download { color: #87c244; }
+.fa-circle-play { color: #3b88c3; }
+.fa-circle-info { color: #3b88c3; }
+.fa-file { color: #3b88c3; }
+.fa-folder { color: #ffcc4d; }
+.fa-cube { color: #ba9066; }
+.fa-arrows-rotate { color: #3b88c3; }
+.fa-gear { color: #ccd6dd }
+.fa-trash-can { color: #ccd6dd }
+
+logo {
+    font-weight: 200;
+}
+
+label {
+    user-select: none;
+}
+
+input[type="checkbox" i] {
+    margin: 3px 3px 3px 0px;
+}
+
+button {
+    padding: 5px 5px;
+}
+
+#tool-panel {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #333;
+    color: white;
+    padding: 0 10px;
+    user-select: none;
+}
+
+#container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+#side-menu {
+    width: 300px;
+    background: #333;
+    display: flex;
+    flex-direction: column-reverse;
+    color: white;
+    overflow-y: auto;
+    transition: width 0.3s, left 0.3s;
+    user-select: none;
+}
+
+#side-menu.hidden {
+    width: 0;
+}
+
+#side-menu.hidden .file-content {
+    display: none;
+}
+
+#side-menu .tabs {
+    user-select: none;
+}
+
+#main-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#editor {
+    flex: 1;
+    overflow: auto;
+}
+
+#terminal-container {
+    height: 200px;
+    background: #272822;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#terminal-tabs {
+    flex: 0 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #333;
+    color: white;
+    cursor: row-resize;
+    user-select: none;
+    padding: 0 5px;
+}
+
+#menu-tabs {
+    flex: 0 0 24px;
+    padding: 5px 0;
+}
+
+#menu-about {
+    position: relative;
+}
+
+.title-lines {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    text-align: center;
+    font-family: arial;
+}
+.title-lines:before, .title-lines:after {
+    position: absolute;
+    top: 51%;
+    overflow: hidden;
+    width: 48%;
+    height: 1px;
+    content: '\a0';
+    background-color: #cccccc88;
+    margin-left: 2%;
+}
+.title-lines:before {
+    margin-left: -50%;
+    text-align: right;
+}
+
+.tab {
+    color: white;
+    text-decoration: none;
+    font-weight: normal;
+    display: inline;
+    padding: 5px 10px;
+}
+
+.tab.active {
+    background: #666;
+}
+
+.tab-content {
+    display: none;
+    flex: 1;
+    padding: 5px 0px 5px 5px;
+}
+
+#side-menu .tab-content {
+    flex: 0 1 100%;
+    overflow: scroll;
+    padding: 10px 10px;
+}
+
+#xterm {
+    height: 100%;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.marked-viewer {
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+}
+
+.hexed-viewer {
+    font-family: monospace;
+    white-space: pre;
+}
+.hexed-line {
+    display: flex;
+}
+.hexed-address, .hexed-hex-part, .hexed-ascii-part {
+    padding: 0 8px;
+}
+.hexed-address {
+    color: #f92672;
+}
+.hexed-hex-part {
+    color: #f8f8f2;
+}
+.hexed-ascii-part {
+    color: #e6db74;
+}
+
+.CodeMirror {
+    height: 100%;
+    width: 100%;
+}
+
+.CodeMirror * {
+    font-family: "Droid Sans Mono", "monospace", monospace;
+    font-weight: normal;
+    font-size: 14px;
+    font-feature-settings: "liga" 0, "calt" 0;
+    font-variation-settings: normal;
+    line-height: 19px;
+    letter-spacing: 0px;
+}
+
+.CodeMirror-scrollbar-filler {
+    background: none;
+}
+
+.button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.button.connected {
+    color: #87c244;
+}
+
+#menu-file-title, #menu-pkg-title, #menu-settings-title {
+    font-weight: bold;
+}
+
+#menu-file-tree div, #menu-pkg-list div, #menu-settings-list div {
+    margin: 5px 0;
+    line-height: 1.2em;
+}
+
+#menu-file-tree div .name {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    text-decoration: none;
+    font-weight: normal;
+}
+
+#menu-file-tree div .selected {
+    font-weight: bold;
+}
+
+.menu-action {
+    text-decoration: none;
+    font-weight: normal;
+    float: right;
+    font-size: 12px;
+    padding: 0 0 0 5px;
+    opacity: 60%;
+}
+
+@media (max-width: 768px) {
+    #side-menu {
+        position: absolute;
+        left: -100%;
+        width: 75%;
+        height: calc(100% - 40px);
+        z-index: 1000;
+    }
+
+    #side-menu.show {
+        left: 0;
+    }
+
+    #overlay {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        z-index: 999;
+        background-color: transparent;
+        overflow: hidden;
+        visibility: hidden;
+        transition: visibility 0s, background-color 0.3s, backdrop-filter 0.3s linear;
+    }
+
+    #overlay.show {
+        visibility: visible;
+        background-color: #00000088;
+        backdrop-filter: blur(3px);
+    }
+}
+@media (max-width: 768px) and (display-mode: standalone) {
+    #app-expand {
+        display: none;
+    }
+}
+
+@media (min-width: 769px) {
+    #main-editor {
+        width: calc(100% - 300px);
+    }
+}
