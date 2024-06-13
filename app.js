@@ -33,6 +33,11 @@ class Mutex {
     }
 }
 
+function report(title, err) {
+    console.error(err, err.stack)
+    toastr.error(err, title)
+}
+
 /*
  * Transports
  */
@@ -43,7 +48,10 @@ class Transport {
             throw new Error("Cannot instantiate abstract class Transport")
         }
         this.mutex = new Mutex()
+        this.inTransaction = false
         this.receivedData = ''
+        this.receiveCallback = null
+        this.disconnectCallback = null
     }
 
     async requestAccess() {
@@ -70,7 +78,32 @@ class Transport {
         this.disconnectCallback = callback
     }
 
+    /*
+     * Transaction API
+     */
+
+    async startTransaction(emit=false) {
+        const release = await this.mutex.acquire()
+        const prevRecvCbk = this.receiveCallback
+        this.inTransaction = true
+        this.receivedData = ''
+        this.receiveCallback = (data) => {
+            this.receivedData += data
+            if (emit) { prevRecvCbk(data) }
+        }
+
+        return () => {
+            this.receiveCallback = prevRecvCbk
+            this.receivedData = null
+            this.inTransaction = false
+            release()
+        }
+    }
+
     async flushInput() {
+        if (!this.inTransaction) {
+            throw new Error('Not in transaction')
+        }
         this.receivedData = ''
         /*while (1) {
             const { value, done } = await reader.read()
@@ -80,47 +113,68 @@ class Transport {
         }*/
     }
 
-    async readExactly(n, timeout = 5000) {
-        const prevRecvCbk = this.receiveCallback
-        this.receiveCallback = (data) => this.receivedData += data;
+    async readExactly(n, timeout=5000) {
+        if (!this.inTransaction) {
+            throw new Error('Not in transaction')
+        }
         const endTime = +Date.now() + timeout
-        try {
-            while (+Date.now() < endTime) {
-                if (this.receivedData.length >= n) {
-                    const res = this.receivedData.substring(0, n)
-                    this.receivedData = this.receivedData.substring(n)
-                    return res
-                }
-                await sleep(10)
+        while (+Date.now() < endTime) {
+            if (this.receivedData.length >= n) {
+                const res = this.receivedData.substring(0, n)
+                this.receivedData = this.receivedData.substring(n)
+                return res
             }
-        } finally {
-            this.receiveCallback = prevRecvCbk
+            await sleep(10)
         }
         throw new Error('Timeout')
     }
 
-    async readUntil(ending, timeout = 5000, emit = false) {
-        const prevRecvCbk = this.receiveCallback
-        this.receiveCallback = (data) => {
-            this.receivedData += data
-            if (emit) { prevRecvCbk(data) }
+    async readUntil(ending, timeout=5000) {
+        if (!this.inTransaction) {
+            throw new Error('Not in transaction')
         }
-        if (emit) { prevRecvCbk(this.receivedData) }
         const endTime = +Date.now() + timeout
-        try {
-            while (emit || (+Date.now() < endTime)) {
-                const idx = this.receivedData.indexOf(ending) + ending.length
-                if (idx >= ending.length) {
-                    const res = this.receivedData.substring(0, idx)
-                    this.receivedData = this.receivedData.substring(idx)
-                    return res
-                }
-                await sleep(10)
+        while (+Date.now() < endTime) {
+            const idx = this.receivedData.indexOf(ending) + ending.length
+            if (idx >= ending.length) {
+                const res = this.receivedData.substring(0, idx)
+                this.receivedData = this.receivedData.substring(idx)
+                return res
             }
-        } finally {
-            this.receiveCallback = prevRecvCbk
+            await sleep(10)
         }
         throw new Error('Timeout reached before finding the ending sequence')
+    }
+
+    async enterRawRepl(soft_reboot=false, emit=false) {
+        const release = await this.startTransaction(emit)
+        try {
+            await this.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
+            await this.flushInput()
+            await this.write('\r\x01')       // Ctrl-A: enter raw REPL
+            await this.readUntil('raw REPL; CTRL-B to exit\r\n')
+
+            if (soft_reboot) {
+                await this.write('\x04\x03') // soft reboot in raw mode
+                await this.readUntil('raw REPL; CTRL-B to exit\r\n')
+            }
+
+            return async () => {
+                try {
+                    await this.write('\x02')     // Ctrl-B: exit raw REPL
+                    await this.readUntil('>\r\n')
+                    const banner = await this.readUntil('>>> ')
+                    //term.clear()
+                    term.write(banner)
+                } finally {
+                    release()
+                }
+            }
+        } catch (err) {
+            release()
+            report("Cannot enter RAW mode", err)
+            throw err
+        }
     }
 }
 
@@ -192,12 +246,14 @@ class WebSerial extends Transport {
 const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
 const NUS_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'
 const NUS_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
+const NUS_TX_LIMIT = 241
 
 const ADA_NUS_SERVICE = 'adaf0001-4369-7263-7569-74507974686e'
 const ADA_NUS_TX = 'adaf0002-4369-7263-7569-74507974686e'
 const ADA_NUS_RX = 'adaf0003-4369-7263-7569-74507974686e'
 const ADA_VER = 'adaf0100-4669-6c65-5472-616e73666572'
 const ADA_FT = 'adaf0200-4669-6c65-5472-616e73666572'
+const ADA_NUS_TX_LIMIT = 20
 
 class WebBluetooth extends Transport {
     constructor() {
@@ -207,6 +263,7 @@ class WebBluetooth extends Transport {
         this.service = null
         this.rx = null
         this.tx = null
+        this.tx_limit = 20
         if (typeof navigator.bluetooth === 'undefined') {
             throw new Error('WebBluetooth not available')
         }
@@ -233,46 +290,67 @@ class WebBluetooth extends Transport {
 
     async connect() {
         this.server = await this.device.gatt.connect()
+        this.service = null
 
-        // Try to get the original NUS service first
-        try {
-            this.service = await this.server.getPrimaryService(NUS_SERVICE)
-            this.rx = await this.service.getCharacteristic(NUS_RX)
-            this.tx = await this.service.getCharacteristic(NUS_TX)
-        } catch (error) {
-            // Try also the Adafruit NUS service
-            this.service = await this.server.getPrimaryService(ADA_NUS_SERVICE)
-            this.rx = await this.service.getCharacteristic(ADA_NUS_RX)
-            this.tx = await this.service.getCharacteristic(ADA_NUS_TX)
+        const services = await this.server.getPrimaryServices()
+        for (let service of services) {
+            if (service.uuid === NUS_SERVICE) {
+                this.service = service
+                this.rx = await service.getCharacteristic(NUS_RX)
+                this.tx = await service.getCharacteristic(NUS_TX)
+                this.tx_limit = NUS_TX_LIMIT
+            } else if (service.uuid === ADA_NUS_SERVICE) {
+                this.service = service
+                this.rx = await service.getCharacteristic(ADA_NUS_RX)
+                this.tx = await service.getCharacteristic(ADA_NUS_TX)
+                this.tx_limit = ADA_NUS_TX_LIMIT
 
-            // Check version
-            const ada_fts = await this.server.getPrimaryService(0xfebb)
-            const versionChar = await ada_fts.getCharacteristic(ADA_VER)
-            const version = (await versionChar.readValue()).getUint32(0, true)
-            if (version != 4) {
-                throw new Error(`Unsupported version: ${version}`)
+                // Check version
+                const ada_fts = await this.server.getPrimaryService(0xfebb)
+                const versionChar = await ada_fts.getCharacteristic(ADA_VER)
+                const version = (await versionChar.readValue()).getUint32(0, true)
+                if (version != 4) {
+                    throw new Error(`Unsupported version: ${version}`)
+                }
+
+                // Register file transfer char
+                const ft = await ada_fts.getCharacteristic(ADA_FT)
+                //ft.removeEventListener('characteristicvaluechanged', () => {})
+                ft.addEventListener('characteristicvaluechanged', () => {})
+                await ft.startNotifications()
             }
 
-            // Register file transfer char
-            const ft = await ada_fts.getCharacteristic(ADA_FT)
-            //ft.removeEventListener('characteristicvaluechanged', () => {})
-            ft.addEventListener('characteristicvaluechanged', () => {})
-            await ft.startNotifications()
+            if (this.service) {
+                await this.rx.startNotifications()
+                this.rx.addEventListener('characteristicvaluechanged', this.handleNotifications.bind(this))
+                return    
+            }
         }
 
-        await this.rx.startNotifications()
-        this.rx.addEventListener('characteristicvaluechanged', this.handleNotifications.bind(this))
+        throw new Error('No compatible NUS service found')
     }
 
     async disconnect() {
         if (this.device && this.device.gatt.connected) {
-            await this.device.gatt.disconnect()
+            await this.device.gatt.disconnect();
         }
     }
 
     async write(data) {
         const encoder = new TextEncoder()
-        await this.tx.writeValue(encoder.encode(data))
+        const value = encoder.encode(data)
+        try {
+            let offset = 0
+            while (offset < value.byteLength) {
+                const chunk = value.slice(offset, offset + this.tx_limit)
+                //await this.tx.writeValueWithoutResponse(chunk)
+                await this.tx.writeValue(chunk)
+                await sleep(5)
+                offset += this.tx_limit
+            }
+        } catch (err) {
+            report("BLE write error", err)
+        }
     }
 
     handleNotifications(event) {
@@ -324,7 +402,7 @@ class WebSocketREPL extends Transport {
             }
         }
 
-        const release = await this.mutex.acquire()
+        const release = await this.startTransaction()
         try {
             await this.readUntil('Password:')
             await this.write(this.pass + '\n')
@@ -381,7 +459,7 @@ async function disconnect() {
     if (port) {
         try {
             await port.disconnect()
-        } catch (error) {}
+        } catch (err) {}
         port = null
     }
 
@@ -464,13 +542,15 @@ async function connect(type) {
     try {
         await port.requestAccess()
     } catch {
+        port = null
         return
     }
 
     try {
         await port.connect()
-    } catch(error) {
-        toastr.error(error, 'Cannot open port')
+    } catch (err) {
+        port = null
+        report('Cannot connect', err)
         return
     }
 
@@ -499,8 +579,8 @@ async function connect(type) {
             } else if (files.filter(x => x.name === 'code.py').length) {
                 await readFileIntoEditor('code.py')
             }
-        } catch(error) {
-            toastr.error('Error reading board info', error)
+        } catch (err) {
+            report('Error reading board info', err)
         }
     }
 }
@@ -577,36 +657,7 @@ for d in '${path}'.split('/'):
 `)
 }
 
-async function enterRawRepl(soft_reboot = false) {
-    const release = await port.mutex.acquire()
-    try {
-        await port.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
-        await port.flushInput()
-        await port.write('\r\x01')       // Ctrl-A: enter raw REPL
-        await port.readUntil('raw REPL; CTRL-B to exit\r\n')
-
-        if (soft_reboot) {
-            await port.write('\x04\x03') // soft reboot in raw mode
-            await port.readUntil('raw REPL; CTRL-B to exit\r\n')
-        }
-
-        async function exitRawRepl() {
-            await port.write('\x02')     // Ctrl-B: exit raw REPL
-            await port.readUntil('>\r\n')
-            const banner = await port.readUntil('>>> ')
-            //term.clear()
-            term.write(banner)
-            release()
-        }
-        return exitRawRepl
-    } catch (error) {
-        toastr.error("Cannot enter RAW mode", error)
-        release()
-        throw error
-    }
-}
-
-async function execCmd(cmd, emit = false) {
+async function execCmd(cmd) {
     await port.readUntil('>')
     await port.write(cmd.trim())
     await port.write('\x04')         // Ctrl-D: execute
@@ -614,8 +665,8 @@ async function execCmd(cmd, emit = false) {
     if (status != 'OK') {
         throw new Error('Cannot exec command:' + status)
     }
-    const res = (await port.readUntil('\x04', 5000, emit)).slice(0, -1)
-    const err = (await port.readUntil('\x04', 5000, emit)).slice(0, -1)
+    const res = (await port.readUntil('\x04')).slice(0, -1)
+    const err = (await port.readUntil('\x04')).slice(0, -1)
 
     if (err.length) {
         throw new Error('Cannot exec command: ' + err)
@@ -624,12 +675,12 @@ async function execCmd(cmd, emit = false) {
     return res
 }
 
-async function execRawRepl(cmd, emit = false, soft_reboot = false) {
-    const exitRaw = await enterRawRepl(soft_reboot)
+async function execRawRepl(cmd, soft_reboot=false, emit=false) {
+    const exitRaw = await port.enterRawRepl(soft_reboot, emit)
     try {
-        return await execCmd(cmd, emit)
-    } catch (error) {
-        toastr.error("Execution failed", error)
+        return await execCmd(cmd)
+    } catch (err) {
+        report("Execution failed", err)
     } finally {
         await exitRaw()
     }
@@ -663,7 +714,7 @@ def walk(p):
    walk(fn+'/')
 walk('')
 `)
-    } catch (error) {
+    } catch (err) {
         files = await execRawRepl(`
 import os
 for n in os.listdir():
@@ -809,7 +860,7 @@ with open('${fn}','rb') as f:
 }
 
 async function writeFile(fn, data, chunk_size=128) {
-    const exitRaw = await enterRawRepl()
+    const exitRaw = await port.enterRawRepl()
     try {
         await execCmd(`
 import os
@@ -886,7 +937,7 @@ if ms:
         content = await readFile(fn)
         try {
             content = (new TextDecoder('utf-8', { fatal: true })).decode(content)
-        } catch (error) {
+        } catch (err) {
             isBinary = true
         }
     }
@@ -912,12 +963,12 @@ if ms:
             editor.setOption('mode', { name: 'application/ld+json' })
 
             if (QID('expand-minify-json').checked) {
-            try {
-                // Prettify JSON
-                content = JSON.stringify(JSON.parse(content), null, 2)
-            } catch (error) {
-                toastr.warning('JSON is malformed')
-            }
+                try {
+                    // Prettify JSON
+                    content = JSON.stringify(JSON.parse(content), null, 2)
+                } catch (err) {
+                    toastr.warning('JSON is malformed')
+                }
             }
         } else if (fn.endsWith('.pem')) {
             editor.setOption('mode', 'pem')
@@ -940,11 +991,11 @@ async function saveCurrentFile() {
     let content = editor.getValue()
     if (editorFn.endsWith(".json") && QID('expand-minify-json').checked) {
         try {
-        // Minify JSON
-        content = JSON.stringify(JSON.parse(content))
+            // Minify JSON
+            content = JSON.stringify(JSON.parse(content))
         } catch (error) {
-        toastr.error('JSON is malformed')
-        return
+            toastr.error('JSON is malformed')
+            return
         }
     }
     await writeFile(editorFn, content)
@@ -953,7 +1004,7 @@ async function saveCurrentFile() {
 async function reboot(mode = "hard") {
     if (!port) return;
 
-    const release = await port.mutex.acquire()
+    const release = await port.startTransaction()
     try {
         if (mode === "soft") {
             await port.write('\r\x03\x03\x04')
@@ -979,7 +1030,7 @@ async function runCurrentFile() {
 
     const emit = true
     const soft_reboot = false
-    await execRawRepl(editor.getValue(), emit, soft_reboot)
+    await execRawRepl(editor.getValue(), soft_reboot, emit)
 }
 
 /*
@@ -1087,8 +1138,8 @@ pj({'mpy':mpy,'path':sys.path})
             }
         }
         toastr.success(`Installed ${pkg}@${pkg_info.version} to ${lib_path}`)
-    } catch (error) {
-        toastr.error(error, 'Installing failed')
+    } catch (err) {
+        report('Installing failed', err)
     }
 }
 
@@ -1112,7 +1163,7 @@ function toggleFullScreen(elementId) {
     const element = QID(elementId)
     if (!document.fullscreenElement) {
         element.requestFullscreen().catch(err => {
-            toastr.error('Error enabling full-screen mode', `${err.message} (${err.name})`)
+            report('Error enabling full-screen mode', err)
         })
     } else {
         document.exitFullscreen()
