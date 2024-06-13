@@ -189,9 +189,13 @@ class WebSerial extends Transport {
  * Bluetooth
  */
 
-const NUS_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
-const NUS_TX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
-const NUS_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
+const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
+const NUS_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'
+const NUS_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
+
+const ADA_NUS_SERVICE = 'adaf0001-4369-7263-7569-74507974686e'
+const ADA_NUS_TX = 'adaf0002-4369-7263-7569-74507974686e'
+const ADA_NUS_RX = 'adaf0003-4369-7263-7569-74507974686e'
 
 class WebBluetooth extends Transport {
     constructor() {
@@ -200,6 +204,7 @@ class WebBluetooth extends Transport {
         this.server = null
         this.service = null
         this.rx = null
+        this.tx = null
         if (typeof navigator.bluetooth === 'undefined') {
             throw new Error('WebBluetooth not available')
         }
@@ -209,18 +214,29 @@ class WebBluetooth extends Transport {
         this.device = await navigator.bluetooth.requestDevice({
             filters: [
                 { services: [NUS_SERVICE] },
-                { namePrefix: "mpy-" },
+                { namePrefix: 'mpy-' },
+                { services: [ 0xfebb ] },
+                { namePrefix: 'CIRCUITPY' },
             ],
             //acceptAllDevices: true,
-            optionalServices: [NUS_SERVICE],
+            optionalServices: [NUS_SERVICE, ADA_NUS_SERVICE, 0xfebb],
         })
     }
 
     async connect() {
         this.server = await this.device.gatt.connect()
-        this.service = await this.server.getPrimaryService(NUS_SERVICE)
-        this.rx = await this.service.getCharacteristic(NUS_RX)
-        this.tx = await this.service.getCharacteristic(NUS_TX)
+
+        // Try to get the original NUS service first
+        try {
+            this.service = await this.server.getPrimaryService(NUS_SERVICE)
+            this.rx = await this.service.getCharacteristic(NUS_RX)
+            this.tx = await this.service.getCharacteristic(NUS_TX)
+        } catch (error) {
+            // Try also the Adafruit NUS service
+            this.service = await this.server.getPrimaryService(ADA_NUS_SERVICE)
+            this.rx = await this.service.getCharacteristic(ADA_NUS_RX)
+            this.tx = await this.service.getCharacteristic(ADA_NUS_TX)
+        }
 
         await this.rx.startNotifications()
         this.rx.addEventListener('characteristicvaluechanged', this.handleNotifications.bind(this))
