@@ -48,6 +48,8 @@
         a {
             color: white;
             font-weight: 600;
+            text-decoration-thickness: 1px;
+            text-decoration-style: dashed;
         }
 
         ::-webkit-scrollbar {
@@ -91,7 +93,7 @@
         .fa-bug { color: #ffcc4d; }
         .fa-download { color: #87c244; }
         .fa-circle-play { color: #3b88c3; }
-        .fa-info { color: #3b88c3; }
+        .fa-circle-info { color: #3b88c3; }
         .fa-file { color: #3b88c3; }
         .fa-folder { color: #ffcc4d; }
         .fa-cube { color: #ba9066; }
@@ -400,10 +402,10 @@
         <div id="overlay" onclick="autoHideSideMenu()"></div>
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
-                <a class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder"></i></a>
-                <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube"></i></a>
-                <a class="tab" data-target="menu-settings"><i class="fa-solid fa-gear"></i></a>
-                <a class="tab" data-target="menu-about"><i class="fa-solid fa-info"></i></a>
+                <a class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder fa-fw"></i></a>
+                <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cube fa-fw"></i></a>
+                <a class="tab" data-target="menu-settings"><i class="fa-solid fa-gear fa-fw"></i></a>
+                <a class="tab" data-target="menu-about"><i class="fa-solid fa-circle-info fa-fw"></i></a>
             </div>
 
             <div id="menu-files" class="tab-content active">
@@ -549,7 +551,7 @@
 
     <script>
 
-        const VIPER_IDE_VERSION = "0.2.1"
+        const VIPER_IDE_VERSION = "0.2.2"
 
         /*
          * Helpers
@@ -1535,13 +1537,13 @@ if ms:
 
             pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
             pkgList.insertAdjacentHTML('beforeend', `<div>
-                <span><i class="fa-solid fa-cube"></i> viper-tools</span>
+                <span><i class="fa-solid fa-cube fa-fw"></i> viper-tools</span>
                 <span class="menu-action" onclick="installReplTools()">0.1.0 <i class="fa-regular fa-circle-down"></i></span>
             </div>`)
             pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
             for (const pkg of mipindex.packages) {
                 pkgList.insertAdjacentHTML('beforeend', `<div>
-                    <span><i class="fa-solid fa-cube"></i> ${pkg.name}</span>
+                    <span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
                     <span class="menu-action" onclick="installPkg('${index_url}', '${pkg.name}')">${pkg.version} <i class="fa-regular fa-circle-down"></i></span>
                 </div>`)
             }
