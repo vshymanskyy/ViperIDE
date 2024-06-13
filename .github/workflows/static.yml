@@ -34,10 +34,9 @@ jobs:
       - name: Build
         run: |
           mkdir build
-          curl --data-urlencode input@ViperIDE.html -X POST https://www.toptal.com/developers/html-minifier/api/raw -o ./build/index.html
-          cp app.css app.js webrepl_content.js favicon.png appicon.png ./build/
+          python3 build.py ./build/index.html
+          cp webrepl_content.js favicon.png appicon.png ./build/
           jq -c . < manifest.json > ./build/manifest.json
-          python3 ./lang/_combine.py ./build/translations.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

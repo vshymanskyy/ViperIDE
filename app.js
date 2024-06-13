@@ -1308,7 +1308,7 @@ function applyTranslation() {
 
     let lang_res
     try {
-        lang_res = await (await fetch('translations.json')).json()
+        lang_res = require("translations.json")
     } catch (err) {
         lang_res = {}
     }
