@@ -221,6 +221,12 @@ class WebBluetooth extends Transport {
             //acceptAllDevices: true,
             optionalServices: [NUS_SERVICE, ADA_NUS_SERVICE, 0xfebb],
         })
+
+        this.device.addEventListener("gattserverdisconnected", () => {
+            if (this.disconnectCallback) {
+                this.disconnectCallback()
+            }
+        })
     }
 
     async connect() {
@@ -956,7 +962,7 @@ async function runCurrentFile() {
     term.write('\r\n')
 
     const emit = true
-    const soft_reboot = true
+    const soft_reboot = false
     await execRawRepl(editor.getValue(), emit, soft_reboot)
 }
 
