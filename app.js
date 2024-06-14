@@ -1,5 +1,5 @@
 
-const VIPER_IDE_VERSION = "0.2.3"
+const VIPER_IDE_VERSION = "0.2.4"
 
 /*
  * Helpers
@@ -180,7 +180,7 @@ class Transport {
                     await this.readUntil('>\r\n')
                     const banner = await this.readUntil('>>> ')
                     //term.clear()
-                    term.write(banner)
+                    //term.write(banner)
                 } finally {
                     release()
                 }
@@ -458,7 +458,7 @@ let editor, term, port
 let editorFn = ""
 let isInRunMode = false
 
-async function disconnect() {
+async function disconnectDevice() {
     if (port) {
         try {
             await port.disconnect()
@@ -471,7 +471,7 @@ async function disconnect() {
     }
 }
 
-async function connect(type) {
+async function connectDevice(type) {
     if (type === 'ws') {
         let url
         if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
@@ -496,7 +496,7 @@ async function connect(type) {
             toastr.error('Password is too short')
             return
         }
-        await disconnect()
+        await disconnectDevice()
         port = new WebSocketREPL(url, pass)
     } else if (type === 'ble') {
         if (iOS) {
@@ -513,7 +513,7 @@ async function connect(type) {
             return;
         }
 
-        await disconnect()
+        await disconnectDevice()
         port = new WebBluetooth()
     } else if (type === 'usb') {
         if (iOS) {
@@ -530,7 +530,7 @@ async function connect(type) {
             return;
         }
 
-        await disconnect()
+        await disconnectDevice()
         if (typeof navigator.serial === 'undefined' || QID('force-serial-poly').checked) {
             console.log('Using WebSerial polyfill')
             port = new WebSerial(webSerialPolyfill)
@@ -565,7 +565,7 @@ async function connect(type) {
         QID(`btn-conn-${type}`).classList.remove('connected')
         toastr.warning('Device disconnected')
         port = null
-        //connect(type)
+        //connectDevice(type)
     })
 
     toastr.success('Device connected')
@@ -582,6 +582,8 @@ async function connect(type) {
             } else if (files.filter(x => x.name === 'code.py').length) {
                 await readFileIntoEditor('code.py')
             }
+            // Print banner
+            await port.write('\x02')
         } catch (err) {
             report('Error reading board info', err)
         }
@@ -1059,6 +1061,7 @@ async function runCurrentFile() {
         isInRunMode = false
         port.emit = false
         await exitRaw()
+        term.write('\r\n>>> ')
     }
 }
 
@@ -1554,7 +1557,7 @@ print()
 
     if (typeof webrepl_url !== 'undefined') {
         await sleep(500)
-        await connect('ws')
+        await connectDevice('ws')
     }
 })();
 

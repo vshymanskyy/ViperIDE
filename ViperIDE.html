@@ -27,9 +27,9 @@
             <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
         </div>
         <div>
-            <button class="button" title="Connect WebREPL"       onclick="connect('ws')"  id="btn-conn-ws"><i class="fa-solid fa-circle-nodes"></i></button>
-            <button class="button" title="Connect Bluetooth"     onclick="connect('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
-            <button class="button" title="Connect USB/Serial"    onclick="connect('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+            <button class="button" title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws"><i class="fa-solid fa-circle-nodes"></i></button>
+            <button class="button" title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+            <button class="button" title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
             <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
         </div>
     </div>
@@ -47,7 +47,7 @@
                 <div id="menu-file-title">File Manager</div>
                 <div id="menu-file-tree">
                     <div><span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span></div>
-                    <div onclick="connect('usb')">
+                    <div onclick="connectDevice('usb')">
                         <a href="#" class="name">&emsp;🤔 <span id="no-files">no files</span></a>
                         <a href="#" class="menu-action"><i class="fa-solid fa-plug"></i></a>
                     </div>
