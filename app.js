@@ -52,6 +52,8 @@ class Transport {
         this.receivedData = ''
         this.receiveCallback = null
         this.disconnectCallback = null
+        this.writeChunk = 128
+        this.emit = false
     }
 
     async requestAccess() {
@@ -67,7 +69,19 @@ class Transport {
     }
 
     async write(data) {
-        throw new Error("Method 'write()' must be implemented.")
+        const encoder = new TextEncoder()
+        const value = encoder.encode(data)
+        try {
+            let offset = 0
+            while (offset < value.byteLength) {
+                const chunk = value.slice(offset, offset + this.writeChunk)
+                await this.writeBytes(chunk)
+                await sleep(5)
+                offset += this.writeChunk
+            }
+        } catch (err) {
+            report("Write error", err)
+        }
     }
 
     onReceive(callback) {
@@ -82,14 +96,14 @@ class Transport {
      * Transaction API
      */
 
-    async startTransaction(emit=false) {
+    async startTransaction() {
         const release = await this.mutex.acquire()
         const prevRecvCbk = this.receiveCallback
         this.inTransaction = true
         this.receivedData = ''
         this.receiveCallback = (data) => {
             this.receivedData += data
-            if (emit) { prevRecvCbk(data) }
+            if (this.emit) { prevRecvCbk(data) }
         }
 
         return () => {
@@ -119,7 +133,7 @@ class Transport {
             throw new Error('Not in transaction')
         }
         const endTime = +Date.now() + timeout
-        while (+Date.now() < endTime) {
+        while (timeout <= 0 || (+Date.now() < endTime)) {
             if (this.receivedData.length >= n) {
                 const res = this.receivedData.substring(0, n)
                 this.receivedData = this.receivedData.substring(n)
@@ -135,7 +149,7 @@ class Transport {
             throw new Error('Not in transaction')
         }
         const endTime = +Date.now() + timeout
-        while (+Date.now() < endTime) {
+        while (timeout <= 0 || (+Date.now() < endTime)) {
             const idx = this.receivedData.indexOf(ending) + ending.length
             if (idx >= ending.length) {
                 const res = this.receivedData.substring(0, idx)
@@ -147,8 +161,8 @@ class Transport {
         throw new Error('Timeout reached before finding the ending sequence')
     }
 
-    async enterRawRepl(soft_reboot=false, emit=false) {
-        const release = await this.startTransaction(emit)
+    async enterRawRepl(soft_reboot=false) {
+        const release = await this.startTransaction()
         try {
             await this.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
             await this.flushInput()
@@ -217,9 +231,8 @@ class WebSerial extends Transport {
         await this.port.close()
     }
 
-    async write(data) {
-        const encoder = new TextEncoder()
-        await this.writer.write(encoder.encode(data))
+    async writeBytes(data) {
+        await this.writer.write(data)
     }
 
     async listen() {
@@ -337,21 +350,9 @@ class WebBluetooth extends Transport {
         }
     }
 
-    async write(data) {
-        const encoder = new TextEncoder()
-        const value = encoder.encode(data)
-        try {
-            let offset = 0
-            while (offset < value.byteLength) {
-                const chunk = value.slice(offset, offset + this.tx_limit)
-                //await this.tx.writeValueWithoutResponse(chunk)
-                await this.tx.writeValue(chunk)
-                await sleep(5)
-                offset += this.tx_limit
-            }
-        } catch (err) {
-            report("BLE write error", err)
-        }
+    async writeBytes(data) {
+        //await this.tx.writeValueWithoutResponse(data)
+        await this.tx.writeValue(data)
     }
 
     handleNotifications(event) {
@@ -427,7 +428,7 @@ class WebSocketREPL extends Transport {
         }
     }
 
-    async write(data) {
+    async writeBytes(data) {
         if (this.socket) {
             this.socket.send(data)
         }
@@ -455,6 +456,7 @@ function sizeFmt(size, places=1) {
 
 let editor, term, port
 let editorFn = ""
+let isInRunMode = false
 
 async function disconnect() {
     if (port) {
@@ -658,7 +660,7 @@ for d in '${path}'.split('/'):
 `)
 }
 
-async function execCmd(cmd) {
+async function execCmd(cmd, timeout=5000, emit=false) {
     await port.readUntil('>')
     await port.write(cmd.trim())
     await port.write('\x04')         // Ctrl-D: execute
@@ -666,8 +668,9 @@ async function execCmd(cmd) {
     if (status != 'OK') {
         throw new Error('Cannot exec command:' + status)
     }
-    const res = (await port.readUntil('\x04')).slice(0, -1)
-    const err = (await port.readUntil('\x04')).slice(0, -1)
+    port.emit = emit
+    const res = (await port.readUntil('\x04', timeout)).slice(0, -1)
+    const err = (await port.readUntil('\x04', timeout)).slice(0, -1)
 
     if (err.length) {
         throw new Error('Cannot exec command: ' + err)
@@ -676,8 +679,8 @@ async function execCmd(cmd) {
     return res
 }
 
-async function execRawRepl(cmd, soft_reboot=false, emit=false) {
-    const exitRaw = await port.enterRawRepl(soft_reboot, emit)
+async function execRawRepl(cmd, soft_reboot=false) {
+    const exitRaw = await port.enterRawRepl(soft_reboot)
     try {
         return await execCmd(cmd)
     } catch (err) {
@@ -1022,6 +1025,11 @@ async function reboot(mode = "hard") {
 async function runCurrentFile() {
     if (!port) return;
 
+    if (isInRunMode) {
+        await port.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
+        return
+    }
+
     if (!editorFn.endsWith(".py")) {
         toastr.error(`${editorFn} file is not executable`)
         return
@@ -1029,9 +1037,29 @@ async function runCurrentFile() {
 
     term.write('\r\n')
 
-    const emit = true
+    const btnRunIconClass = QID("btn-run-icon").classList
+
     const soft_reboot = false
-    await execRawRepl(editor.getValue(), soft_reboot, emit)
+    const timeout = -1
+    const exitRaw = await port.enterRawRepl(soft_reboot)
+    try {
+        btnRunIconClass.remove('fa-circle-play')
+        btnRunIconClass.add('fa-circle-stop')
+        isInRunMode = true
+        const emit = true
+        await execCmd(editor.getValue(), timeout, emit)
+    } catch (err) {
+        if (err.includes("KeyboardInterrupt")) {
+        } else {
+            report("Execution failed", err)
+        }
+    } finally {
+        btnRunIconClass.remove('fa-circle-stop')
+        btnRunIconClass.add('fa-circle-play')
+        isInRunMode = false
+        port.emit = false
+        await exitRaw()
+    }
 }
 
 /*
@@ -1491,11 +1519,16 @@ print()
     })
     term.open(QID('xterm'))
     term.onData(async (data) => {
-        const release = await port.mutex.acquire()
-        try {
+        if (isInRunMode) {
+            // Allow injecting input in run mode
             await port.write(data)
-        } finally {
-            release()
+        } else {
+            const release = await port.mutex.acquire()
+            try {
+                await port.write(data)
+            } finally {
+                release()
+            }
         }
     })
 
