@@ -33,6 +33,7 @@ A MicroPython IDE for Web and Mobile
   - Run file without saving
 - **File Manager**
   - Add, remove files and directories
+  - Create multiple levels of files/directories at once (use multiple "/" in the name)
   - Root FS stats display
 - **Package Manager**
   - `micropython-lib` index
