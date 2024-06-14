@@ -33,7 +33,7 @@ A MicroPython IDE for Web and Mobile
   - Run file without saving
 - **File Manager**
   - Add, remove files and directories
-  - Create multiple levels of files/directories at once (use multiple "/" in the name)
+  - Create multiple levels of directories at once (use multiple "/" in the name)
   - Root FS stats display
 - **Package Manager**
   - `micropython-lib` index
@@ -54,13 +54,12 @@ A MicroPython IDE for Web and Mobile
 
 [ViperIDE Online ](https://viper-ide.org)  
 [Documentation](./docs/)  
-[Discussion](https://github.com/orgs/micropython/discussions/15219)  
-[CodeMirror](https://codemirror.net)
-[Xterm.js](https://xtermjs.org)
+[Discussion](https://github.com/orgs/micropython/discussions/15219)   
+[CodeMirror](https://codemirror.net), [Xterm.js](https://xtermjs.org)
 
 ## Limitations
 
-- Older MicroPython versions may or may not work. Keep your MicroPyton up to date.
+- Older MicroPython versions may or may not work. Keep your MicroPython up to date.
 - Some USB devices require drivers installation.
 - Some boards are not detected by Android via USB OTG. In such cases, only `BLE` or `WebREPL` connection is possible.
 - On iOS, `WebBluetooth` and `WebUSB` are not available. Only `WebREPL` works.
