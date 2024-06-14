@@ -1,5 +1,5 @@
 
-const VIPER_IDE_VERSION = "0.2.2"
+const VIPER_IDE_VERSION = "0.2.3"
 
 /*
  * Helpers
@@ -94,6 +94,7 @@ class Transport {
 
         return () => {
             this.receiveCallback = prevRecvCbk
+            prevRecvCbk(this.receivedData)
             this.receivedData = null
             this.inTransaction = false
             release()
@@ -1427,6 +1428,8 @@ function applyTranslation() {
     editor.setValue(`
 # ViperIDE - MicroPython Web IDE
 
+import time
+
 colors = [
     "\\033[31m", "\\033[32m", "\\033[33m", "\\033[34m",
     "\\033[35m", "\\033[36m", "\\033[37m",
@@ -1439,9 +1442,14 @@ text = "  ${T('example.hello', 'Привіт')} MicroPython! 𓆙"
 print("=" * 32)
 for i, char in enumerate(text):
     color = colors[i % len(colors)]
-    print(f"{color}{char}", end="")
+    print(color + char, end="")
 print(reset)
 print("=" * 32)
+
+for i in range(10):
+    time.sleep(1)
+    print(i + 1, "", end="")
+print()
 `)
 
     const xtermTheme = {
