@@ -103,12 +103,12 @@ class Transport {
         this.receivedData = ''
         this.receiveCallback = (data) => {
             this.receivedData += data
-            if (this.emit) { prevRecvCbk(data) }
+            if (this.emit && prevRecvCbk) { prevRecvCbk(data) }
         }
 
         return () => {
             this.receiveCallback = prevRecvCbk
-            prevRecvCbk(this.receivedData)
+            if (prevRecvCbk) { prevRecvCbk(this.receivedData) }
             this.receivedData = null
             this.inTransaction = false
             release()
@@ -428,7 +428,7 @@ class WebSocketREPL extends Transport {
         }
     }
 
-    async writeBytes(data) {
+    async write(data) {
         if (this.socket) {
             this.socket.send(data)
         }
