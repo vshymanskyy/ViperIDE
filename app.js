@@ -428,9 +428,20 @@ class WebSocketREPL extends Transport {
         }
     }
 
-    async write(data) {
-        if (this.socket) {
-            this.socket.send(data)
+    async write(value) {
+        if (!this.socket) { return; }
+        try {
+            let offset = 0
+            while (offset < value.length) {
+                const chunk = value.slice(offset, offset + this.writeChunk)
+                this.socket.send(chunk)
+                offset += this.writeChunk
+                if (offset < value.length) {
+                    await sleep(150)
+                }
+            }
+        } catch (err) {
+            report("Write error", err)
         }
     }
 }
@@ -671,6 +682,9 @@ async function execCmd(cmd, timeout=5000, emit=false) {
         throw new Error('Cannot exec command:' + status)
     }
     port.emit = emit
+    if (emit) {
+        term.write(port.receivedData)
+    }
     const res = (await port.readUntil('\x04', timeout)).slice(0, -1)
     const err = (await port.readUntil('\x04', timeout)).slice(0, -1)
 
