@@ -1111,13 +1111,13 @@ async function fetchPkgList(index_url) {
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div>
         <span><i class="fa-solid fa-cube fa-fw"></i> viper-tools</span>
-        <span class="menu-action" onclick="installReplTools()">0.1.0 <i class="fa-regular fa-circle-down"></i></span>
+        <a href="#" class="menu-action" onclick="installReplTools()">0.1.0 <i class="fa-regular fa-circle-down"></i></a>
     </div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
     for (const pkg of mipindex.packages) {
         pkgList.insertAdjacentHTML('beforeend', `<div>
             <span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
-            <span class="menu-action" onclick="installPkg('${index_url}', '${pkg.name}')">${pkg.version} <i class="fa-regular fa-circle-down"></i></span>
+            <a href="#" class="menu-action" onclick="installPkg('${index_url}', '${pkg.name}')">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
         </div>`)
     }
 }
