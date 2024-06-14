@@ -49,3 +49,7 @@ A MicroPython IDE for Web and Mobile
 > [!TIP]
 > `mpremote` is still a great tool for automation. Learn to use it!
 
+## Limitations
+
+- Some boards are not detected by Android via USB OTG (lack of drivers?). In such cases, only `BLE` or `WebREPL` connection is possible.
+- On iOS, `WebBluetooth` and `WebUSB` are not available. Only `WebREPL` works.
