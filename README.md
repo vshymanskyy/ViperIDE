@@ -25,7 +25,7 @@ A MicroPython IDE for Web and Mobile
 ## Features
 
 - **File Editor**
-  - Syntax highlighting for `.py`, `.json`, `.pem` (based on `CodeMirror`)
+  - Syntax highlighting for `.py`, `.json`, `.pem`
   - Auto expand/minify of `.json` files
   - Viewer mode for `Markdown`
   - `Hex` viewer for binary files
@@ -37,7 +37,7 @@ A MicroPython IDE for Web and Mobile
 - **Package Manager**
   - `micropython-lib` index
 - **Terminal / REPL**
-  - ANSI escape sequences support (based on `xterm.js`)
+  - VT100 (ANSI escape sequences) support
   - Snippet support - *WIP*
 - Improved UX
   - Progressive Web App
@@ -54,6 +54,8 @@ A MicroPython IDE for Web and Mobile
 [ViperIDE Online ](https://viper-ide.org)  
 [Documentation](./docs/)  
 [Discussion](https://github.com/orgs/micropython/discussions/15219)  
+[CodeMirror](https://codemirror.net)
+[Xterm.js](https://xtermjs.org)
 
 ## Limitations
 
