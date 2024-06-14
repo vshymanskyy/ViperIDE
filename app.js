@@ -730,15 +730,19 @@ for n in os.listdir():
 `)
     }
 
-    let stats = await execRawRepl(`
+    let [fs_used, fs_free, fs_size] = [0,0,0];
+    try {
+        let stats = await execRawRepl(`
 import os
 s = os.statvfs("/")
 fs = s[1] * s[2]
 ff = s[3] * s[0]
 fu = fs - ff
 print('%s:%s:%s' % (fu, ff, fs))
-`)
-    const [fs_used, fs_free, fs_size] = stats.trim().split(':')
+`);
+        [fs_used, fs_free, fs_size] = stats.trim().split(':')
+    } catch (err) {
+    }
 
     // Build file tree
     let result = []
