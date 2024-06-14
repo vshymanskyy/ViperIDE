@@ -51,5 +51,7 @@ A MicroPython IDE for Web and Mobile
 
 ## Limitations
 
-- Some boards are not detected by Android via USB OTG (lack of drivers?). In such cases, only `BLE` or `WebREPL` connection is possible.
+- Older MicroPython versions may or may not work. Keep your MicroPyton up to date.
+- Some USB devices require drivers installation.
+- Some boards are not detected by Android via USB OTG. In such cases, only `BLE` or `WebREPL` connection is possible.
 - On iOS, `WebBluetooth` and `WebUSB` are not available. Only `WebREPL` works.
