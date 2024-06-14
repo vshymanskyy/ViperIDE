@@ -621,7 +621,7 @@ async function removeFile(path) {
     await execRawRepl(`
 import os
 try:
- os.unlink('${path}')
+ os.remove('${path}')
 except OSError as e:
  if e.args[0] == 39:
   raise Exception('Directory not empty')
@@ -884,7 +884,7 @@ def w(d):
         }
 
         await execCmd(`f.close()
-try: os.unlink('${fn}')
+try: os.remove('${fn}')
 except: pass
 os.rename('.viper.tmp','${fn}')
 `)
@@ -1093,10 +1093,11 @@ async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
     try {
         const sys = JSON.parse(await execRawRepl(`
 import sys,json
-pj=lambda x:print(json.dumps(x,separators=(',',':')))
 mpy=getattr(sys.implementation, '_mpy', 0) & 0xFF
-pj({'mpy':mpy,'path':sys.path})
+print(json.dumps({'mpy':mpy,'path':sys.path}))
 `))
+
+        if (!sys.mpy) { sys.mpy = "py" }
 
         // Find `lib` filder in sys.path
         const lib_path = sys.path.find(x => x.endsWith('/lib'))
@@ -1129,6 +1130,11 @@ pj({'mpy':mpy,'path':sys.path})
                 const file_rsp = await fetch(rewriteUrl(url))
                 const content = await file_rsp.arrayBuffer()
                 const target_file = `${lib_path}/${fn}`
+
+                // Ensure path exists
+                const [dirname, _] = splitPath(target_file)
+                await makePath(dirname)
+
                 await writeFile(target_file, content)
             }
         }
@@ -1446,6 +1452,7 @@ for i, char in enumerate(text):
 print(reset)
 print("=" * 32)
 
+# Count 1 to 10
 for i in range(10):
     time.sleep(1)
     print(i + 1, "", end="")
