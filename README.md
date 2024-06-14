@@ -49,6 +49,12 @@ A MicroPython IDE for Web and Mobile
 > [!TIP]
 > `mpremote` is still a great tool for automation. Learn to use it!
 
+## Links
+
+[ViperIDE Online ](https://viper-ide.org)  
+[Documentation](./docs/)  
+[Discussion](https://github.com/orgs/micropython/discussions/15219)  
+
 ## Limitations
 
 - Older MicroPython versions may or may not work. Keep your MicroPyton up to date.
