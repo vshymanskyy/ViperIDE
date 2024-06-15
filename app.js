@@ -1604,6 +1604,16 @@ async function checkForUpdates() {
     if (manifest.version !== VIPER_IDE_VERSION) {
         toastr.info(`New ViperIDE version ${manifest.version} is available`)
         QID('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:updateApp()">update</a>)`
+
+        // Automatically show about page
+        QS('a[data-target="menu-about"]').click()
+
+        if (window.innerWidth <= 768) {
+            fileTree.classList.add('show')
+            overlay.classList.add('show')
+        } else {
+            fileTree.classList.remove('hidden')
+        }
     }
 }
 
