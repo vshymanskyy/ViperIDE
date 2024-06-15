@@ -106,11 +106,16 @@ class Transport {
             if (this.emit && prevRecvCbk) { prevRecvCbk(data) }
         }
 
+        document.documentElement.style.setProperty('--connected-color', 'var(--connected-active)');
+
         return () => {
             this.receiveCallback = prevRecvCbk
             if (prevRecvCbk) { prevRecvCbk(this.receivedData) }
             this.receivedData = null
             this.inTransaction = false
+
+            document.documentElement.style.setProperty('--connected-color', 'var(--connected-passive)');
+
             release()
         }
     }
@@ -675,7 +680,7 @@ for d in '${path}'.split('/'):
 
 async function execCmd(cmd, timeout=5000, emit=false) {
     await port.readUntil('>')
-    await port.write(cmd.trim())
+    await port.write(cmd)
     await port.write('\x04')         // Ctrl-D: execute
     const status = await port.readExactly(2)
     if (status != 'OK') {

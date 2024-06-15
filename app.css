@@ -280,6 +280,12 @@ button {
     background: none;
 }
 
+:root {
+  --connected-passive: #87c244;
+  --connected-active: #ffcc4d;
+  --connected-color: var(--connected-passive);
+}
+
 .button {
     background: none;
     border: none;
@@ -289,7 +295,7 @@ button {
 }
 
 .button.connected {
-    color: #87c244;
+    color: var(--connected-color);
 }
 
 #menu-file-title, #menu-pkg-title, #menu-settings-title {
