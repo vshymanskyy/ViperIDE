@@ -1,5 +1,5 @@
 
-const VIPER_IDE_VERSION = "0.2.6"
+const VIPER_IDE_VERSION = "0.2.7"
 
 /*
  * Helpers
@@ -1643,8 +1643,6 @@ print()
         await connectDevice('ws')
     }
 
-    analytics.identify(getUserUID())
-
     const ua = new UAParser()
     const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
 
@@ -1659,7 +1657,7 @@ print()
     //console.log(geo)
     //console.log(ua.getResult())
 
-    analytics.track('Visited', {
+    analytics.identify(getUserUID(), {
         browser: ua.getBrowser().name,
         browser_version: ua.getBrowser().version,
         os: ua.getOS().name,
