@@ -1668,7 +1668,6 @@ print()
         os_version: ua.getOS().version,
         cpu: ua.getCPU().architecture,
         pwa: isRunningStandalone(),
-        referrer: document.referrer,
         screen: screen_res,
         orientation: getScreenOrientation(),
         dpr: parseFloat(dpr.toFixed(2)),
@@ -1682,7 +1681,10 @@ print()
         tz: tz,
     })
 
-    analytics.track('Visit')
+    analytics.track('Visit', {
+        url: window.location,
+        referrer: document.referrer,
+    })
 })();
 
 /*
