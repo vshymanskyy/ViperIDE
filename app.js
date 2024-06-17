@@ -1682,7 +1682,7 @@ print()
     })
 
     analytics.track('Visit', {
-        url: window.location,
+        url: window.location.href,
         referrer: document.referrer,
     })
 })();
