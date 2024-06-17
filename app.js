@@ -1685,6 +1685,8 @@ print()
 
     analytics.identify(userUID, {
         email: userUID + '@viper.ide',
+        version: VIPER_IDE_VERSION,
+        build: (new Date(window.VIPER_IDE_BUILD || 0)).toISOString(),
         browser: ua.getBrowser().name,
         browser_version: ua.getBrowser().version,
         os: ua.getOS().name,
@@ -1724,6 +1726,7 @@ async function checkForUpdates() {
     lastUpdateCheck = now
 
     QID('viper-ide-version').innerHTML = VIPER_IDE_VERSION
+    QID('viper-ide-build').innerText = "build " + (new Date(window.VIPER_IDE_BUILD)).toLocaleString()
 
     const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: "no-store"})
     manifest = await manifest_rsp.json()

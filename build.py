@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, json, glob
+import os, sys, json, glob, time
 
 html_path = 'ViperIDE.html'
 css_path = 'app.css'
@@ -30,6 +30,8 @@ combined = html_content.replace(
     '<script src="./app.js"></script>', f'<script>{js_content}</script>'
 ).replace(
     'require("translations.json")', lang_content
+).replace(
+    'window.VIPER_IDE_BUILD', str(int(time.time()))
 )
 
 # Write the combined content
