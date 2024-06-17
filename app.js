@@ -36,6 +36,11 @@ class Mutex {
 function report(title, err) {
     console.error(err, err.stack)
     toastr.error(err, title)
+    analytics.track('Error', {
+        "name": err.name,
+        "message": err.message,
+        "stack": err.stack,
+    })
 }
 
 /*
@@ -598,11 +603,18 @@ async function connectDevice(type) {
             } else if (files.filter(x => x.name === 'code.py').length) {
                 await readFileIntoEditor('code.py')
             }
+
+            const info = await readDeviceInfo()
             // Print banner. TODO: optimize
             await port.write('\x02')
+
+            info['connection'] = type
+            analytics.track('Device Connected', info)
         } catch (err) {
             report('Error reading board info', err)
         }
+    } else {
+        analytics.track('Device Connected')
     }
 }
 
@@ -919,6 +931,17 @@ os.rename('.viper.tmp','${fn}')
     } finally {
         await exitRaw()
     }
+}
+
+async function readDeviceInfo() {
+    const  rsp = await execRawRepl(`
+import sys,os
+u=os.uname()
+v=sys.version.split(';')[1].strip()
+print('|'.join([u.machine,u.release,u.sysname,v]))
+`)
+    const [machine, release, sysname, version] = rsp.trim().split('|')
+    return { machine, release, sysname, version }
 }
 
 async function readFileIntoEditor(fn) {
