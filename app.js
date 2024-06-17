@@ -1658,7 +1658,10 @@ print()
     //console.log(geo)
     //console.log(ua.getResult())
 
-    analytics.identify(getUserUID(), {
+    const userUID = getUserUID()
+
+    analytics.identify(userUID, {
+        email: userUID + '@viper.ide',
         browser: ua.getBrowser().name,
         browser_version: ua.getBrowser().version,
         os: ua.getOS().name,
@@ -1671,7 +1674,7 @@ print()
         dpr: parseFloat(dpr.toFixed(2)),
         dpi: QID('dpi-ruler').offsetHeight,
         lang: currentLang,
-        location: geo.latitude + "," + geo.longitude,
+        location: geo.latitude + ',' + geo.longitude,
         continent: geo.continent,
         country: geo.countryName,
         region: geo.regionName,
