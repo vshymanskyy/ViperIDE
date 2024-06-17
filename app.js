@@ -1647,6 +1647,7 @@ print()
     const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
 
     const dpr = window.devicePixelRatio
+    const screen_res = (Math.round(window.screen.width * dpr) + 'x' + Math.round(window.screen.height * dpr))
     let tz
     try {
         tz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -1665,7 +1666,7 @@ print()
         cpu: ua.getCPU().architecture,
         pwa: isRunningStandalone(),
         referrer: document.referrer,
-        screen: (parseInt(window.screen.width*dpr) + "x" + parseInt(window.screen.height*dpr)),
+        screen: screen_res,
         orientation: getScreenOrientation(),
         dpr: parseFloat(dpr.toFixed(2)),
         dpi: QID('dpi-ruler').offsetHeight,
