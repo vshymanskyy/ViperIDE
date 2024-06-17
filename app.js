@@ -1645,16 +1645,16 @@ print()
 
     analytics.identify(getUserUID())
 
+    const ua = new UAParser()
+    const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
+
     const dpr = window.devicePixelRatio
     let tz
     try {
         tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     } catch (e) {
-        tz = new Date().getTimezoneOffset()
+        tz = (new Date()).getTimezoneOffset()
     }
-
-    const ua = new UAParser()
-    const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
 
     //console.log(geo)
     //console.log(ua.getResult())
@@ -1669,12 +1669,14 @@ print()
         referrer: document.referrer,
         screen: (parseInt(window.screen.width*dpr) + "x" + parseInt(window.screen.height*dpr)),
         orientation: getScreenOrientation(),
+        dpr: dpr,
         lang: currentLang,
         location: geo.latitude + "," + geo.longitude,
         continent: geo.continent,
         country: geo.countryName,
         region: geo.regionName,
         city: geo.cityName,
+        tz: tz,
     })
 })();
 
