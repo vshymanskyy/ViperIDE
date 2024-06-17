@@ -1099,12 +1099,12 @@ async function runCurrentFile() {
         isInRunMode = true
         const emit = true
         await execCmd(editor.getValue(), timeout, emit)
-        analytics.track('Script Run')
     } catch (err) {
         if (err.message.includes("KeyboardInterrupt")) {
-            analytics.track('Script Run')
+            // Interrupted manually
         } else {
-            report("Execution failed", err)
+            toastr.error(err, "Script Failed")
+            return
         }
     } finally {
         btnRunIconClass.remove('fa-circle-stop')
@@ -1114,6 +1114,8 @@ async function runCurrentFile() {
         await exitRaw()
         term.write('\r\n>>> ')
     }
+    // Success
+    analytics.track('Script Run')
 }
 
 /*
