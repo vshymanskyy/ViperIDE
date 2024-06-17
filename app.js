@@ -1678,7 +1678,7 @@ print()
         tz: tz,
     })
 
-    analytics.track('Visited')
+    analytics.track('Visit')
 })();
 
 /*
