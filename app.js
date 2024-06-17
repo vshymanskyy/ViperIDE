@@ -1096,8 +1096,10 @@ async function runCurrentFile() {
         isInRunMode = true
         const emit = true
         await execCmd(editor.getValue(), timeout, emit)
+        analytics.track('Script Run')
     } catch (err) {
-        if (err.includes("KeyboardInterrupt")) {
+        if (err.message.includes("KeyboardInterrupt")) {
+            analytics.track('Script Run')
         } else {
             report("Execution failed", err)
         }
@@ -1515,8 +1517,10 @@ function getUserUID() {
         resources: lang_res,
     })
 
+    const currentLang = i18next.resolvedLanguage || "en";
+
     const lang_sel = QID('lang')
-    lang_sel.value = i18next.resolvedLanguage || "en"
+    lang_sel.value = currentLang
     lang_sel.addEventListener('change', async function() {
         await i18next.changeLanguage(this.value)
         applyTranslation()
@@ -1632,13 +1636,24 @@ print()
 
     analytics.identify(getUserUID())
     const ua = new UAParser()
+    const s = window.screen
+    const dpr = window.devicePixelRatio
+    let tz
+    try {
+        tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    } catch (e) {
+        tz = new Date().getTimezoneOffset()
+    }
     analytics.track('Visited', {
         browser: ua.getBrowser().name,
         browser_version: ua.getBrowser().version,
         os: ua.getOS().name,
         os_version: ua.getOS().version,
         cpu: ua.getCPU().architecture,
-        pwa: isRunningStandalone()
+        pwa: isRunningStandalone(),
+        referrer: document.referrer,
+        screen: (parseInt(s.width*dpr) + "x" + parseInt(s.height*dpr)),
+        lang: currentLang,
     })
 })();
 
