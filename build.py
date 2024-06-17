@@ -31,7 +31,7 @@ combined = html_content.replace(
 ).replace(
     'require("translations.json")', lang_content
 ).replace(
-    'window.VIPER_IDE_BUILD', str(int(time.time()))
+    'window.VIPER_IDE_BUILD', str(int(time.time() * 1000))
 )
 
 # Write the combined content
