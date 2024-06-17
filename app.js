@@ -1497,13 +1497,33 @@ function getUserUID() {
     return uuid;
 }
 
-function getScreenOrientation() {
-    if (window.matchMedia("(orientation: portrait)").matches) {
-        return "portrait";
-    } else if (window.matchMedia("(orientation: landscape)").matches) {
-        return "landscape";
+function getScreenInfo() {
+    function getScreenOrientation() {
+        if (window.matchMedia("(orientation: portrait)").matches) {
+            return "portrait";
+        } else if (window.matchMedia("(orientation: landscape)").matches) {
+            return "landscape";
+        }
+        return null;
     }
-    return null;
+
+    function snapToGrid(x) {
+        x = Math.round(x)
+        const grid = [
+            240, 320, 360, 375, 414, 480, 540, 576, 600, 640, 667, 720, 768, 800, 810, 896, 900, 980,
+            1024, 1080, 1200, 1280, 1366, 1440, 1600, 1920, 2160, 2560, 3440, 3840, 4320, 5120, 7680,
+        ]
+        const closest = grid.reduce((prev, curr) => Math.abs(curr - x) < Math.abs(prev - x) ? curr : prev)
+        return (Math.abs(closest - x) <= 3) ? closest : x
+    }
+
+    const dpr = window.devicePixelRatio || 1
+    return {
+        dpr: parseFloat(dpr.toFixed(2)),
+        width: snapToGrid(window.screen.width),
+        height: snapToGrid(window.screen.height),
+        orientation: getScreenOrientation(),
+    }
 }
 
 (async () => {
@@ -1645,9 +1665,8 @@ print()
 
     const ua = new UAParser()
     const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
+    const scr = getScreenInfo()
 
-    const dpr = window.devicePixelRatio
-    const screen_res = (Math.round(window.screen.width * dpr) + 'x' + Math.round(window.screen.height * dpr))
     let tz
     try {
         tz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -1657,6 +1676,7 @@ print()
 
     //console.log(geo)
     //console.log(ua.getResult())
+    //console.log(scr)
 
     const userUID = getUserUID()
 
@@ -1668,9 +1688,9 @@ print()
         os_version: ua.getOS().version,
         cpu: ua.getCPU().architecture,
         pwa: isRunningStandalone(),
-        screen: screen_res,
-        orientation: getScreenOrientation(),
-        dpr: parseFloat(dpr.toFixed(2)),
+        screen: scr.width + 'x' + scr.height,
+        orientation: scr.orientation,
+        dpr: scr.dpr,
         dpi: QID('dpi-ruler').offsetHeight,
         lang: currentLang,
         location: geo.latitude + ',' + geo.longitude,
