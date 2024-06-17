@@ -1677,6 +1677,8 @@ print()
         city: geo.cityName,
         tz: tz,
     })
+
+    analytics.track('Visited')
 })();
 
 /*
