@@ -1497,6 +1497,15 @@ function getUserUID() {
     return uuid;
 }
 
+function getScreenOrientation() {
+    if (window.matchMedia("(orientation: portrait)").matches) {
+        return "portrait";
+    } else if (window.matchMedia("(orientation: landscape)").matches) {
+        return "landscape";
+    }
+    return null;
+}
+
 (async () => {
     /*window.addEventListener('error', (e) => {
         toastr.error(e, "Error")
@@ -1659,8 +1668,10 @@ print()
         pwa: isRunningStandalone(),
         referrer: document.referrer,
         screen: (parseInt(window.screen.width*dpr) + "x" + parseInt(window.screen.height*dpr)),
+        orientation: getScreenOrientation(),
         lang: currentLang,
-        location: geo.latitude + "," + geo.longtitude,
+        location: geo.latitude + "," + geo.longitude,
+        continent: geo.continent,
         country: geo.countryName,
         region: geo.regionName,
         city: geo.cityName,
