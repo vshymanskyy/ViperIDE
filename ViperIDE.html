@@ -37,8 +37,8 @@
         <div id="overlay" onclick="autoHideSideMenu()"></div>
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
-                <a class="tab active" data-target="menu-files" onclick="fetchFileList()"><i class="fa-solid fa-folder fa-fw"></i></a>
-                <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes()"><i class="fa-solid fa-cubes fa-fw"></i></a>
+                <a class="tab active" data-target="menu-files" onclick="fetchFileList();return false;"><i class="fa-solid fa-folder fa-fw"></i></a>
+                <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes();return false;"><i class="fa-solid fa-cubes fa-fw"></i></a>
                 <a class="tab" data-target="menu-settings"><i class="fa-solid fa-gear fa-fw"></i></a>
                 <a class="tab" data-target="menu-about"><i class="fa-solid fa-circle-info fa-fw"></i></a>
             </div>
@@ -47,9 +47,9 @@
                 <div id="menu-file-title">File Manager</div>
                 <div id="menu-file-tree">
                     <div><span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span></div>
-                    <div onclick="connectDevice('usb')">
-                        <a href="#" class="name">&emsp;🤔 <span id="no-files">no files</span></a>
-                        <a href="#" class="menu-action"><i class="fa-solid fa-plug"></i></a>
+                    <div>
+                        <a href="#" class="name" onclick="connectDevice('usb');return false;">&emsp;🤔 <span id="no-files">no files</span></a>
+                        <a href="#" class="menu-action" onclick="connectDevice('usb');return false;"><i class="fa-solid fa-plug"></i></a>
                     </div>
                 </div>
             </div>
