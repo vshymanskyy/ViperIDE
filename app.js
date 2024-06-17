@@ -493,6 +493,8 @@ async function disconnectDevice() {
 }
 
 async function connectDevice(type) {
+    analytics.track('Device Start Connection', { connection: type })
+
     if (type === 'ws') {
         let url
         if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
@@ -590,8 +592,9 @@ async function connectDevice(type) {
     })
 
     toastr.success('Device connected')
-
     QID(`btn-conn-${type}`).classList.add('connected')
+
+    analytics.track('Device Port Connected', { connection: type })
 
     if (QID('interrupt-device').checked) {
         // TODO: detect WDT and disable it temporarily
