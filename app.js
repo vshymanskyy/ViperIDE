@@ -1635,8 +1635,7 @@ print()
     }
 
     analytics.identify(getUserUID())
-    const ua = new UAParser()
-    const s = window.screen
+
     const dpr = window.devicePixelRatio
     let tz
     try {
@@ -1644,6 +1643,13 @@ print()
     } catch (e) {
         tz = new Date().getTimezoneOffset()
     }
+
+    const ua = new UAParser()
+    const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
+
+    //console.log(geo)
+    //console.log(ua.getResult())
+
     analytics.track('Visited', {
         browser: ua.getBrowser().name,
         browser_version: ua.getBrowser().version,
@@ -1652,8 +1658,12 @@ print()
         cpu: ua.getCPU().architecture,
         pwa: isRunningStandalone(),
         referrer: document.referrer,
-        screen: (parseInt(s.width*dpr) + "x" + parseInt(s.height*dpr)),
+        screen: (parseInt(window.screen.width*dpr) + "x" + parseInt(window.screen.height*dpr)),
         lang: currentLang,
+        location: geo.latitude + "," + geo.longtitude,
+        country: geo.countryName,
+        region: geo.regionName,
+        city: geo.cityName,
     })
 })();
 
