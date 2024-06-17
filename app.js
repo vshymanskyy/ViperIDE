@@ -1265,7 +1265,8 @@ function setupTabs(containerNode) {
 
     tabs.forEach(tab => {
         tab.setAttribute('href', '#')
-        tab.addEventListener('click', () => {
+        tab.addEventListener('click', (ev) => {
+            ev.preventDefault()
             const targetId = tab.getAttribute('data-target')
 
             tabs.forEach(t => t.classList.remove('active'))
