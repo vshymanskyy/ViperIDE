@@ -821,7 +821,7 @@ print('%s:%s:%s' % (fu, ff, fs))
     // Traverse file tree
     fileTree.innerHTML = `<div>
         <span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span>
-        <a href="#" class="menu-action" onclick="createNewFile('/')"><i class="fa-solid fa-plus"></i></a>
+        <a href="#" class="menu-action" onclick="createNewFile('/');return false;"><i class="fa-solid fa-plus"></i></a>
         <span class="menu-action">${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
     </div>`
     function traverse(node, depth) {
@@ -830,8 +830,8 @@ print('%s:%s:%s' % (fu, ff, fs))
             if ("content" in n) {
                 fileTree.insertAdjacentHTML('beforeend', `<div>
                     <span class="folder name">${offset}<i class="fa-solid fa-folder fa-fw"></i> ${n.name}</span>
-                    <a href="#" class="menu-action" onclick="removeDir('${n.path}')"><i class="fa-solid fa-xmark"></i></a>
-                    <a href="#" class="menu-action" onclick="createNewFile('${n.path}/')"><i class="fa-solid fa-plus"></i></a>
+                    <a href="#" class="menu-action" onclick="removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
+                    <a href="#" class="menu-action" onclick="createNewFile('${n.path}/');return false;"><i class="fa-solid fa-plus"></i></a>
                 </div>`)
                 traverse(n.content, depth+1)
             } else {
@@ -843,8 +843,8 @@ print('%s:%s:%s' % (fu, ff, fs))
                     icon = '<i class="fa-regular fa-file fa-fw"></i>'
                 }
                 fileTree.insertAdjacentHTML('beforeend', `<div>
-                    <a href="#" class="name" onclick="fileClick('${n.path}')">${offset}${icon} ${n.name}</a>
-                    <a href="#" class="menu-action" onclick="removeFile('${n.path}')"><i class="fa-solid fa-xmark"></i></a>
+                    <a href="#" class="name" onclick="fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
+                    <a href="#" class="menu-action" onclick="removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
                     <span class="menu-action">${sizeFmt(n.size)}</span>
                 </div>`)
             }
@@ -853,7 +853,7 @@ print('%s:%s:%s' % (fu, ff, fs))
     traverse(result, 1)
 
     fileTree.insertAdjacentHTML('beforeend', `<div>
-        <a href="#" class="name" onclick="fileClick('~sysinfo.md')"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md</a>
+        <a href="#" class="name" onclick="fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md</a>
         <span class="menu-action">virtual</span>
     </div>`)
 
@@ -1158,13 +1158,13 @@ async function fetchPkgList(index_url) {
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div>
         <span><i class="fa-solid fa-cube fa-fw"></i> viper-tools</span>
-        <a href="#" class="menu-action" onclick="installReplTools()">0.1.0 <i class="fa-regular fa-circle-down"></i></a>
+        <a href="#" class="menu-action" onclick="installReplTools();return false;">0.1.0 <i class="fa-regular fa-circle-down"></i></a>
     </div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
     for (const pkg of mipindex.packages) {
         pkgList.insertAdjacentHTML('beforeend', `<div>
             <span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
-            <a href="#" class="menu-action" onclick="installPkg('${index_url}', '${pkg.name}')">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
+            <a href="#" class="menu-action" onclick="installPkg('${index_url}','${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
         </div>`)
     }
 }
@@ -1278,6 +1278,7 @@ function setupTabs(containerNode) {
                     content.classList.remove('active')
                 }
             })
+            return false
         })
     })
 }
