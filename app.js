@@ -598,7 +598,7 @@ async function connectDevice(type) {
             } else if (files.filter(x => x.name === 'code.py').length) {
                 await readFileIntoEditor('code.py')
             }
-            // Print banner
+            // Print banner. TODO: optimize
             await port.write('\x02')
         } catch (err) {
             report('Error reading board info', err)
@@ -1156,7 +1156,7 @@ print(json.dumps({'mpy':mpy,'path':sys.path}))
         // Find `lib` filder in sys.path
         const lib_path = sys.path.find(x => x.endsWith('/lib'))
         if (!lib_path) {
-            toastr.error(`sys.path doesn't include the "lib" folder`)
+            toastr.error(`"lib" folder not found in sys.path`)
             return
         }
 
@@ -1448,6 +1448,30 @@ function applyTranslation() {
     } catch (err) {}
 }
 
+function getUserUID() {
+    const localStorageKey = 'uuid';
+
+    // Check if UUID already exists in local storage
+    let uuid = localStorage.getItem(localStorageKey);
+    if (uuid) {
+        return uuid;
+    }
+
+    // Function to generate UUIDv4
+    function generateUUIDv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0,
+                  v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    // Generate and store new UUID
+    uuid = generateUUIDv4();
+    localStorage.setItem(localStorageKey, uuid);
+    return uuid;
+}
+
 (async () => {
     /*window.addEventListener('error', (e) => {
         toastr.error(e, "Error")
@@ -1582,6 +1606,17 @@ print()
         await sleep(500)
         await connectDevice('ws')
     }
+
+    analytics.identify(getUserUID())
+    const ua = new UAParser()
+    analytics.track('Visited', {
+        browser: ua.getBrowser().name,
+        browser_version: ua.getBrowser().version,
+        os: ua.getOS().name,
+        os_version: ua.getOS().version,
+        cpu: ua.getCPU().architecture,
+        pwa: isRunningStandalone()
+    })
 })();
 
 /*
