@@ -1688,7 +1688,7 @@ print()
     const userUID = getUserUID()
 
     analytics.identify(userUID, {
-        email: userUID + '@viper.ide',
+        email: userUID.split('-').pop() + '@vip.er',
         version: VIPER_IDE_VERSION,
         build: (new Date(window.VIPER_IDE_BUILD || 0)).toISOString(),
         browser: ua.getBrowser().name,
