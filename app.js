@@ -65,6 +65,7 @@ class Transport {
         this.disconnectCallback = null
         this.writeChunk = 128
         this.emit = false
+        this.info = {}
     }
 
     async requestAccess() {
@@ -73,6 +74,10 @@ class Transport {
 
     async connect() {
         throw new Error("Method 'connect()' must be implemented.")
+    }
+
+    async getInfo() {
+        return this.info
     }
 
     async disconnect() {
@@ -231,6 +236,13 @@ class WebSerial extends Transport {
 
     async requestAccess() {
         this.port = await this.serial.requestPort()
+        try {
+            const pi = this.port.getInfo()
+            this.info = {
+                vid: pi.usbVendorId.toString(16).padStart(4, '0'),
+                pid: pi.usbProductId.toString(16).padStart(4, '0'),
+            }
+        } catch(err) {}
     }
 
     async connect() {
@@ -316,6 +328,11 @@ class WebBluetooth extends Transport {
                 this.disconnectCallback()
             }
         })
+        try {
+            this.info = {
+                name: this.device.name,
+            }
+        } catch(err) {}
     }
 
     async connect() {
@@ -393,6 +410,9 @@ class WebSocketREPL extends Transport {
         this.url = url
         this.pass = pass
         this.socket = null
+        this.info = {
+            url: this.url
+        }
     }
 
     async requestAccess() {
@@ -600,7 +620,7 @@ async function connectDevice(type) {
     toastr.success('Device connected')
     QID(`btn-conn-${type}`).classList.add('connected')
 
-    analytics.track('Device Port Connected', { connection: type })
+    analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
     if (QID('interrupt-device').checked) {
         // TODO: detect WDT and disable it temporarily
