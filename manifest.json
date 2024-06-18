@@ -3,16 +3,28 @@
     "name": "ViperIDE",
     "short_name": "ViperIDE",
     "description": "MicroPython Web IDE",
-    "version": "0.2.7",
-    "start_url": "index.html",
+    "version": "0.2.8",
+    "start_url": "/index.html",
     "background_color": "#272822",
     "theme_color": "#272822",
     "display": "standalone",
     "icons": [
         {
-            "src": "app.png",
+            "src": "assets/app_1024.png",
             "sizes": "1024x1024",
             "type": "image/png"
+        },
+        {
+            "src": "assets/app_m192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "assets/app_m512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ]
 }

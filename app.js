@@ -1,5 +1,5 @@
 
-const VIPER_IDE_VERSION = "0.2.7"
+const VIPER_IDE_VERSION = "0.2.8"
 
 /*
  * Helpers
