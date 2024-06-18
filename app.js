@@ -33,9 +33,14 @@ class Mutex {
     }
 }
 
+function sanitizeHTML(s) {
+    //return '<pre>' + (new Option(s)).innerHTML + '</pre>'
+    return (new Option(s)).innerHTML.replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;')
+}
+
 function report(title, err) {
     console.error(err, err.stack)
-    toastr.error(err, title)
+    toastr.error(sanitizeHTML(err.message), title)
     analytics.track('Error', {
         name: err.name,
         message: err.message,
@@ -615,7 +620,7 @@ async function connectDevice(type) {
             await port.write('\x02')
         } catch (err) {
             if (err.message.includes('Timeout')) {
-                report('Device is not responding', new Error(`Ensure that:</br>- You're using a recent version of MicroPython</br>- The correct device is selected`))
+                report('Device is not responding', new Error(`Ensure that:\n- You're using a recent version of MicroPython\n- The correct device is selected`))
             } else {
                 report('Error reading board info', err)
             }
@@ -703,7 +708,7 @@ async function execCmd(cmd, timeout=5000, emit=false) {
     await port.write('\x04')         // Ctrl-D: execute
     const status = await port.readExactly(2)
     if (status != 'OK') {
-        throw new Error('Cannot exec command:' + status)
+        throw new Error(status)
     }
     port.emit = emit
     if (emit) {
@@ -713,7 +718,7 @@ async function execCmd(cmd, timeout=5000, emit=false) {
     const err = (await port.readUntil('\x04', timeout)).slice(0, -1)
 
     if (err.length) {
-        throw new Error('Cannot exec command: ' + err)
+        throw new Error(err)
     }
 
     return res
@@ -1107,7 +1112,7 @@ async function runCurrentFile() {
         if (err.message.includes("KeyboardInterrupt")) {
             // Interrupted manually
         } else {
-            toastr.error(err, "Script Failed")
+            toastr.error(sanitizeHTML(err.message), "Script Failed")
             return
         }
     } finally {
