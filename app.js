@@ -138,7 +138,7 @@ class Transport {
         }*/
     }
 
-    async readExactly(n, timeout=5000) {
+    async readExactly(n, timeout=3000) {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
@@ -154,7 +154,7 @@ class Transport {
         throw new Error('Timeout')
     }
 
-    async readUntil(ending, timeout=5000) {
+    async readUntil(ending, timeout=3000) {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
@@ -197,7 +197,7 @@ class Transport {
             }
         } catch (err) {
             release()
-            report("Cannot enter RAW mode", err)
+            //report("Cannot enter RAW mode", err)
             throw err
         }
     }
@@ -600,6 +600,10 @@ async function connectDevice(type) {
         // TODO: detect WDT and disable it temporarily
 
         try {
+            const info = await readDeviceInfo()
+            info['connection'] = type
+            analytics.track('Device Connected', info)
+
             const files = await fetchFileList()
             if        (files.filter(x => x.name === 'main.py').length) {
                 await readFileIntoEditor('main.py')
@@ -607,14 +611,14 @@ async function connectDevice(type) {
                 await readFileIntoEditor('code.py')
             }
 
-            const info = await readDeviceInfo()
             // Print banner. TODO: optimize
             await port.write('\x02')
-
-            info['connection'] = type
-            analytics.track('Device Connected', info)
         } catch (err) {
-            report('Error reading board info', err)
+            if (err.message.includes('Timeout')) {
+                report('Device is not responding', `Ensure that:</br>- You're using a recent version of MicroPython</br>- The correct device is selected`)
+            } else {
+                report('Error reading board info', err)
+            }
         }
     } else {
         analytics.track('Device Connected')
@@ -748,9 +752,9 @@ def walk(p):
   fn=p+n
   s=os.stat(fn)
   if s[0] & 0x4000 == 0:
-   print('f:'+fn+':'+str(s[6]))
+   print('f|'+fn+'|'+str(s[6]))
   elif n not in ('.','..'):
-   print('d:'+fn+':'+str(s[6]))
+   print('d|'+fn+'|'+str(s[6]))
    walk(fn+'/')
 walk('')
 `)
@@ -760,7 +764,7 @@ import os
 for n in os.listdir():
  s=os.stat(n)
  if s[0] & 0x4000 == 0:
-  print('f:'+n+':'+str(s[6]))
+  print('f|'+n+'|'+str(s[6]))
 `)
     }
 
@@ -772,9 +776,9 @@ s = os.statvfs("/")
 fs = s[1] * s[2]
 ff = s[3] * s[0]
 fu = fs - ff
-print('%s:%s:%s' % (fu, ff, fs))
+print('%s:%s:%s'%(fu,ff,fs))
 `);
-        [fs_used, fs_free, fs_size] = stats.trim().split(':')
+        [fs_used, fs_free, fs_size] = stats.trim().split('|')
     } catch (err) {
     }
 
@@ -783,7 +787,7 @@ print('%s:%s:%s' % (fu, ff, fs))
     for (const line of files.split('\n')) {
         if (line === '') continue
         let current = result
-        let [type, fullpath, size] = line.trim().split(':')
+        let [type, fullpath, size] = line.trim().split('|')
         let path = fullpath.split('/')
         let file
         if (type == 'f') {
@@ -1534,12 +1538,12 @@ function getScreenInfo() {
 }
 
 (async () => {
-    /*window.addEventListener('error', (e) => {
-        toastr.error(e, "Error")
+    window.addEventListener('error', (e) => {
+        report("Unhandled Error", e)
     })
     window.addEventListener('unhandledrejection', (e) => {
-        toastr.error(e.reason, "Unhandled Rejection")
-    })*/
+        report("Unhandled Error", e)
+    })
 
     let lang_res
     try {
@@ -1670,50 +1674,61 @@ print()
         await connectDevice('ws')
     }
 
-    const ua = new UAParser()
-    const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
-    const scr = getScreenInfo()
-
-    let tz
     try {
-        tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-    } catch (e) {
-        tz = (new Date()).getTimezoneOffset()
+        if (typeof window.analytics.track === 'undefined') {
+            throw new Error()
+        }
+
+        const ua = new UAParser()
+        const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
+        const scr = getScreenInfo()
+
+        let tz
+        try {
+            tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        } catch (e) {
+            tz = (new Date()).getTimezoneOffset()
+        }
+
+        //console.log(geo)
+        //console.log(ua.getResult())
+        //console.log(scr)
+
+        const userUID = getUserUID()
+
+        analytics.identify(userUID, {
+            email: userUID.split('-').pop() + '@vip.er',
+            version: VIPER_IDE_VERSION,
+            build: (new Date(window.VIPER_IDE_BUILD || 0)).toISOString(),
+            browser: ua.getBrowser().name,
+            browser_version: ua.getBrowser().version,
+            os: ua.getOS().name,
+            os_version: ua.getOS().version,
+            cpu: ua.getCPU().architecture,
+            pwa: isRunningStandalone(),
+            screen: scr.width + 'x' + scr.height,
+            orientation: scr.orientation,
+            dpr: scr.dpr,
+            dpi: QID('dpi-ruler').offsetHeight,
+            lang: currentLang,
+            location: geo.latitude + ',' + geo.longitude,
+            continent: geo.continent,
+            country: geo.countryName,
+            region: geo.regionName,
+            city: geo.cityName,
+            tz: tz,
+        })
+
+        analytics.track('Visit', {
+            url: window.location.href,
+            referrer: document.referrer,
+        })
+    } catch (err) {
+        window.analytics = {
+            track: function() {}
+        }
     }
 
-    //console.log(geo)
-    //console.log(ua.getResult())
-    //console.log(scr)
-
-    const userUID = getUserUID()
-
-    analytics.identify(userUID, {
-        email: userUID.split('-').pop() + '@vip.er',
-        version: VIPER_IDE_VERSION,
-        build: (new Date(window.VIPER_IDE_BUILD || 0)).toISOString(),
-        browser: ua.getBrowser().name,
-        browser_version: ua.getBrowser().version,
-        os: ua.getOS().name,
-        os_version: ua.getOS().version,
-        cpu: ua.getCPU().architecture,
-        pwa: isRunningStandalone(),
-        screen: scr.width + 'x' + scr.height,
-        orientation: scr.orientation,
-        dpr: scr.dpr,
-        dpi: QID('dpi-ruler').offsetHeight,
-        lang: currentLang,
-        location: geo.latitude + ',' + geo.longitude,
-        continent: geo.continent,
-        country: geo.countryName,
-        region: geo.regionName,
-        city: geo.cityName,
-        tz: tz,
-    })
-
-    analytics.track('Visit', {
-        url: window.location.href,
-        referrer: document.referrer,
-    })
 })();
 
 /*
