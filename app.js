@@ -138,7 +138,7 @@ class Transport {
         }*/
     }
 
-    async readExactly(n, timeout=3000) {
+    async readExactly(n, timeout=5000) {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
@@ -154,7 +154,7 @@ class Transport {
         throw new Error('Timeout')
     }
 
-    async readUntil(ending, timeout=3000) {
+    async readUntil(ending, timeout=5000) {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
@@ -615,7 +615,7 @@ async function connectDevice(type) {
             await port.write('\x02')
         } catch (err) {
             if (err.message.includes('Timeout')) {
-                report('Device is not responding', `Ensure that:</br>- You're using a recent version of MicroPython</br>- The correct device is selected`)
+                report('Device is not responding', new Error(`Ensure that:</br>- You're using a recent version of MicroPython</br>- The correct device is selected`))
             } else {
                 report('Error reading board info', err)
             }
