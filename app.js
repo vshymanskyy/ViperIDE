@@ -1459,7 +1459,9 @@ function applyTranslation() {
         QS('#menu-pkg-title').innerText = T('menu.package-mgr')
         QS('#menu-settings-title').innerText = T('menu.settings')
 
-        QID('no-files').innerText = T('files.no-files')
+        try {
+            QID('no-files').innerText = T('files.no-files')
+        } catch (err) {}
 
         QS('#menu-line-conn').innerText = T('settings.conn')
         QS('#menu-line-editor').innerText = T('settings.editor')
