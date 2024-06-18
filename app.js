@@ -347,7 +347,7 @@ class WebBluetooth extends Transport {
             if (this.service) {
                 await this.rx.startNotifications()
                 this.rx.addEventListener('characteristicvaluechanged', this.handleNotifications.bind(this))
-                return    
+                return
             }
         }
 
@@ -1538,12 +1538,15 @@ function getScreenInfo() {
 }
 
 (async () => {
-    window.addEventListener('error', (e) => {
-        report("Unhandled Error", e)
-    })
-    window.addEventListener('unhandledrejection', (e) => {
-        report("Unhandled Error", e)
-    })
+    function handleError(e) {
+        if (e instanceof ErrorEvent && e.message.includes('ResizeObserver')) {
+            // skip
+        } else {
+            report("Unhandled Error", e)
+        }
+    }
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleError)
 
     let lang_res
     try {
