@@ -42,6 +42,7 @@ function report(title, err) {
     console.error(err, err.stack)
     toastr.error(sanitizeHTML(err.message), title)
     analytics.track('Error', {
+        title: title,
         name: err.name,
         message: err.message,
         stack: err.stack,
@@ -1545,15 +1546,16 @@ function getScreenInfo() {
 }
 
 (async () => {
-    function handleError(e) {
+    window.addEventListener('error', (e) => {
         if (e instanceof ErrorEvent && e.message.includes('ResizeObserver')) {
             // skip
         } else {
-            report("Unhandled Error", e)
+            report("Error", e)
         }
-    }
-    window.addEventListener('error', handleError)
-    window.addEventListener('unhandledrejection', handleError)
+    });
+    window.addEventListener('unhandledrejection', (ev) => {
+        report("Rejection", new Error(ev.reason))
+    });
 
     let lang_res
     try {
