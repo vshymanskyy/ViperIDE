@@ -37,9 +37,9 @@ function report(title, err) {
     console.error(err, err.stack)
     toastr.error(err, title)
     analytics.track('Error', {
-        "name": err.name,
-        "message": err.message,
-        "stack": err.stack,
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
     })
 }
 
@@ -776,7 +776,7 @@ s = os.statvfs("/")
 fs = s[1] * s[2]
 ff = s[3] * s[0]
 fu = fs - ff
-print('%s:%s:%s'%(fu,ff,fs))
+print('%s|%s|%s'%(fu,ff,fs))
 `);
         [fs_used, fs_free, fs_size] = stats.trim().split('|')
     } catch (err) {
