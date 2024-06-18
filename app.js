@@ -659,6 +659,8 @@ function splitPath(path) {
 }
 
 async function createNewFile(path) {
+    if (!port) return;
+
     const fn = prompt(`Creating new file inside ${path}\nPlease enter the name:`)
     if (fn == null || fn == "") return
 
@@ -682,6 +684,8 @@ f.close()
 }
 
 async function removeFile(path) {
+    if (!port) return;
+
     if (!confirm(`Remove ${path}?`)) return
     await execRawRepl(`
 import os
@@ -697,6 +701,8 @@ except OSError as e:
 }
 
 async function removeDir(path) {
+    if (!port) return;
+
     if (!confirm(`Remove ${path}?`)) return
     await execRawRepl(`
 import os
@@ -765,7 +771,9 @@ async function execReplNoFollow(cmd) {
 }
 
 async function fetchFileList() {
-    if (!port) return;
+    let result = []
+
+    if (!port) return result;
 
     const fileTree = QID('menu-file-tree')
 
@@ -809,7 +817,6 @@ print('%s|%s|%s'%(fu,ff,fs))
     }
 
     // Build file tree
-    let result = []
     for (const line of files.split('\n')) {
         if (line === '') continue
         let current = result
