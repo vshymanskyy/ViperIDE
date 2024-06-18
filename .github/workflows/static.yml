@@ -35,7 +35,8 @@ jobs:
         run: |
           mkdir build
           python3 build.py ./build/index.html
-          cp webrepl_content.js favicon.png app.png ./build/
+          cp -r ./assets ./build/
+          cp webrepl_content.js ./build/
           jq -c . < manifest.json > ./build/manifest.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
