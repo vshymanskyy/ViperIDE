@@ -898,6 +898,8 @@ print('%s|%s|%s'%(fu,ff,fs))
 }
 
 async function fileClick(fn) {
+    if (!port) return;
+
     const e = window.event.target || window.event.srcElement;
 
     for (const el of document.getElementsByClassName("name")){
