@@ -2,34 +2,26 @@
 
 import os, sys, json, glob, time
 
-html_path = 'ViperIDE.html'
-css_path = 'app.css'
-js_path = 'app.js'
+def readfile(fn):
+    with open(fn, 'r', encoding='utf-8') as f:
+        return f.read()
 
-with open(html_path, 'r', encoding='utf-8') as f:
-    html_content = f.read()
-
-with open(css_path, 'r', encoding='utf-8') as f:
-    css_content = f.read()
-
-with open(js_path, 'r', encoding='utf-8') as f:
-    js_content = f.read()
-
-lang_content = {}
-for fn in glob.glob("*.json", root_dir="./lang/"):
-    with open("./lang/" + fn) as f:
-        k = fn.replace(".json", "")
-        v = json.load(f)
-        lang_content[k] = v
-lang_content = json.dumps(lang_content, separators=(',',':'), ensure_ascii=False, sort_keys=True)
+def translations_json():
+    result = {}
+    for fn in glob.glob('*.json', root_dir='./lang/'):
+        lang = fn.replace('.json', '')
+        result[lang] = json.loads(readfile('./lang/' + fn))
+    return json.dumps(result, separators=(',',':'), ensure_ascii=False, sort_keys=True)
 
 # Insert CSS and JS into HTML
-combined = html_content.replace(
-    '<link rel="stylesheet" href="./app.css">', f'<style>{css_content}</style>'
+combined = readfile('ViperIDE.html').replace(
+    '<link rel="stylesheet" href="./app.css">', '<style>' + readfile('app.css') + '</style>'
 ).replace(
-    '<script src="./app.js"></script>', f'<script>{js_content}</script>'
+    '<script src="./app.js"></script>', '<script>' + readfile('app.js') + '</script>'
 ).replace(
-    'require("translations.json")', lang_content
+    '<script src="./transports.js"></script>', '<script>' + readfile('transports.js') + '</script>'
+).replace(
+    'require("translations.json")', translations_json()
 ).replace(
     'window.VIPER_IDE_BUILD', str(int(time.time() * 1000))
 )
