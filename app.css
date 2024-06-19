@@ -6,6 +6,15 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
+:root {
+  --fg-color: white;
+  --bg-color: #2a2e32;
+  --bg-color-menu: #2a2e32dd;
+  --connected-passive: #87c244;
+  --connected-active: #ffcc4d;
+  --connected-color: var(--connected-passive);
+}
+
 html, body {
     margin: 0;
     padding: 0;
@@ -14,8 +23,8 @@ html, body {
     overscroll-behavior: none;
     touch-action: none;
     box-sizing: border-box;
-    background: #2a2e32;
-    color: white;
+    background: var(--bg-color);
+    color: var(--fg-color);
     font-family: system-ui;
 }
 
@@ -35,7 +44,7 @@ body.loaded {
 }
 
 a {
-    color: white;
+    color: unset;
     font-weight: 600;
     text-decoration-thickness: 1px;
     text-decoration-style: dashed;
@@ -113,7 +122,6 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: white;
     padding: 0 10px;
     user-select: none;
 }
@@ -128,7 +136,7 @@ button {
     width: 300px;
     display: flex;
     flex-direction: column-reverse;
-    color: white;
+    background-color: var(--bg-color-menu);
     overflow-y: auto;
     transition: width 0.3s, left 0.3s;
     user-select: none;
@@ -160,7 +168,6 @@ button {
 
 #terminal-container {
     height: 200px;
-    color: white;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -171,7 +178,6 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: white;
     cursor: row-resize;
     user-select: none;
     padding: 0 5px;
@@ -209,7 +215,6 @@ button {
 }
 
 .tab {
-    color: white;
     text-decoration: none;
     font-weight: normal;
     display: inline;
@@ -289,16 +294,10 @@ button {
     background: none;
 }
 
-:root {
-  --connected-passive: #87c244;
-  --connected-active: #ffcc4d;
-  --connected-color: var(--connected-passive);
-}
-
 .button {
     background: none;
     border: none;
-    color: white;
+    color: unset;
     cursor: pointer;
     font-size: 20px;
 }
