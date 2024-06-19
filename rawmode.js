@@ -200,9 +200,9 @@ print('%s|%s|%s'%(fu,ff,fs))
     }
 
     async walkFs() {
-        let rsp
-        try {
-            rsp = await this.exec(`
+        const rsp = await (async () => {
+            try {
+                return await this.exec(`
 def walk(p):
  for n in os.listdir(p):
   fn=p+n
@@ -214,14 +214,19 @@ def walk(p):
    walk(fn+'/')
 walk('')
 `)
-        } catch (err) {
-            rsp = await this.exec(`
+            } catch (err) {}
+
+            // Legacy mode (flat)
+            try {
+                return await this.exec(`
 for n in os.listdir():
  s=os.stat(n)
  if s[0] & 0x4000 == 0:
   print('f|'+n+'|'+str(s[6]))
 `)
-        }
+            } catch (err) { throw err } // Throw error, as all methods failed
+        })();
+
         let result = []
         // Build file tree
         for (const line of rsp.split('\n')) {
