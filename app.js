@@ -12,7 +12,8 @@ const VIPER_IDE_VERSION = "0.3.0"
  * Helpers
  */
 
-const addCSS = (css) => { document.head.appendChild(document.createElement("style")).innerHTML = css }
+const addCss = (css) => { document.head.appendChild(document.createElement("style")).innerHTML = css }
+const getCssPropertyValue = (name) => getComputedStyle(document.documentElement).getPropertyValue(name)
 
 const QSA = (x) => [...document.querySelectorAll(x)]
 const QS  = document.querySelector.bind(document)
@@ -1011,7 +1012,7 @@ print()
 
     const xtermTheme = {
         foreground: '#F8F8F8',
-        background: getComputedStyle(document.documentElement).getPropertyValue('--bg-color-edit'),
+        background: getCssPropertyValue('--bg-color-edit'),
         selection: '#5DA5D533',
         black: '#1E1E1D',
         brightBlack: '#262625',
