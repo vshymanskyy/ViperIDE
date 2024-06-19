@@ -6,7 +6,7 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-const VIPER_IDE_VERSION = "0.2.9"
+const VIPER_IDE_VERSION = "0.3.0"
 
 /*
  * Helpers
@@ -38,20 +38,9 @@ function report(title, err) {
     })
 }
 
-function sizeFmt(size, places=1) {
-    const suffixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
-    let i = 0
-    while (size > 1024 && i < suffixes.length - 1) {
-        i++
-        size /= 1024
-    }
-    // Check if the size is in bytes and omit decimals in that case
-    if (i === 0) {
-        return `${size}${suffixes[i]}`
-    } else {
-        return `${(size).toFixed(places)}${suffixes[i]}`
-    }
-}
+/*
+ * Device Management
+ */
 
 let editor, term, port
 let editorFn = ""
@@ -177,31 +166,37 @@ async function connectDevice(type) {
     if (QID('interrupt-device').checked) {
         // TODO: detect WDT and disable it temporarily
 
+        const raw = await MpRawMode.begin(port)
         try {
-            const info = await readDeviceInfo()
+            const info = await raw.getDeviceInfo()
             info['connection'] = type
             analytics.track('Device Connected', info)
 
-            const files = await fetchFileList()
+            const files = await _raw_updateFileList(raw)
             if        (files.filter(x => x.name === 'main.py').length) {
-                await readFileIntoEditor('main.py')
+                await _raw_loadFile(raw, 'main.py')
             } else if (files.filter(x => x.name === 'code.py').length) {
-                await readFileIntoEditor('code.py')
+                await _raw_loadFile(raw, 'code.py')
             }
-
-            // Print banner. TODO: optimize
-            await port.write('\x02')
         } catch (err) {
             if (err.message.includes('Timeout')) {
                 report('Device is not responding', new Error(`Ensure that:\n- You're using a recent version of MicroPython\n- The correct device is selected`))
             } else {
                 report('Error reading board info', err)
             }
+        } finally {
+            await raw.end()
         }
+        // Print banner. TODO: optimize
+        await port.write('\x02')
     } else {
         analytics.track('Device Connected')
     }
 }
+
+/*
+ * File Management
+ */
 
 function splitPath(path) {
     const parts = path.split('/').filter(part => part !== '')
@@ -210,107 +205,68 @@ function splitPath(path) {
     return [ directoryPath, filename ]
 }
 
+function sizeFmt(size, places=1) {
+    if (size == null) { return "unknown" }
+    const suffixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+    let i = 0
+    while (size > 1024 && i < suffixes.length - 1) {
+        i++
+        size /= 1024
+    }
+    // Check if the size is in bytes and omit decimals in that case
+    if (i === 0) {
+        return `${size}${suffixes[i]}`
+    } else {
+        return `${(size).toFixed(places)}${suffixes[i]}`
+    }
+}
+
 async function createNewFile(path) {
     if (!port) return;
-
     const fn = prompt(`Creating new file inside ${path}\nPlease enter the name:`)
     if (fn == null || fn == "") return
-
-    if (fn.endsWith("/")) {
-        const full = path + fn.slice(0, -1)
-        await makePath(full)
-    } else {
-        const full = path + fn
-        if (fn.includes('/')) {
-            // Ensure path exists
-            const [dirname, _] = splitPath(full)
-            await makePath(dirname)
+    const raw = await MpRawMode.begin(port)
+    try {
+        if (fn.endsWith("/")) {
+            const full = path + fn.slice(0, -1)
+            await raw.makePath(full)
+        } else {
+            const full = path + fn
+            if (fn.includes('/')) {
+                // Ensure path exists
+                const [dirname, _] = splitPath(full)
+                await raw.makePath(dirname)
+            }
+            await raw.touchFile(full)
+            await _raw_loadFile(raw, full)
         }
-        await execRawRepl(`
-f=open('${full}','wb')
-f.close()
-`)
-        await readFileIntoEditor(full)
+        await _raw_updateFileList(raw)
+    } finally {
+        await raw.end()
     }
-    await fetchFileList()
 }
 
 async function removeFile(path) {
     if (!port) return;
-
     if (!confirm(`Remove ${path}?`)) return
-    await execRawRepl(`
-import os
-try:
- os.remove('${path}')
-except OSError as e:
- if e.args[0] == 39:
-  raise Exception('Directory not empty')
- else:
-  raise
-`)
-    await fetchFileList()
+    const raw = await MpRawMode.begin(port)
+    try {
+        await raw.removeFile(path)
+        await _raw_updateFileList(raw)
+    } finally {
+        await raw.end()
+    }
 }
 
 async function removeDir(path) {
     if (!port) return;
-
     if (!confirm(`Remove ${path}?`)) return
-    await execRawRepl(`
-import os
-try:
- os.rmdir('${path}')
-except OSError as e:
- if e.args[0] == 39:
-  raise Exception('Directory not empty')
- else:
-  raise
-`)
-    await fetchFileList()
-}
-
-async function makePath(path) {
-    await execRawRepl(`
-import os
-p = ''
-for d in '${path}'.split('/'):
-    p += '/' + d if p else d
-    try: os.mkdir(p)
-    except OSError as e:
-        if e.args[0] != 17: raise
-`)
-}
-
-async function execCmd(cmd, timeout=5000, emit=false) {
-    await port.readUntil('>')
-    await port.write(cmd)
-    await port.write('\x04')         // Ctrl-D: execute
-    const status = await port.readExactly(2)
-    if (status != 'OK') {
-        throw new Error(status)
-    }
-    port.emit = emit
-    if (emit) {
-        term.write(port.receivedData)
-    }
-    const res = (await port.readUntil('\x04', timeout)).slice(0, -1)
-    const err = (await port.readUntil('\x04', timeout)).slice(0, -1)
-
-    if (err.length) {
-        throw new Error(err)
-    }
-
-    return res
-}
-
-async function execRawRepl(cmd, soft_reboot=false) {
-    const exitRaw = await port.enterRawRepl(soft_reboot)
+    const raw = await MpRawMode.begin(port)
     try {
-        return await execCmd(cmd)
-    } catch (err) {
-        report("Execution failed", err)
+        await raw.removeDir(path)
+        await _raw_updateFileList(raw)
     } finally {
-        await exitRaw()
+        await raw.end()
     }
 }
 
@@ -323,76 +279,24 @@ async function execReplNoFollow(cmd) {
 }
 
 async function fetchFileList() {
-    let result = []
-
-    if (!port) return result;
-
-    const fileTree = QID('menu-file-tree')
-
-    let files
+    if (!port) return;
+    const raw = await MpRawMode.begin(port)
     try {
-        files = await execRawRepl(`
-import os
-def walk(p):
- for n in os.listdir(p):
-  fn=p+n
-  s=os.stat(fn)
-  if s[0] & 0x4000 == 0:
-   print('f|'+fn+'|'+str(s[6]))
-  elif n not in ('.','..'):
-   print('d|'+fn+'|'+str(s[6]))
-   walk(fn+'/')
-walk('')
-`)
-    } catch (err) {
-        files = await execRawRepl(`
-import os
-for n in os.listdir():
- s=os.stat(n)
- if s[0] & 0x4000 == 0:
-  print('f|'+n+'|'+str(s[6]))
-`)
+        await _raw_updateFileList(raw)
+    } finally {
+        await raw.end()
     }
+}
 
-    let [fs_used, fs_free, fs_size] = [0,0,0];
+async function _raw_updateFileList(raw) {
+    let [fs_used, fs_free, fs_size] = [null, null, null];
     try {
-        let stats = await execRawRepl(`
-import os
-s = os.statvfs("/")
-fs = s[1] * s[2]
-ff = s[3] * s[0]
-fu = fs - ff
-print('%s|%s|%s'%(fu,ff,fs))
-`);
-        [fs_used, fs_free, fs_size] = stats.trim().split('|')
+        [fs_used, fs_free, fs_size] = await raw.getFsStats()
     } catch (err) {
+        console.log(err)
     }
 
-    // Build file tree
-    for (const line of files.split('\n')) {
-        if (line === '') continue
-        let current = result
-        let [type, fullpath, size] = line.trim().split('|')
-        let path = fullpath.split('/')
-        let file
-        if (type == 'f') {
-            file = path.pop()
-        }
-        for (const segment of path) {
-            if (segment === '') continue
-            let next = current.filter(x => x.name === segment && "content" in x)
-            if (next.length) {
-                current = next[0].content
-            } else {
-                prev = current
-                current = []
-                prev.push({ name: segment, path: path.join('/'), content: current })
-            }
-        }
-        if (type == 'f') {
-            current.push({ name: file, path: fullpath, size: parseInt(size, 10) })
-        }
-    }
+    const result = await raw.walkFs()
 
     function sorted(content) {
         // Natural sort by name
@@ -408,6 +312,7 @@ print('%s|%s|%s'%(fu,ff,fs))
     }
 
     // Traverse file tree
+    const fileTree = QID('menu-file-tree')
     fileTree.innerHTML = `<div>
         <span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span>
         <a href="#" class="menu-action" onclick="createNewFile('/');return false;"><i class="fa-solid fa-plus"></i></a>
@@ -458,129 +363,23 @@ async function fileClick(fn) {
         el.classList.remove('selected')
     }
 
-    await readFileIntoEditor(fn)
+    const raw = await MpRawMode.begin(port)
+    try {
+        await _raw_loadFile(raw, fn)
+    } finally {
+        await raw.end()
+    }
 
     e.classList.add('selected')
 }
 
-function toHex(data){
-    if (typeof data === 'string' || data instanceof String) {
-        const encoder = new TextEncoder('utf-8')
-        data = Array.from(encoder.encode(data))
-    }
-    return [...new Uint8Array(data)]
-        .map(x => x.toString(16).padStart(2, '0'))
-        .join('')
-}
-
-async function readFile(fn) {
-    const content = await execRawRepl(`
-try:
- import binascii
- h=lambda x: binascii.hexlify(x).decode()
- h(b'')
-except:
- h=lambda b: ''.join('{:02x}'.format(byte) for byte in b)
-with open('${fn}','rb') as f:
- while 1:
-  b=f.read(255)
-  if not b:break
-  print(h(b),end='')
-`)
-    if (content.length) {
-        return new Uint8Array(content.match(/../g).map(h=>parseInt(h,16)))
-    } else {
-        return new Uint8Array()
-    }
-}
-
-async function writeFile(fn, data, chunk_size=128) {
-    const exitRaw = await port.enterRawRepl()
-    try {
-        await execCmd(`
-import os
-try:
- import binascii
- h=binascii.unhexlify
- h('')
-except:
- h=lambda s: bytes(int(s[i:i+2], 16) for i in range(0, len(s), 2))
-f=open('.viper.tmp','wb')
-def w(d):
- f.write(h(d))
-`)
-
-        // Split into chunks and send
-        const hexData = toHex(data)
-        for (let i = 0; i < hexData.length; i += chunk_size) {
-            const chunk = hexData.slice(i, i + chunk_size)
-            await execCmd("w('" + chunk + "')")
-        }
-
-        await execCmd(`f.close()
-try: os.remove('${fn}')
-except: pass
-os.rename('.viper.tmp','${fn}')
-`)
-    } finally {
-        await exitRaw()
-    }
-}
-
-async function readDeviceInfo() {
-    const  rsp = await execRawRepl(`
-import sys,os
-u=os.uname()
-v=sys.version.split(';')[1].strip()
-print('|'.join([u.machine,u.release,u.sysname,v]))
-`)
-    const [machine, release, sysname, version] = rsp.trim().split('|')
-    return { machine, release, sysname, version }
-}
-
-async function readFileIntoEditor(fn) {
+async function _raw_loadFile(raw, fn) {
     let content
     let isBinary = false
     if (fn == "~sysinfo.md") {
-        content = await execRawRepl(`
-import sys,os,gc
-gc.collect()
-mu = gc.mem_alloc()
-mf = gc.mem_free()
-ms = mu + mf
-uname=os.uname()
-p=print
-def size_fmt(size):
- suffixes = ['B','KiB','MiB','GiB','TiB']
- i = 0
- while size > 1024 and i < len(suffixes)-1:
-  i += 1
-  size //= 1024
- return "%d%s" % (size, suffixes[i])
-p('## Machine')
-p('- Name: \`'+uname.machine+'\`')
-try:
- gc.collect()
- import microcontroller as uc
- p('- CPU: \`%s @ %s MHz\`' % (sys.platform, uc.cpu.frequency // 1_000_000))
- p('- UID: \`%s\`' % (uc.cpu.uid.hex(),))
- p('- Temp.: \`%s °C\`' % (uc.cpu.temperature,))
- p('- Voltage: \`%s V\`' % (uc.cpu.voltage,))
-except:
- try:
-  gc.collect()
-  import machine
-  p('- CPU: \`%s @ %s MHz\`' % (sys.platform, machine.freq() // 1_000_000))
- except:
-  p('- CPU: \`'+sys.platform+'\`')
-p()
-p('## System')
-p('- Version: \`'+sys.version.split(";")[1].strip()+'\`')
-if ms:
- p('- Memory use:  \`%s / %s, free: %d%%\`' % (size_fmt(mu), size_fmt(ms), (mf * 100) // ms))
-`)
+        content = await raw.readSysInfoMD()
     } else {
-        content = await readFile(fn)
+        content = await raw.readFile(fn)
         try {
             content = (new TextDecoder('utf-8', { fatal: true })).decode(content)
         } catch (err) {
@@ -644,7 +443,12 @@ async function saveCurrentFile() {
             return
         }
     }
-    await writeFile(editorFn, content)
+    const raw = await MpRawMode.begin(port)
+    try {
+        await raw.writeFile(editorFn, content)
+    } finally {
+        await raw.end()
+    }
 }
 
 async function reboot(mode = "hard") {
@@ -683,13 +487,13 @@ async function runCurrentFile() {
 
     const soft_reboot = false
     const timeout = -1
-    const exitRaw = await port.enterRawRepl(soft_reboot)
+    const raw = await MpRawMode.begin(port, soft_reboot)
     try {
         btnRunIconClass.remove('fa-circle-play')
         btnRunIconClass.add('fa-circle-stop')
         isInRunMode = true
         const emit = true
-        await execCmd(editor.getValue(), timeout, emit)
+        await raw.exec(editor.getValue(), timeout, emit)
     } catch (err) {
         if (err.message.includes("KeyboardInterrupt")) {
             // Interrupted manually
@@ -698,11 +502,11 @@ async function runCurrentFile() {
             return
         }
     } finally {
+        port.emit = false
+        await raw.end()
         btnRunIconClass.remove('fa-circle-stop')
         btnRunIconClass.add('fa-circle-play')
         isInRunMode = false
-        port.emit = false
-        await exitRaw()
         term.write('\r\n>>> ')
     }
     // Success
@@ -762,12 +566,10 @@ async function fetchPkgList(index_url) {
     }
 }
 
-async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
-    if (!port) return;
-
+async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=null) {
     try {
-        const sys = JSON.parse(await execRawRepl(`
-import sys,json
+        const sys = JSON.parse(await raw.exec(`
+import json
 mpy=getattr(sys.implementation, '_mpy', 0) & 0xFF
 print(json.dumps({'mpy':mpy,'path':sys.path}))
 `))
@@ -794,9 +596,9 @@ print(json.dumps({'mpy':mpy,'path':sys.path}))
 
                 // Ensure path exists
                 const [dirname, _] = splitPath(target_file)
-                await makePath(dirname)
+                await raw.makePath(dirname)
 
-                await writeFile(target_file, content)
+                await raw.writeFile(target_file, content)
             }
         }
 
@@ -808,20 +610,30 @@ print(json.dumps({'mpy':mpy,'path':sys.path}))
 
                 // Ensure path exists
                 const [dirname, _] = splitPath(target_file)
-                await makePath(dirname)
+                await raw.makePath(dirname)
 
-                await writeFile(target_file, content)
+                await raw.writeFile(target_file, content)
             }
         }
 
         if ("deps" in pkg_info) {
             for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
-                await installPkg(index_url, dep_pkg, dep_ver)
+                await _raw_installPkg(raw, index_url, dep_pkg, dep_ver)
             }
         }
         toastr.success(`Installed ${pkg}@${pkg_info.version} to ${lib_path}`)
     } catch (err) {
         report('Installing failed', err)
+    }
+}
+
+async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
+    if (!port) return;
+    const raw = await MpRawMode.begin(port)
+    try {
+        await _raw_installPkg(raw, index_url, pkg, version, pkg_info)
+    } finally {
+        await raw.end()
     }
 }
 

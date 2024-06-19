@@ -152,37 +152,6 @@ class Transport {
         }
         throw new Error('Timeout reached before finding the ending sequence')
     }
-
-    async enterRawRepl(soft_reboot=false) {
-        const release = await this.startTransaction()
-        try {
-            await this.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
-            await this.flushInput()
-            await this.write('\r\x01')       // Ctrl-A: enter raw REPL
-            await this.readUntil('raw REPL; CTRL-B to exit\r\n')
-
-            if (soft_reboot) {
-                await this.write('\x04\x03') // soft reboot in raw mode
-                await this.readUntil('raw REPL; CTRL-B to exit\r\n')
-            }
-
-            return async () => {
-                try {
-                    await this.write('\x02')     // Ctrl-B: exit raw REPL
-                    await this.readUntil('>\r\n')
-                    const banner = await this.readUntil('>>> ')
-                    //term.clear()
-                    //term.write(banner)
-                } finally {
-                    release()
-                }
-            }
-        } catch (err) {
-            release()
-            //report("Cannot enter RAW mode", err)
-            throw err
-        }
-    }
 }
 
 /*
