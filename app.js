@@ -1011,7 +1011,7 @@ print()
 
     const xtermTheme = {
         foreground: '#F8F8F8',
-        background: '#1B1E20',
+        background: getComputedStyle(document.documentElement).getPropertyValue('--bg-color-edit'),
         selection: '#5DA5D533',
         black: '#1E1E1D',
         brightBlack: '#262625',

@@ -10,6 +10,7 @@
   --fg-color: white;
   --bg-color: #2a2e32;
   --bg-color-menu: #2a2e32dd;
+  --bg-color-edit: #1b1e20;
   --connected-passive: #87c244;
   --connected-active: #ffcc4d;
   --connected-color: var(--connected-passive);
@@ -162,6 +163,7 @@ button {
 }
 
 #editor {
+    background: var(--bg-color-edit);
     flex: 1;
     overflow: auto;
 }
@@ -239,7 +241,7 @@ button {
 
 #xterm {
     height: 100%;
-    background: #1B1E20;
+    background: var(--bg-color-edit);
 }
 
 .tab-content.active {
@@ -287,8 +289,13 @@ button {
     letter-spacing: 0px;
 }
 
-.cm-s-monokai.CodeMirror { background: #1B1E20; }
-.cm-s-monokai .CodeMirror-gutters { background: #1B1E20; border-right: 1px solid #2a2e32; }
+.cm-s-monokai.CodeMirror {
+    background: var(--bg-color-edit);
+}
+.cm-s-monokai .CodeMirror-gutters {
+    background: var(--bg-color-edit);
+    border-right: 1px solid var(--bg-color);
+}
 
 .CodeMirror-scrollbar-filler {
     background: none;
