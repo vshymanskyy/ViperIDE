@@ -418,6 +418,8 @@ async function _raw_loadFile(raw, fn) {
             }
         } else if (fn.endsWith('.pem')) {
             editor.setOption('mode', 'pem')
+        } else if (fn.endsWith('.ini') || fn.endsWith('.inf') ) {
+            editor.setOption('mode', 'ini')
         } else if (fn.endsWith('.md')) {
             editor.setOption('mode', 'markdown')
         } else {
@@ -812,6 +814,26 @@ CodeMirror.defineSimpleMode('pem', {
         lineComment: '#'
     }
 })
+
+CodeMirror.defineSimpleMode('ini', {
+    start: [
+        {regex: /\/\/.*/,       token: 'comment'},
+        {regex: /\#.*/,         token: 'comment'},
+        {regex: /\;.*/,         token: 'comment'},
+        {regex: /\[[^\]]+\]/,   token: 'keyword'},
+        {regex: /[^\s\=\,]+/,   token: 'variable', next: 'property'}
+    ],
+    property: [
+        {regex: /\=/,   next: 'value'},
+        {regex: /.*/,   token: null, next: 'start'}
+    ],
+    value: [
+        {regex: /true|false/i,          token: 'atom',   next: 'start'},
+        {regex: /[-+]?0x[a-fA-F0-9]+$/, token: 'number', next: 'start'},
+        {regex: /[-+]?\d+$/,            token: 'number', next: 'start'},
+        {regex: /.*/,                   token: 'string', next: 'start'}
+    ]
+});
 
 function updateWordWrapping() {
     editor.setOption('lineWrapping', QID('use-word-wrap').checked)
