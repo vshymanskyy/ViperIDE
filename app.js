@@ -573,23 +573,17 @@ async function fetchPkgList(index_url) {
 
 async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=null) {
     try {
-        const sys = JSON.parse(await raw.exec(`
-import json
-mpy=getattr(sys.implementation, '_mpy', 0) & 0xFF
-print(json.dumps({'mpy':mpy,'path':sys.path}))
-`))
-
-        if (!sys.mpy) { sys.mpy = "py" }
-
-        // Find `lib` filder in sys.path
-        const lib_path = sys.path.find(x => x.endsWith('/lib'))
+        const devinfo = await raw.getDeviceInfo()
+        const mpy_ver = devinfo.mpy_ver
+        // Find the first `lib` folder in sys.path
+        const lib_path = devinfo.sys_path.find(x => x.endsWith('/lib'))
         if (!lib_path) {
             toastr.error(`"lib" folder not found in sys.path`)
             return
         }
 
         if (!pkg_info) {
-            const pkg_info_rsp = await fetch(rewriteUrl(`${index_url}/package/${sys.mpy}/${pkg}/${version}.json`))
+            const pkg_info_rsp = await fetch(rewriteUrl(`${index_url}/package/${mpy_ver}/${pkg}/${version}.json`))
             pkg_info = await pkg_info_rsp.json()
         }
 

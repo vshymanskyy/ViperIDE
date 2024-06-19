@@ -96,7 +96,7 @@ except:
  h=lambda b: ''.join('{:02x}'.format(byte) for byte in b)
 with open('${fn}','rb') as f:
  while 1:
-  b=f.read(255)
+  b=f.read(64)
   if not b:break
   print(h(b),end='')
 `)
@@ -138,10 +138,15 @@ os.rename('.viper.tmp','${fn}')
         const rsp = await this.exec(`
 u=os.uname()
 v=sys.version.split(';')[1].strip()
-print('|'.join([u.machine,u.release,u.sysname,v]))
+mpy=str(getattr(sys.implementation, '_mpy', 0) & 0xFF)
+sp=':'.join(sys.path)
+print('|'.join([u.machine,u.release,u.sysname,v,mpy,sp]))
 `)
-        const [machine, release, sysname, version] = rsp.trim().split('|')
-        return { machine, release, sysname, version }
+        let [machine, release, sysname, version, mpy_ver, sys_path] = rsp.trim().split('|')
+        sys_path = sys_path.split(':')
+        mpy_ver = parseInt(mpy_ver, 10)
+        if (!mpy_ver) { mpy_ver = 'py' }
+        return { machine, release, sysname, version, mpy_ver, sys_path }
     }
 
 
@@ -154,9 +159,9 @@ f.close()
 
     async makePath(path) {
         await this.exec(`
-p = ''
-for d in '${path}'.split('/'):
- p += '/' + d if p else d
+p=''
+for d in filter(len,'${path}'.split('/')):
+ p += '/'+d
  try: os.mkdir(p)
  except OSError as e:
   if e.args[0] != 17: raise
@@ -200,32 +205,18 @@ print('%s|%s|%s'%(fu,ff,fs))
     }
 
     async walkFs() {
-        const rsp = await (async () => {
-            try {
-                return await this.exec(`
+        const rsp = await this.exec(`
 def walk(p):
- for n in os.listdir(p):
-  fn=p+n
+ for n in os.listdir(p if p else '/'):
+  fn=p+'/'+n
   s=os.stat(fn)
   if s[0] & 0x4000 == 0:
    print('f|'+fn+'|'+str(s[6]))
   elif n not in ('.','..'):
    print('d|'+fn+'|'+str(s[6]))
-   walk(fn+'/')
+   walk(fn)
 walk('')
 `)
-            } catch (err) {}
-
-            // Legacy mode (flat)
-            try {
-                return await this.exec(`
-for n in os.listdir():
- s=os.stat(n)
- if s[0] & 0x4000 == 0:
-  print('f|'+n+'|'+str(s[6]))
-`)
-            } catch (err) { throw err } // Throw error, as all methods failed
-        })();
 
         let result = []
         // Build file tree
