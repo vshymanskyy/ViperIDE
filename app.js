@@ -6,7 +6,7 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-const VIPER_IDE_VERSION = "0.3.0"
+const VIPER_IDE_VERSION = "0.3.1"
 
 /*
  * Helpers
