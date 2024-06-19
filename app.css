@@ -9,11 +9,12 @@
 :root {
   --fg-color: white;
   --bg-color: #2a2e32;
-  --bg-color-menu: #2a2e32dd;
+  --bg-color-menu: #2a2e32ee;
   --bg-color-edit: #1b1e20;
   --connected-passive: #87c244;
   --connected-active: #ffcc4d;
   --connected-color: var(--connected-passive);
+  --animation: 0.3s ease-in-out;
 }
 
 html, body {
@@ -33,7 +34,7 @@ body {
     display: flex;
     flex-direction: column;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity var(--animation);
 }
 
 body.loaded {
@@ -139,20 +140,13 @@ button {
     flex-direction: column-reverse;
     background-color: var(--bg-color-menu);
     overflow-y: auto;
-    transition: width 0.3s, left 0.3s;
+    transition: width var(--animation),
+                left var(--animation);
     user-select: none;
 }
 
 #side-menu.hidden {
     width: 0;
-}
-
-#side-menu.hidden .file-content {
-    display: none;
-}
-
-#side-menu .tabs {
-    user-select: none;
 }
 
 #main-editor {
@@ -364,13 +358,21 @@ button {
         background-color: transparent;
         overflow: hidden;
         visibility: hidden;
-        transition: visibility 0s, background-color 0.3s, backdrop-filter 0.3s linear;
     }
 
     #overlay.show {
         visibility: visible;
         background-color: #00000088;
         backdrop-filter: blur(3px);
+        transition: visibility 0s,
+                    background-color var(--animation),
+                    backdrop-filter var(--animation);
+    }
+
+    #overlay:not(.show) {
+        transition: visibility var(--animation), 
+                    background-color var(--animation), 
+                    backdrop-filter var(--animation);
     }
 }
 @media (max-width: 768px) and (display-mode: standalone) {
