@@ -1011,7 +1011,7 @@ print()
 
     const xtermTheme = {
         foreground: '#F8F8F8',
-        background: '#272822',
+        background: '#1B1E20',
         selection: '#5DA5D533',
         black: '#1E1E1D',
         brightBlack: '#262625',

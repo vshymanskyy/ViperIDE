@@ -5,8 +5,8 @@
     "description": "MicroPython Web IDE",
     "version": "0.3.0",
     "start_url": "/index.html",
-    "background_color": "#272822",
-    "theme_color": "#272822",
+    "background_color": "#2a2e32",
+    "theme_color": "#2a2e32",
     "display": "standalone",
     "icons": [
         {

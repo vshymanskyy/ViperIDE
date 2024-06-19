@@ -14,7 +14,7 @@ html, body {
     overscroll-behavior: none;
     touch-action: none;
     box-sizing: border-box;
-    background: #272822;
+    background: #2a2e32;
     color: white;
     font-family: system-ui;
 }
@@ -113,7 +113,6 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #333;
     color: white;
     padding: 0 10px;
     user-select: none;
@@ -127,7 +126,6 @@ button {
 
 #side-menu {
     width: 300px;
-    background: #333;
     display: flex;
     flex-direction: column-reverse;
     color: white;
@@ -162,7 +160,6 @@ button {
 
 #terminal-container {
     height: 200px;
-    background: #272822;
     color: white;
     display: flex;
     flex-direction: column;
@@ -174,7 +171,6 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #333;
     color: white;
     cursor: row-resize;
     user-select: none;
@@ -238,6 +234,7 @@ button {
 
 #xterm {
     height: 100%;
+    background: #1B1E20;
 }
 
 .tab-content.active {
@@ -284,6 +281,9 @@ button {
     line-height: 19px;
     letter-spacing: 0px;
 }
+
+.cm-s-monokai.CodeMirror { background: #1B1E20; }
+.cm-s-monokai .CodeMirror-gutters { background: #1B1E20; border-right: 1px solid #2a2e32; }
 
 .CodeMirror-scrollbar-filler {
     background: none;
