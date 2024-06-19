@@ -420,6 +420,8 @@ async function _raw_loadFile(raw, fn) {
             editor.setOption('mode', 'pem')
         } else if (fn.endsWith('.ini') || fn.endsWith('.inf') ) {
             editor.setOption('mode', 'ini')
+        } else if (fn.endsWith('.toml')) {
+            editor.setOption('mode', 'toml')
         } else if (fn.endsWith('.md')) {
             editor.setOption('mode', 'markdown')
         } else {
@@ -824,8 +826,8 @@ CodeMirror.defineSimpleMode('ini', {
         {regex: /[^\s\=\,]+/,   token: 'variable', next: 'property'}
     ],
     property: [
-        {regex: /\=/,   next: 'value'},
-        {regex: /.*/,   token: null, next: 'start'}
+        {regex: /\=/,   token: 'def', next: 'value'},
+        {regex: /.*/,   token: null,  next: 'start'}
     ],
     value: [
         {regex: /true|false/i,          token: 'atom',   next: 'start'},
