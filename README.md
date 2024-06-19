@@ -15,12 +15,14 @@ A MicroPython IDE for Web and Mobile
 
 ## Tested with
 
-- ESP32, ESP32S3, ESP32C3
-- Raspberry Pi Pico (RP2040)
+- Espressif ESP32, ESP32S3, ESP32C3
+- Raspberry Pi Pico W (RP2040)
+- Seeed XIAO nRF52840 Sense (nRF52840)
 - Micro:bit (nRF51822)
 - Micro:bit v2 (nRF52833) with [`CircuitPython`](https://circuitpython.org/board/microbit_v2)
 - Air602 (WM W600) with [`robert-hh` port](https://github.com/robert-hh/Shared-Stuff/tree/master/w600_firmware)
 - Realtek RTL8721 with [`ambiot` port](https://github.com/ambiot/micropython/releases)
+- nRF9161 DK with Zephyr port
 
 ## Features
 
