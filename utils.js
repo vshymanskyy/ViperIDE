@@ -77,6 +77,75 @@ function getScreenInfo() {
     }
 }
 
+class IdleMonitor {
+    constructor(idleTimeout = 60000) {
+        this.idleTimeout = idleTimeout;
+        this.onIdle = () => {};
+        this.onActive = () => {};
+        this.idleTimer = null;
+        this.isIdle = false;
+        this.handleActivity = this.handleActivity.bind(this);
+        this.attachEventListeners();
+        this.startIdleTimer();
+    }
+
+    attachEventListeners() {
+        //window.addEventListener('mousemove', this.handleActivity);
+        window.addEventListener('keypress', this.handleActivity);
+        window.addEventListener('scroll', this.handleActivity);
+        window.addEventListener('click', this.handleActivity);
+        window.addEventListener('touchstart', this.handleActivity);
+        window.addEventListener('touchmove', this.handleActivity);
+    }
+
+    removeEventListeners() {
+        //window.removeEventListener('mousemove', this.handleActivity);
+        window.removeEventListener('keypress', this.handleActivity);
+        window.removeEventListener('scroll', this.handleActivity);
+        window.removeEventListener('click', this.handleActivity);
+        window.removeEventListener('touchstart', this.handleActivity);
+        window.removeEventListener('touchmove', this.handleActivity);
+    }
+
+    handleActivity() {
+        if (this.isIdle) {
+            this.isIdle = false;
+            this.onActive();
+        }
+        this.resetIdleTimer();
+    }
+
+    startIdleTimer() {
+        clearTimeout(this.idleTimer);
+        this.idleTimer = setTimeout(() => {
+            this.isIdle = true;
+            this.onIdle();
+        }, this.idleTimeout);
+    }
+
+    resetIdleTimer() {
+        clearTimeout(this.idleTimer);
+        this.startIdleTimer();
+    }
+
+    stopMonitoring() {
+        clearTimeout(this.idleTimer);
+        this.removeEventListeners();
+    }
+
+    setIdleCallback(callback) {
+        if (typeof callback === 'function') {
+            this.onIdle = callback;
+        }
+    }
+
+    setActiveCallback(callback) {
+        if (typeof callback === 'function') {
+            this.onActive = callback;
+        }
+    }
+}
+
 function toHex(data) {
     if (typeof data === 'string' || data instanceof String) {
         const encoder = new TextEncoder('utf-8')

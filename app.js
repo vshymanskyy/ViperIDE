@@ -405,6 +405,8 @@ async function saveCurrentFile() {
     } finally {
         await raw.end()
     }
+    // Success
+    analytics.track('File Saved')
 }
 
 async function reboot(mode = "hard") {
@@ -987,6 +989,17 @@ print()
             url: window.location.href,
             referrer: document.referrer,
         })
+
+        const idleMonitor = new IdleMonitor(3*60*1000);
+
+        idleMonitor.setIdleCallback(() => {
+            analytics.track('User Idle')
+        })
+
+        idleMonitor.setActiveCallback(() => {
+            analytics.track('User Active')
+        })
+
     } catch (err) {
         window.analytics = {
             track: function() {}
