@@ -18,6 +18,8 @@ A MicroPython IDE for Web and Mobile
 - Espressif ESP32, ESP32S3, ESP32C3
 - Raspberry Pi Pico W (RP2040)
 - Adafruit Feather STM32F405 Express
+- WeAct Studio Blackpill v3.1 (STM32F411CE)
+- PYBv1.1 (STM32F405RG)
 - Seeed XIAO nRF52840 Sense
 - Nordic nRF9161 DK with Zephyr port
 - Micro:bit (nRF51822)
@@ -63,6 +65,7 @@ A MicroPython IDE for Web and Mobile
 ## Limitations
 
 - Older MicroPython versions may or may not work. Keep your MicroPython up to date.
+  *That said, ViperIDE has been reported to work with MicroPython v1.14 back from Feb 2021* 🤠
 - Some USB devices require drivers installation.
 - Some boards are not detected by Android via USB OTG. In such cases, only `BLE` or `WebREPL` connection is possible.
 - On iOS, `WebBluetooth` and `WebUSB` are not available. Only `WebREPL` works.
