@@ -28,6 +28,7 @@ html, body {
     background: var(--bg-color);
     color: var(--fg-color);
     font-family: system-ui;
+    /* font-weight: 300; */
 }
 
 body {

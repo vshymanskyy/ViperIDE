@@ -51,7 +51,9 @@ async function disconnectDevice() {
     if (port) {
         try {
             await port.disconnect()
-        } catch (err) {}
+        } catch (err) {
+            console.log(err)
+        }
         port = null
     }
 
@@ -1064,6 +1066,7 @@ print()
     })
     term.open(QID('xterm'))
     term.onData(async (data) => {
+        if (!port) return;
         if (isInRunMode) {
             // Allow injecting input in run mode
             await port.write(data)

@@ -196,7 +196,7 @@ class WebSerial extends Transport {
 
     async disconnect() {
         await this.reader.cancel()
-        await this.port.close()
+        await this.port.forget()
     }
 
     async writeBytes(data) {
