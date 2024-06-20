@@ -47,9 +47,11 @@ body.loaded {
 
 a {
     color: unset;
-    font-weight: 600;
-    text-decoration-thickness: 1px;
-    text-decoration-style: dashed;
+    text-decoration: none;
+}
+
+a.link {
+    text-decoration: underline dashed 1px;
 }
 
 ::-webkit-scrollbar {
@@ -103,8 +105,8 @@ a {
 .fa-gear { color: #ccd6dd }
 .fa-trash-can { color: #ccd6dd }
 
-logo {
-    font-weight: 200;
+.logo {
+    font-weight: normal;
 }
 
 label {
@@ -193,7 +195,6 @@ button {
     z-index: 1;
     overflow: hidden;
     text-align: center;
-    font-family: arial;
 }
 .title-lines:before, .title-lines:after {
     position: absolute;
@@ -211,8 +212,6 @@ button {
 }
 
 .tab {
-    text-decoration: none;
-    font-weight: normal;
     display: inline;
     padding: 5px 10px;
 }
@@ -291,6 +290,10 @@ button {
     border-right: 1px solid var(--bg-color);
 }
 
+.cm-s-monokai .CodeMirror-linenumber {
+    font-weight: 200;
+}
+
 .CodeMirror-scrollbar-filler {
     background: none;
 }
@@ -320,8 +323,6 @@ button {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    text-decoration: none;
-    font-weight: normal;
 }
 
 #menu-file-tree div .selected {
@@ -329,7 +330,6 @@ button {
 }
 
 .menu-action {
-    text-decoration: none;
     font-weight: normal;
     float: right;
     font-size: 12px;

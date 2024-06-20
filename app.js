@@ -852,7 +852,9 @@ function createCodeMirror() {
 function applyTranslation() {
     try {
         // sanity check
-        if (!i18next.exists('example.hello')) return;
+        if (!i18next.exists('example.hello')) {
+            throw new Error('No translation')
+        }
 
         document.body.dir = i18next.dir()
 
@@ -891,17 +893,19 @@ function applyTranslation() {
 
         QS('#about-cta').innerHTML = T('about.cta')
         QS('#report-bug').innerHTML = T('about.report-bug')
-
-        QSA("a[id=gh-star]").forEach(el => {
-            el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE")
-            el.setAttribute("target", "_blank")
-        })
-
-        QSA("a[id=gh-issues]").forEach(el => {
-            el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE/issues")
-            el.setAttribute("target", "_blank")
-        })
     } catch (err) {}
+
+    QSA("a[id=gh-star]").forEach(el => {
+        el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE")
+        el.setAttribute("target", "_blank")
+        el.classList.add("link")
+    })
+
+    QSA("a[id=gh-issues]").forEach(el => {
+        el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE/issues")
+        el.setAttribute("target", "_blank")
+        el.classList.add("link")
+    })
 }
 
 function getUserUID() {
