@@ -8,6 +8,14 @@
 
 const VIPER_IDE_VERSION = "0.3.1"
 
+function getBuildDate() {
+    if (window.VIPER_IDE_BUILD) {
+        return (new Date(window.VIPER_IDE_BUILD)).toISOString().substr(0, 19).replace('T',' ')
+    } else {
+        return "unknown"
+    }
+}
+
 /*
  * Device Management
  */
@@ -965,7 +973,7 @@ print()
         analytics.identify(userUID, {
             email: userUID.split('-').pop() + '@vip.er',
             version: VIPER_IDE_VERSION,
-            build: (new Date(window.VIPER_IDE_BUILD || 0)).toISOString(),
+            build: getBuildDate(),
             browser: ua.getBrowser().name,
             browser_version: ua.getBrowser().version,
             os: ua.getOS().name,
@@ -1022,7 +1030,7 @@ async function checkForUpdates() {
     lastUpdateCheck = now
 
     QID('viper-ide-version').innerHTML = VIPER_IDE_VERSION
-    QID('viper-ide-build').innerText = "build " + (new Date(window.VIPER_IDE_BUILD)).toLocaleString()
+    QID('viper-ide-build').innerText = "build " + getBuildDate()
 
     const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: "no-store"})
     manifest = await manifest_rsp.json()
