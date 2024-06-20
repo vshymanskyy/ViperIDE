@@ -135,25 +135,25 @@ button {
 }
 
 #side-menu {
-    width: 300px;
+    flex: 0 0 300px;
     display: flex;
     flex-direction: column-reverse;
     background-color: var(--bg-color-menu);
     overflow-y: auto;
-    transition: width var(--animation),
+    transition: margin-left var(--animation),
                 left var(--animation);
     user-select: none;
 }
 
 #side-menu.hidden {
-    width: 0;
+    margin-left: -300px;
 }
 
 #main-editor {
     flex: 1;
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 0;
 }
 
 #editor {
@@ -381,8 +381,3 @@ button {
     }
 }
 
-@media (min-width: 769px) {
-    #main-editor {
-        width: calc(100% - 300px);
-    }
-}
