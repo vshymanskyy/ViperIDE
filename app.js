@@ -161,7 +161,6 @@ async function connectDevice(type) {
         //connectDevice(type)
     })
 
-    toastr.success('Device connected')
     QID(`btn-conn-${type}`).classList.add('connected')
 
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
@@ -171,9 +170,12 @@ async function connectDevice(type) {
 
         const raw = await MpRawMode.begin(port)
         try {
-            const info = await raw.getDeviceInfo()
-            info['connection'] = type
-            analytics.track('Device Connected', info)
+            const devinfo = await raw.getDeviceInfo()
+            Object.assign(devinfo, { connection: type })
+
+            toastr.success(sanitizeHTML(devinfo.machine + '\n' + devinfo.version), 'Device connected')
+            analytics.track('Device Connected', devinfo)
+            console.log('Device info', devinfo)
 
             const files = await _raw_updateFileList(raw)
             if        (files.filter(x => x.name === 'main.py').length) {
@@ -193,6 +195,7 @@ async function connectDevice(type) {
         // Print banner. TODO: optimize
         await port.write('\x02')
     } else {
+        toastr.success('Device connected')
         analytics.track('Device Connected')
     }
 }

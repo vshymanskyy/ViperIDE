@@ -137,7 +137,8 @@ os.rename('.viper.tmp','${fn}')
     async getDeviceInfo() {
         const rsp = await this.exec(`
 u=os.uname()
-v=sys.version.split(';')[-1].strip()
+try: v=sys.version.split(';')[1].strip()
+except: v='MicroPython '+u.release
 mpy=str(getattr(sys.implementation, '_mpy', 0) & 0xFF)
 sp=':'.join(sys.path)
 print('|'.join([u.machine,u.release,u.sysname,v,mpy,sp]))
