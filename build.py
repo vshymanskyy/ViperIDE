@@ -15,15 +15,15 @@ def translations_json():
 
 # Insert CSS and JS into HTML
 combined = readfile('ViperIDE.html').replace(
-    '<link rel="stylesheet" href="./app.css">', '<style>' + readfile('app.css') + '</style>'
+    '<link rel="stylesheet" href="./src/app.css">', '<style>' + readfile('src/app.css') + '</style>'
 ).replace(
-    '<script src="./app.js"></script>', '<script>' + readfile('app.js') + '</script>'
+    '<script src="./src/app.js"></script>', '<script>' + readfile('src/app.js') + '</script>'
 ).replace(
-    '<script src="./transports.js"></script>', '<script>' + readfile('transports.js') + '</script>'
+    '<script src="./src/transports.js"></script>', '<script>' + readfile('src/transports.js') + '</script>'
 ).replace(
-    '<script src="./rawmode.js"></script>', '<script>' + readfile('rawmode.js') + '</script>'
+    '<script src="./src/rawmode.js"></script>', '<script>' + readfile('src/rawmode.js') + '</script>'
 ).replace(
-    '<script src="./utils.js"></script>', '<script>' + readfile('utils.js') + '</script>'
+    '<script src="./src/utils.js"></script>', '<script>' + readfile('src/utils.js') + '</script>'
 ).replace(
     'require("translations.json")', translations_json()
 ).replace(
@@ -31,7 +31,7 @@ combined = readfile('ViperIDE.html').replace(
 )
 
 # Write the combined content
-with open(sys.argv[1], 'w', encoding='utf-8') as f:
+with open('./build/index.html', 'w', encoding='utf-8') as f:
     f.write(combined)
 
 print('Files combined successfully!')
