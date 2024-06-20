@@ -23,6 +23,8 @@ combined = readfile('ViperIDE.html').replace(
 ).replace(
     '<script src="./rawmode.js"></script>', '<script>' + readfile('rawmode.js') + '</script>'
 ).replace(
+    '<script src="./utils.js"></script>', '<script>' + readfile('utils.js') + '</script>'
+).replace(
     'require("translations.json")', translations_json()
 ).replace(
     'window.VIPER_IDE_BUILD', str(int(time.time() * 1000))

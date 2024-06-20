@@ -6,24 +6,6 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-class Mutex {
-    constructor() {
-        this._lock = Promise.resolve()
-    }
-
-    acquire() {
-        let release
-        const lock = new Promise(resolve => release = resolve)
-        const acquire = this._lock.then(() => release)
-        this._lock = this._lock.then(() => lock)
-        return acquire
-    }
-}
-
 class Transport {
     constructor() {
         if (this.constructor === Transport) {

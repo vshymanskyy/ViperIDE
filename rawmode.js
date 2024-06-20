@@ -6,16 +6,6 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-function toHex(data){
-    if (typeof data === 'string' || data instanceof String) {
-        const encoder = new TextEncoder('utf-8')
-        data = Array.from(encoder.encode(data))
-    }
-    return [...new Uint8Array(data)]
-        .map(x => x.toString(16).padStart(2, '0'))
-        .join('')
-}
-
 class MpRawMode {
     constructor(port) {
         this.port = port
