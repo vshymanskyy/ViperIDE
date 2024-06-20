@@ -106,14 +106,18 @@ class Transport {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
-        const endTime = +Date.now() + timeout
+        let endTime = +Date.now() + timeout
         while (timeout <= 0 || (+Date.now() < endTime)) {
             if (this.receivedData.length >= n) {
                 const res = this.receivedData.substring(0, n)
                 this.receivedData = this.receivedData.substring(n)
                 return res
             }
+            const prev_avail = this.receivedData.length
             await sleep(10)
+            if (this.receivedData.length > prev_avail) {
+                endTime = +Date.now() + timeout
+            }
         }
         throw new Error('Timeout')
     }
@@ -122,7 +126,7 @@ class Transport {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
-        const endTime = +Date.now() + timeout
+        let endTime = +Date.now() + timeout
         while (timeout <= 0 || (+Date.now() < endTime)) {
             const idx = this.receivedData.indexOf(ending) + ending.length
             if (idx >= ending.length) {
@@ -130,7 +134,11 @@ class Transport {
                 this.receivedData = this.receivedData.substring(idx)
                 return res
             }
+            const prev_avail = this.receivedData.length
             await sleep(10)
+            if (this.receivedData.length > prev_avail) {
+                endTime = +Date.now() + timeout
+            }
         }
         throw new Error('Timeout reached before finding the ending sequence')
     }
