@@ -97,7 +97,35 @@ with open('${fn}','rb') as f:
         }
     }
 
-    async writeFile(fn, data, chunk_size=128) {
+    async writeFile(fn, data, chunk_size=128, direct=false) {
+        console.log(`Writing ${fn}`)
+        if (typeof data === 'string' || data instanceof String) {
+            const encoder = new TextEncoder('utf-8')
+            data = Array.from(encoder.encode(data))
+        }
+        function hexlify(data) {
+            return [...new Uint8Array(data)]
+                .map(x => x.toString(16).padStart(2, '0'))
+                .join('')
+        }
+        function repr(arr) {
+            arr = new Uint8Array(arr)
+            let result = "b'";
+            for (let byte of arr) {
+                if (byte >= 32 && byte <= 126) { // Printable ASCII range
+                    if (byte === 92 || byte === 39) { // Escape backslash and single quote
+                        result += '\\' + String.fromCharCode(byte);
+                    } else {
+                        result += String.fromCharCode(byte);
+                    }
+                } else {
+                    result += '\\x' + byte.toString(16).padStart(2, '0');
+                }
+            }
+            result += "'";
+            return result;
+        }
+        const dest = direct ? fn : '.viper.tmp'
         await this.exec(`
 try:
  import binascii
@@ -105,23 +133,32 @@ try:
  h('')
 except:
  h=lambda s: bytes(int(s[i:i+2], 16) for i in range(0, len(s), 2))
-f=open('.viper.tmp','wb')
-def w(d):
- f.write(h(d))
+f=open('${dest}','wb')
+w=lambda d: f.write(h(d))
+o=f.write
 `)
 
         // Split into chunks and send
-        const hexData = toHex(data)
-        for (let i = 0; i < hexData.length; i += chunk_size) {
-            const chunk = hexData.slice(i, i + chunk_size)
-            await this.exec("w('" + chunk + "')")
+        for (let i = 0; i < data.byteLength; i += chunk_size) {
+            const chunk = data.slice(i, i + chunk_size)
+            const cmdHex = "w('" + hexlify(chunk) + "')"
+            const cmdRepr = "o(" + repr(chunk) + ")"
+            // Use the optimal command
+            if (cmdHex.length < cmdRepr.length) {
+                await this.exec(cmdHex)
+            } else {
+                await this.exec(cmdRepr)
+            }
         }
-
-        await this.exec(`f.close()
+        if (direct) {
+            await this.exec(`f.close()`)
+        } else {
+            await this.exec(`f.close()
 try: os.remove('${fn}')
 except: pass
-os.rename('.viper.tmp','${fn}')
+os.rename('${dest}','${fn}')
 `)
+        }
     }
 
     async getDeviceInfo() {

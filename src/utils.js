@@ -146,16 +146,6 @@ class IdleMonitor {
     }
 }
 
-function toHex(data) {
-    if (typeof data === 'string' || data instanceof String) {
-        const encoder = new TextEncoder('utf-8')
-        data = Array.from(encoder.encode(data))
-    }
-    return [...new Uint8Array(data)]
-        .map(x => x.toString(16).padStart(2, '0'))
-        .join('')
-}
-
 function splitPath(path) {
     const parts = path.split('/').filter(part => part !== '')
     const filename = parts.pop()

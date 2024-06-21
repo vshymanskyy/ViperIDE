@@ -558,7 +558,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
                 const [dirname, _] = splitPath(target_file)
                 await raw.makePath(dirname)
 
-                await raw.writeFile(target_file, content)
+                await raw.writeFile(target_file, content, 128, true)
             }
         }
 
@@ -572,7 +572,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
                 const [dirname, _] = splitPath(target_file)
                 await raw.makePath(dirname)
 
-                await raw.writeFile(target_file, content)
+                await raw.writeFile(target_file, content, 128, true)
             }
         }
 
