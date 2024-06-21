@@ -3,7 +3,7 @@
     "name": "ViperIDE",
     "short_name": "ViperIDE",
     "description": "MicroPython Web IDE",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "start_url": "/index.html",
     "background_color": "#2a2e32",
     "theme_color": "#2a2e32",
