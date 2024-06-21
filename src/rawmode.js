@@ -101,7 +101,7 @@ with open('${fn}','rb') as f:
         console.log(`Writing ${fn}`)
         if (typeof data === 'string' || data instanceof String) {
             const encoder = new TextEncoder('utf-8')
-            data = Array.from(encoder.encode(data))
+            data = new Uint8Array(Array.from(encoder.encode(data)))
         }
         function hexlify(data) {
             return [...new Uint8Array(data)]

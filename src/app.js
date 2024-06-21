@@ -415,6 +415,7 @@ async function saveCurrentFile() {
     }
     // Success
     analytics.track('File Saved')
+    toastr.success('File Saved')
 }
 
 async function reboot(mode = "hard") {
