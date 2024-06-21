@@ -534,6 +534,8 @@ async function fetchPkgList(index_url) {
 }
 
 async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=null) {
+    analytics.track('Package Install', { name: pkg })
+    toastr.info(`Installing ${pkg}...`)
     try {
         const devinfo = await raw.getDeviceInfo()
         const mpy_ver = devinfo.mpy_ver
