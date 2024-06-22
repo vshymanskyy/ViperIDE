@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WebRTC Bridge</title>
+    <title>ViperIDE P2P Bridge</title>
 </head>
 <body>
-    <h1>WebRTC Bridge</h1>
-    <p>Bridge ID: <span id="bridge-id"></span></p>
+    <h1>ViperIDE P2P Bridge</h1>
 
     <button class="button" title="Connect WebREPL"       onclick="startBridge('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-circle-nodes"></i></button>
     <button class="button" title="Connect Bluetooth"     onclick="startBridge('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
     <button class="button" title="Connect USB/Serial"    onclick="startBridge('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+
+    <p>Bridge ID: <span id="bridge-id">none</span></p>
 
     <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
 
@@ -25,30 +26,53 @@
     <script src="./src/utils.js"></script>
     <script src="./src/transports.js"></script>
     <script>
-        let port;
+        let port, rtc;
+
+        async function disconnectAll() {
+            document.getElementById('bridge-id').textContent = 'none'
+
+            try {
+                await rtc.disconnect()
+            } catch(err) {}
+
+            try {
+                await port.disconnect()
+            } catch(err) {}
+
+            rtc = null
+            port = null
+        }
 
         const startBridge = async () => {
-            port = new WebSerial();
-            await port.requestAccess();
-            await port.connect();
+            try {
+                await disconnectAll()
 
-            const bridgeTransport = new WebRTCTransport();
-            await bridgeTransport.requestAccess();
+                port = new WebSerial()
+                await port.requestAccess()
+                await port.connect()
 
-            document.getElementById('bridge-id').textContent = bridgeTransport.info.id;
+                rtc = new WebRTCTransport()
+                await rtc.requestAccess()
 
-            bridgeTransport.onReceive(async (data) => {
-                await port.write(data);
-            });
+                document.getElementById('bridge-id').textContent = rtc.info.id
 
-            port.onReceive(async (data) => {
-                await bridgeTransport.write(data);
-            });
+                rtc.onReceive(async (data) => {
+                    console.log('peer -> port', data)
+                    await port.write(data)
+                })
 
-            bridgeTransport.onDisconnect(() => {
-                console.log('WebRTC peer disconnected.');
-            });
-        };
+                port.onReceive(async (data) => {
+                    console.log('port -> peer', data)
+                    await rtc.write(data)
+                })
+
+                rtc.onDisconnect(() => {
+                    console.log('Peer disconnected.')
+                })
+            } catch (err) {
+                console.error('Error starting bridge:', err);
+            }
+        }
     </script>
 </body>
 </html>
