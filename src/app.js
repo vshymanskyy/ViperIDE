@@ -108,10 +108,10 @@ async function connectDevice(type) {
             port = new WebSerial()
         }
     } else if (type === 'rtc') {
-        const id = prompt('Bridge ID:')
+        const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:')
         if (id == null) { return }
         if (id.length != 36) {
-            toastr.error('Bridge ID is malformed')
+            toastr.error('P2P ID is malformed')
             return
         }
         await disconnectDevice()

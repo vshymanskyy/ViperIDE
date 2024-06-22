@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ViperIDE P2P Bridge</title>
+
+    <link rel="icon" type="image/png" href="assets/favicon.png"/>
 
     <style>
     html, body {
@@ -16,6 +19,7 @@
         font-family: system-ui;
         font-weight: 300;
         font-size: 16px;
+        line-height: 1.8em;
     }
 
     body {
@@ -29,6 +33,14 @@
 
     a.link {
         text-decoration: underline dashed 1px;
+    }
+
+    .highlight {
+        background: #444;
+        border-radius: 3px;
+        padding: 1px 5px 1px 5px;
+        line-height: 19px;
+        white-space: nowrap;
     }
 
     button {
@@ -54,10 +66,10 @@
         <button class="button" title="Connect Bluetooth"     onclick="startBridge('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button-->
         <button class="button" title="Connect USB/Serial"    onclick="startBridge('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
     </p>
-    <p>2. Get Bridge ID:<br><span id="bridge-id">---</span></p>
-    <p>3. In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <b><i class="fa-solid fa-globe"></i> [Connect P2P Bridge]</b> button and insert your Bridge ID</p>
+    <p>2. Get Bridge P2P ID:<br><span class="highlight" id="bridge-id">---</span></p>
+    <p>3. In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-circle-nodes"></i> Connect P2P</span> button and insert your Bridge P2P ID</p>
 
-    <p>A secure, peer-to-peer connection should be established <b>across the internet</b> between the bridge and the Viper IDE.</p>
+    <p>A secure, peer-to-peer connection should be established <b>across the internet</b>.</p>
 
     <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
 
