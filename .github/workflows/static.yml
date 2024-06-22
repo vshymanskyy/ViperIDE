@@ -34,10 +34,10 @@ jobs:
       - name: Build
         run: |
           mkdir build
-          python3 build.py
+          python3 build.py ViperIDE.html build/index.html
+          python3 build.py bridge.html   build/bridge.html
           cp -r ./assets ./build/
           cp ./src/webrepl_content.js ./build/
-          cp bridge.html ./build/
           jq -c . < manifest.json > ./build/manifest.json
       - name: Setup Pages
         uses: actions/configure-pages@v5

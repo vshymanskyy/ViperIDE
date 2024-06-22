@@ -14,7 +14,7 @@ def translations_json():
     return json.dumps(result, separators=(',',':'), ensure_ascii=False, sort_keys=True)
 
 # Insert CSS and JS into HTML
-combined = readfile('ViperIDE.html').replace(
+combined = readfile(sys.argv[1]).replace(
     '<link rel="stylesheet" href="./src/app.css">', '<style>' + readfile('src/app.css') + '</style>'
 ).replace(
     '<script src="./src/app.js"></script>', '<script>' + readfile('src/app.js') + '</script>'
@@ -31,7 +31,7 @@ combined = readfile('ViperIDE.html').replace(
 )
 
 # Write the combined content
-with open('./build/index.html', 'w', encoding='utf-8') as f:
+with open(sys.argv[2], 'w', encoding='utf-8') as f:
     f.write(combined)
 
 print('Files combined successfully!')
