@@ -72,6 +72,10 @@
     <script src="./src/utils.js"></script>
     <script src="./src/transports.js"></script>
     <script>
+        window.analytics = {
+            track: function() {}
+        }
+
         let port, rtc;
 
         async function disconnectAll() {
