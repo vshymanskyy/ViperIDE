@@ -204,6 +204,28 @@ function toggleFullScreen(elementId) {
     }
 }
 
+let activityTimeout = -1;
+
+// Function to indicate activity
+function indicateActivity() {
+    // Clear any existing timeout to reset the inactivity timer
+    if (activityTimeout !== -1) {
+        clearTimeout(activityTimeout);
+    }
+
+    // Set the connected color to active if not already set
+    if (activityTimeout === -1) {
+        document.documentElement.style.setProperty('--connected-color', 'var(--connected-active)');
+    }
+
+    // Change the color to passive after some inactivity
+    activityTimeout = setTimeout(() => {
+        // Set the connected color to passive
+        document.documentElement.style.setProperty('--connected-color', 'var(--connected-passive)');
+        activityTimeout = -1;
+    }, 100);
+}
+
 function setupTabs(containerNode) {
     const tabs = containerNode.querySelectorAll('.tab')
     const tabContents = containerNode.querySelectorAll('.tab-content')

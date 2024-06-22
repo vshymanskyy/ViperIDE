@@ -14,6 +14,7 @@ class Transport {
         this.mutex = new Mutex()
         this.inTransaction = false
         this.receivedData = ''
+        this.activityCallback = () => {}
         this.receiveCallback = () => {}
         this.disconnectCallback = () => {}
         this.writeChunk = 128
@@ -45,12 +46,16 @@ class Transport {
             while (offset < value.byteLength) {
                 const chunk = value.slice(offset, offset + this.writeChunk)
                 await this.writeBytes(chunk)
-                await sleep(5)
+                this.activityCallback()
                 offset += this.writeChunk
             }
         } catch (err) {
             report("Write error", err)
         }
+    }
+
+    onActivity(callback) {
+        this.activityCallback = callback
     }
 
     onReceive(callback) {
@@ -75,15 +80,11 @@ class Transport {
             if (this.emit && prevRecvCbk) { prevRecvCbk(data) }
         }
 
-        document.documentElement.style.setProperty('--connected-color', 'var(--connected-active)');
-
         return () => {
             this.receiveCallback = prevRecvCbk
             if (prevRecvCbk) { prevRecvCbk(this.receivedData) }
             this.receivedData = null
             this.inTransaction = false
-
-            document.documentElement.style.setProperty('--connected-color', 'var(--connected-passive)');
 
             release()
         }
@@ -200,6 +201,7 @@ class WebSerial extends Transport {
                 const { value, done } = await this.reader.read()
                 if (done) break
                 this.receiveCallback(decoder.decode(value))
+                this.activityCallback()
             }
         } catch (error) {
             this.disconnectCallback()
@@ -316,6 +318,7 @@ class WebBluetooth extends Transport {
         const decoder = new TextDecoder()
         const value = event.target.value
         this.receiveCallback(decoder.decode(value))
+        this.activityCallback()
     }
 }
 
@@ -352,6 +355,7 @@ class WebSocketREPL extends Transport {
         this.socket.binaryType = 'arraybuffer'
         this.socket.onmessage = (event) => {
             this.receiveCallback(event.data)
+            this.activityCallback()
         }
 
         this.socket.onclose = () => {
@@ -389,6 +393,7 @@ class WebSocketREPL extends Transport {
             while (offset < value.length) {
                 const chunk = value.slice(offset, offset + this.writeChunk)
                 this.socket.send(chunk)
+                this.activityCallback()
                 offset += this.writeChunk
                 if (offset < value.length) {
                     await sleep(150)
@@ -405,18 +410,16 @@ class WebSocketREPL extends Transport {
  */
 
 class WebRTCTransport extends Transport {
-    constructor(peerId = null) {
+    constructor(peerId = null, myId = null) {
         super();
-        this.peer = new Peer({ secure: true })
+        this.peer = new Peer(myId, { secure: true })
         this.targetPeerId = peerId
         this.connection = null
+        this.connectCallback = () => {}
         this.peer.on('connection', (conn) => {
-            console.log('WebRTC inbound connection', conn)
             this.targetPeerId = conn.peer
             this._setup_conn(conn)
-            if (this.connectCallback) {
-                this.connectCallback()
-            }
+            this.connectCallback()
         })
     }
 
@@ -437,6 +440,7 @@ class WebRTCTransport extends Transport {
         conn.on('data', (data) => {
             const decoder = new TextDecoder()
             this.receiveCallback(decoder.decode(data))
+            this.activityCallback()
         })
         conn.on('close', () => {
             this.disconnectCallback()
@@ -471,6 +475,7 @@ class WebRTCTransport extends Transport {
     async writeBytes(data) {
         if (this.connection && this.connection.open) {
             this.connection.send(data);
+            await sleep(10) // TODO
         } else {
             throw new Error('Connection is not open.');
         }

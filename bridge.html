@@ -122,6 +122,7 @@ window.analytics = {
 
 let port = null;
 let rtc = null;
+let bridge_peer_id = null;
 let wakeLock = null;
 
 async function disconnectDevice() {
@@ -230,28 +231,6 @@ async function prepareNewPort(type) {
     return new_port
 }
 
-let activityTimeout = -1;
-
-// Function to indicate activity
-function indicateActivity() {
-    // Clear any existing timeout to reset the inactivity timer
-    if (activityTimeout !== -1) {
-        clearTimeout(activityTimeout);
-    }
-
-    // Set the connected color to active if not already set
-    if (activityTimeout === -1) {
-        document.documentElement.style.setProperty('--connected-color', 'var(--connected-active)');
-    }
-
-    // Change the color to passive after some inactivity
-    activityTimeout = setTimeout(() => {
-        // Set the connected color to passive
-        document.documentElement.style.setProperty('--connected-color', 'var(--connected-passive)');
-        activityTimeout = -1;
-    }, 100);
-}
-
 async function connectDevice(type) {
     const new_port = await prepareNewPort(type)
     if (!new_port) { return }
@@ -271,8 +250,10 @@ async function connectDevice(type) {
 
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
-    rtc = new WebRTCTransport()
+    // Try to reuse the peer id
+    rtc = new WebRTCTransport(null, null) // TODO bridge_peer_id
     await rtc.requestAccess()
+    bridge_peer_id = rtc.peer.id
 
     document.getElementById('bridge-id').textContent = rtc.info.id
 
@@ -282,12 +263,12 @@ async function connectDevice(type) {
 
     rtc.onReceive(async (data) => {
         await port.write(data)
-        indicateActivity()
     })
+
+    port.onActivity(indicateActivity)
 
     port.onReceive(async (data) => {
         await rtc.write(data)
-        indicateActivity()
     })
 
     rtc.onDisconnect(() => {

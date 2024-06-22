@@ -137,6 +137,8 @@ async function connectDevice(type) {
 
     port = new_port
 
+    port.onActivity(indicateActivity)
+
     port.onReceive((data) => {
         term.write(data)
     })
