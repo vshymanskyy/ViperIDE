@@ -1,7 +1,9 @@
 {
     "translation": {
         "example": {
-            "hello": "你好"
+            "hello": "你好",
+            "comment-colors": "以不同颜色打印每个字母",
+            "comment-count": "从1数到10"
         },
         "tool": {
             "run": "运行文件",
@@ -35,7 +37,8 @@
             "use-word-wrap": "自动换行",
             "render-markdown": "Markdown 查看器",
             "use-natural-sort": "自然排序",
-            "lang": "本土化"
+            "lang": "本土化",
+            "zoom": "缩放"
         },
         "about": {
             "cta": "如果您喜欢 ViperIDE，请<a id='gh-star'>在 GitHub 上给它一颗星</a> ⭐ 并在社交媒体上传播信息 📢",

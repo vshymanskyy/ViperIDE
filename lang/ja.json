@@ -1,7 +1,9 @@
 {
     "translation": {
         "example": {
-            "hello": "こんにちは"
+            "hello": "こんにちは",
+            "comment-colors": "各文字を異なる色で印刷",
+            "comment-count": "1から10まで数える"
         },
         "tool": {
             "run": "ファイルを実行",
@@ -35,7 +37,8 @@
             "use-word-wrap": "ワードラップ",
             "render-markdown": "Markdownビューア",
             "use-natural-sort": "自然な並び替え",
-            "lang": "ローカリゼーション"
+            "lang": "ローカリゼーション",
+            "zoom": "ズーム"
         },
         "about": {
             "cta": "ViperIDEが気に入ったら、<a id='gh-star'>GitHubでスターを付けてください</a> ⭐ そして、ソーシャルメディアで広めてください 📢",

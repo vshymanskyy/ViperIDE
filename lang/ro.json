@@ -1,7 +1,9 @@
 {
     "translation": {
         "example": {
-            "hello": "Bună"
+            "hello": "Salut",
+            "comment-colors": "Imprimați fiecare literă cu o culoare diferită",
+            "comment-count": "Numărați de la 1 la 10"
         },
         "tool": {
             "run": "Rulați fișierul",
@@ -35,7 +37,8 @@
             "use-word-wrap": "Împachetarea cuvintelor",
             "render-markdown": "Vizualizator Markdown",
             "use-natural-sort": "Sortare naturală",
-            "lang": "Localizare"
+            "lang": "Localizare",
+            "zoom": "Zoom"
         },
         "about": {
             "cta": "Dacă vă place ViperIDE, vă rugăm <a id='gh-star'>dați-i o stea pe GitHub</a> ⭐ și răspândiți vestea pe rețelele sociale 📢",

@@ -1,7 +1,9 @@
 {
     "translation": {
         "example": {
-            "hello": "Hej"
+            "hello": "Hej",
+            "comment-colors": "Skriv ut varje bokstav i en annan färg",
+            "comment-count": "Räkna från 1 till 10"
         },
         "tool": {
             "run": "Kör fil",
@@ -35,7 +37,8 @@
             "use-word-wrap": "Ordbrytning",
             "render-markdown": "Markdown-visare",
             "use-natural-sort": "Naturlig sortering",
-            "lang": "Lokalisering"
+            "lang": "Lokalisering",
+            "zoom": "Zoom"
         },
         "about": {
             "cta": "Om du gillar ViperIDE, vänligen <a id='gh-star'>ge det en stjärna på GitHub</a> ⭐ och sprid ordet på sociala medier 📢",
