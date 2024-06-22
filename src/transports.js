@@ -472,13 +472,16 @@ class WebRTCTransport extends Transport {
         }
     }
 
-    async writeBytes(data) {
+    async write(data) {
+        const encoder = new TextEncoder()
+        const value = encoder.encode(data)
+
         if (this.connection && this.connection.open) {
-            this.connection.send(data);
-            await sleep(10) // TODO
-        } else {
+            this.connection.send(value);
+            //await sleep(10) // TODO
+        } /*else {
             throw new Error('Connection is not open.');
-        }
+        }*/
     }
 }
 
