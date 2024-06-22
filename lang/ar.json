@@ -2,7 +2,7 @@
     "translation": {
         "example": {
             "hello": "مرحبا",
-            "comment-colors": "طباعة كل حرف بلون مختلف",
+            "comment-colors": "اطبع كل حرف بلون مختلف",
             "comment-count": "عد من 1 إلى 10"
         },
         "tool": {

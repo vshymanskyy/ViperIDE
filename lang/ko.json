@@ -2,8 +2,8 @@
     "translation": {
         "example": {
             "hello": "안녕하세요",
-            "comment-colors": "각 문자를 다른 색으로 인쇄",
-            "comment-count": "1에서 10까지 세다"
+            "comment-colors": "각 글자를 다른 색으로 인쇄합니다",
+            "comment-count": "1에서 10까지 세어보세요"
         },
         "tool": {
             "run": "파일 실행",

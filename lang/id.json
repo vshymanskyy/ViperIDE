@@ -3,7 +3,7 @@
         "example": {
             "hello": "Halo",
             "comment-colors": "Cetak setiap huruf dengan warna yang berbeda",
-            "comment-count": "Hitung dari 1 sampai 10"
+            "comment-count": "Hitung dari 1 hingga 10"
         },
         "tool": {
             "run": "Jalankan File",

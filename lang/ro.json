@@ -1,9 +1,9 @@
 {
     "translation": {
         "example": {
-            "hello": "Salut",
-            "comment-colors": "Imprimați fiecare literă cu o culoare diferită",
-            "comment-count": "Numărați de la 1 la 10"
+            "hello": "Bună",
+            "comment-colors": "Tipărește fiecare literă cu o culoare diferită",
+            "comment-count": "Numără de la 1 la 10"
         },
         "tool": {
             "run": "Rulați fișierul",

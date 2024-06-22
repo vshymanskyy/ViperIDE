@@ -2,8 +2,8 @@
     "translation": {
         "example": {
             "hello": "你好",
-            "comment-colors": "以不同颜色打印每个字母",
-            "comment-count": "从1数到10"
+            "comment-colors": "用不同颜色打印每个字母",
+            "comment-count": "数到10"
         },
         "tool": {
             "run": "运行文件",

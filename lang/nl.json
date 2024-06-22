@@ -2,7 +2,7 @@
     "translation": {
         "example": {
             "hello": "Hallo",
-            "comment-colors": "Print elke letter in een andere kleur",
+            "comment-colors": "Druk elke letter af in een andere kleur",
             "comment-count": "Tel van 1 tot 10"
         },
         "tool": {
@@ -38,7 +38,7 @@
             "render-markdown": "Markdown viewer",
             "use-natural-sort": "Natuurlijke sortering",
             "lang": "Lokalisatie",
-            "zoom": "Zoom"
+            "zoom": "Inzoomen"
         },
         "about": {
             "cta": "Als je ViperIDE leuk vindt, geef het dan alsjeblieft een <a id='gh-star'>ster op GitHub</a> ⭐ en vertel het verder op sociale media 📢",

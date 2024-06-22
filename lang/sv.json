@@ -2,7 +2,7 @@
     "translation": {
         "example": {
             "hello": "Hej",
-            "comment-colors": "Skriv ut varje bokstav i en annan färg",
+            "comment-colors": "Skriv ut varje bokstav med en annan färg",
             "comment-count": "Räkna från 1 till 10"
         },
         "tool": {

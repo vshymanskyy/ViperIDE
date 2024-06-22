@@ -2,8 +2,8 @@
     "translation": {
         "example": {
             "hello": "Hola",
-            "comment-colors": "Imprimir cada letra con un color diferente",
-            "comment-count": "Contar del 1 al 10"
+            "comment-colors": "Imprime cada letra con un color diferente",
+            "comment-count": "Cuenta del 1 al 10"
         },
         "tool": {
             "run": "Ejecutar archivo",
@@ -38,7 +38,7 @@
             "render-markdown": "Visualizador de Markdown",
             "use-natural-sort": "Ordenación natural",
             "lang": "Localización",
-            "zoom": "Ampliar"
+            "zoom": "Zoom"
         },
         "about": {
             "cta": "Si te gusta ViperIDE, por favor <a id='gh-star'>dale una estrella en GitHub</a> ⭐ y difúndelo en las redes sociales 📢",

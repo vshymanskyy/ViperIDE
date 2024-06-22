@@ -2,7 +2,7 @@
     "translation": {
         "example": {
             "hello": "こんにちは",
-            "comment-colors": "各文字を異なる色で印刷",
+            "comment-colors": "各文字を異なる色で印刷する",
             "comment-count": "1から10まで数える"
         },
         "tool": {

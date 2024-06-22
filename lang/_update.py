@@ -2,22 +2,25 @@
 
 """
 
-I have a 'new_translations.json' file with English translation, please add entries for:
-ar el es he id ja nl pt ru uk zh-TW zh-CN de fr hi it ko pl ro sv
+I have a translations JSON file. Please add entries for:
+ar el es he id ja uk nl pt ru zh-TW zh-CN de fr hi it ko pl ro sv
 
 {
   "en": {
     "translation": {
         "example": {
-            "hello": "Hello",
-            "comment-colors": "Print each letter with a different color",
-            "comment-count": "Count 1 to 10"
-        },
-        "settings": {
-            "zoom": "Zoom"
+            "hello": "Hello"
         }
     }
-  }
+  },
+  "uk": {
+    "translation": {
+        "example": {
+            "hello": "Привіт"
+        }
+    }
+  },
+  ...
 }
 
 """
@@ -58,7 +61,7 @@ def update_translations(input_file, target_folder):
 
 if __name__ == "__main__":
     # Path to the input file containing new translations
-    input_file = 'new_translations.json'
+    input_file = '_new.json'
 
     # Folder containing the target JSON files
     target_folder = '.'
