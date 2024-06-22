@@ -411,3 +411,66 @@ class WebSocketREPL extends Transport {
         }
     }
 }
+
+/*
+ * P2P / WebRTC
+ */
+
+class WebRTCTransport extends Transport {
+    constructor(peerId = null) {
+        super();
+        this.peer = new Peer(peerId);
+        this.connection = null;
+    }
+
+    async requestAccess() {
+        // Generate a unique ID if not provided
+        if (!this.peer.id) {
+            await new Promise((resolve) => this.peer.on('open', resolve));
+        }
+        this.info = { id: this.peer.id };
+    }
+
+    async connect(targetPeerId) {
+        this.connection = this.peer.connect(targetPeerId);
+
+        this.connection.on('open', () => {
+            this.listen();
+        });
+
+        this.connection.on('close', () => {
+            if (this.disconnectCallback) {
+                this.disconnectCallback();
+            }
+        });
+
+        this.connection.on('error', (err) => {
+            console.error('WebRTC connection error:', err);
+            if (this.disconnectCallback) {
+                this.disconnectCallback();
+            }
+        });
+    }
+
+    async disconnect() {
+        if (this.connection) {
+            this.connection.close();
+            this.connection = null;
+        }
+    }
+
+    async writeBytes(data) {
+        if (this.connection) {
+            this.connection.send(data);
+        }
+    }
+
+    listen() {
+        this.connection.on('data', (data) => {
+            if (this.receiveCallback) {
+                this.receiveCallback(data);
+            }
+        });
+    }
+}
+

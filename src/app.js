@@ -107,6 +107,15 @@ async function connectDevice(type) {
         } else {
             port = new WebSerial()
         }
+    } else if (type === 'rtc') {
+        const id = prompt('Bridge ID:')
+        if (id == null) { return }
+        if (id.length != 36) {
+            toastr.error('Bridge ID is malformed')
+            return
+        }
+        await disconnectDevice()
+        port = new WebRTCTransport(id)
     } else {
         toastr.error('Unknown connection type')
         return
