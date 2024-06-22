@@ -27,7 +27,7 @@
             <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
         </div>
         <div>
-            <!--button class="button" title="Connect P2P/WebRTC"    onclick="connectDevice('ws')"  id="btn-conn-rtc"><i class="fa-solid fa-globe"></i></button-->
+            <button class="button" title="Connect P2P Bridge"    onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-globe"></i></button>
             <button class="button" title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-circle-nodes"></i></button>
             <button class="button" title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
             <button class="button" title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
@@ -199,6 +199,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
     <script>window.analytics = { _writeKey: "WdDAz9IvQknVcbSS" };</script>
     <script src="https://unpkg.com/@june-so/analytics-next/dist/umd/standalone.js"></script>

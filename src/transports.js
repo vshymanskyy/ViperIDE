@@ -422,38 +422,44 @@ class WebRTCTransport extends Transport {
         this.peer = new Peer()
         this.targetPeerId = peerId
         this.connection = null
+        this.peer.on('connection', (conn) => {
+            console.log('WebRTC inbound connection', conn)
+            this._setup_conn(conn)
+        })
     }
 
     async requestAccess() {
         // Generate a unique ID if not provided
         if (!this.peer.id) {
-            await new Promise((resolve) => this.peer.on('open', resolve));
+            await new Promise((resolve) => this.peer.on('open', resolve))
         }
-        this.info = { id: this.peer.id };
+        this.info = { id: this.peer.id }
+        console.log('My P2P ID:', this.peer.id)
+    }
+
+    _setup_conn(conn) {
+        conn.on('data', (data) => {
+            if (this.receiveCallback) {
+                const decoder = new TextDecoder()
+                this.receiveCallback(decoder.decode(data))
+            }
+        })
+        conn.on('close', () => {
+            if (this.disconnectCallback) {
+                this.disconnectCallback()
+            }
+        })
+        this.connection = conn
     }
 
     connect() {
         return new Promise((resolve, reject) => {
-            this.connection = this.peer.connect(this.targetPeerId);
+            const conn = this.peer.connect(this.targetPeerId)
 
-            this.connection.on('open', () => {
-                this.connection.on('data', (data) => {
-                    if (this.receiveCallback) {
-                        this.receiveCallback(data)
-                    }
-                })
+            conn.on('error', reject)
+            conn.on('open', () => {
+                this._setup_conn(conn)
                 resolve()
-            })
-
-            this.connection.on('error', (err) => {
-                console.error('WebRTC connection error:', err);
-                reject(err)
-            })
-
-            this.connection.on('close', () => {
-                if (this.disconnectCallback) {
-                    this.disconnectCallback()
-                }
             })
         });
     }

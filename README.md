@@ -4,11 +4,11 @@
 [![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=success)](https://github.com/vshymanskyy/ViperIDE/issues) 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/vshymanskyy/ViperIDE) 
 
-A MicroPython IDE for Web and Mobile
+An innovative MicroPython IDE for Web and Mobile
 
 - No software installation required, works out of the box
 - Direct USB / Serial connection works on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
-- [`WebREPL`](docs/Web-REPL.md) and [`Bluetooth LE`](docs/Bluetooth-REPL.md) connection support
+- [`WebREPL`](docs/Web-REPL.md), [`Bluetooth LE`](docs/Bluetooth-REPL.md) and [`P2P/WebRTC`](https://viper-ide.org/bridge.html) connection support
 - Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
 
 ![image](docs/images/screenshot-desktop-chrome.png)
@@ -41,7 +41,7 @@ A MicroPython IDE for Web and Mobile
   - Create multiple levels of directories at once (use multiple "/" in the name)
   - Root FS stats display
 - **Package Manager**
-  - `micropython-lib` index
+  - Official `micropython-lib` index
 - **Terminal / REPL**
   - VT100 (ANSI escape sequences) support
   - Snippet support - *WIP*
@@ -67,5 +67,6 @@ A MicroPython IDE for Web and Mobile
 - Older MicroPython versions may or may not work. Keep your MicroPython up to date.
   *That said, ViperIDE has been reported to work with MicroPython v1.14 back from Feb 2021* 🤠
 - Some USB devices require drivers installation.
-- Some boards are not detected by Android via USB OTG. In such cases, only `BLE` or `WebREPL` connection is possible.
-- On iOS, `WebBluetooth` and `WebUSB` are not available. Only `WebREPL` works.
+- Some boards are not detected by Android via USB OTG. In such cases, only `BLE`, `WebREPL`, `P2P` connection is possible.
+- On iOS, `WebBluetooth` and `WebUSB` are not available. Only `WebREPL` and `P2P` works.
+

@@ -37,6 +37,7 @@ jobs:
           python3 build.py
           cp -r ./assets ./build/
           cp ./src/webrepl_content.js ./build/
+          cp bridge.html ./build/
           jq -c . < manifest.json > ./build/manifest.json
       - name: Setup Pages
         uses: actions/configure-pages@v5

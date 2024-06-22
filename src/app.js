@@ -34,7 +34,7 @@ async function disconnectDevice() {
         port = null
     }
 
-    for (const t of ["ws", "ble", "usb"]) {
+    for (const t of ["ws", "ble", "usb", "rtc"]) {
         QID(`btn-conn-${t}`).classList.remove('connected')
     }
 }
