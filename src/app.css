@@ -11,6 +11,7 @@
   --bg-color: #2a2e32;
   --bg-color-menu: #2a2e32ee;
   --bg-color-edit: #1b1e20;
+  --font-size: 14px;
   --connected-passive: #87c244;
   --connected-active: #ffcc4d;
   --connected-color: var(--connected-passive);
@@ -28,14 +29,18 @@ html, body {
     background: var(--bg-color);
     color: var(--fg-color);
     font-family: system-ui;
-    /* font-weight: 300; */
+    font-weight: 300;
+    font-size: var(--font-size);
+    transition: font-size var(--animation),
+                background-color var(--animation),
+                color var(--animation),
+                opacity var(--animation);
 }
 
 body {
     display: flex;
     flex-direction: column;
     opacity: 0;
-    transition: opacity var(--animation);
 }
 
 body.loaded {
@@ -105,6 +110,7 @@ a.link {
 .fa-arrows-rotate { color: #3b88c3; }
 .fa-gear { color: #ccd6dd }
 .fa-trash-can { color: #ccd6dd }
+.fa-star { color: #ffcc4d; }
 
 .logo {
     font-weight: normal;
@@ -120,6 +126,16 @@ input[type="checkbox" i] {
 
 button {
     padding: 5px 5px;
+}
+
+input, select, option {
+    font: unset;
+    color: unset;
+    background-color: unset;
+}
+
+option {
+    background-color: var(--bg-color);
 }
 
 #tool-panel {
@@ -174,11 +190,7 @@ button {
 
 #terminal-tabs {
     flex: 0 0 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     cursor: row-resize;
-    user-select: none;
     padding: 0 5px;
 }
 
@@ -210,6 +222,14 @@ button {
 .title-lines:before {
     margin-left: -50%;
     text-align: right;
+}
+
+.tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    font-size: 1.1rem;;
 }
 
 .tab {
@@ -276,10 +296,10 @@ button {
 .CodeMirror * {
     font-family: "Droid Sans Mono", "monospace", monospace;
     font-weight: normal;
-    font-size: 14px;
+    font-size: 0.9rem;
+    line-height: 1.2rem;
     font-feature-settings: "liga" 0, "calt" 0;
     font-variation-settings: normal;
-    line-height: 19px;
     letter-spacing: 0px;
 }
 
@@ -304,7 +324,7 @@ button {
     border: none;
     color: unset;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 1.1rem;
 }
 
 .button.connected {
@@ -333,7 +353,7 @@ button {
 .menu-action {
     font-weight: normal;
     float: right;
-    font-size: 12px;
+    font-size: 0.8rem;
     padding: 0 0 0 5px;
     opacity: 60%;
 }

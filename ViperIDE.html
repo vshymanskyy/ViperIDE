@@ -27,7 +27,8 @@
             <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
         </div>
         <div>
-            <button class="button" title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws"><i class="fa-solid fa-circle-nodes"></i></button>
+            <!--button class="button" title="Connect P2P/WebRTC"    onclick="connectDevice('ws')"  id="btn-conn-rtc"><i class="fa-solid fa-globe"></i></button-->
+            <button class="button" title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-circle-nodes"></i></button>
             <button class="button" title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
             <button class="button" title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
             <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
@@ -37,10 +38,16 @@
         <div id="overlay" onclick="autoHideSideMenu()"></div>
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
-                <a class="tab active" data-target="menu-files" onclick="fetchFileList();return false;"><i class="fa-solid fa-folder fa-fw"></i></a>
-                <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes();return false;"><i class="fa-solid fa-cubes fa-fw"></i></a>
-                <a class="tab" data-target="menu-settings"><i class="fa-solid fa-gear fa-fw"></i></a>
-                <a class="tab" data-target="menu-about"><i class="fa-solid fa-circle-info fa-fw"></i></a>
+                <div>
+                    <a class="tab active" data-target="menu-files" onclick="fetchFileList();return false;"><i class="fa-solid fa-folder fa-fw"></i></a>
+                    <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes();return false;"><i class="fa-solid fa-cubes fa-fw"></i></a>
+                </div>
+                <div>
+                    <a class="tab" data-target="menu-settings"><i class="fa-solid fa-gear fa-fw"></i></a>
+                    <a class="tab" data-target="menu-about"><i class="fa-solid fa-circle-info fa-fw"></i></a>
+                    <!--button class="button" onclick="TODO"><i class="fa-regular fa-message fa-fw"></i></button>
+                    <button class="button" onclick="TODO"><i class="fa-regular fa-star fa-fw"></i></button-->
+                </div>
             </div>
 
             <div id="menu-files" class="tab-content active">
@@ -102,6 +109,16 @@
 
                             <!-- Austronesian Languages -->
                             <option value="id">🇮🇩 Bahasa Indonesia</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="Zoom:">Zoom:</label>
+                        <select id="zoom">
+                            <option value="0.80">80%</option>
+                            <option value="1.00">100%</option>
+                            <option value="1.10">110%</option>
+                            <option value="1.25">125%</option>
+                            <option value="1.50">150%</option>
                         </select>
                     </div>
                     <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
