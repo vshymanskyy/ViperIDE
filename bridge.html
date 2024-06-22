@@ -120,7 +120,9 @@ window.analytics = {
     track: function() {}
 }
 
-let port, rtc;
+let port = null;
+let rtc = null;
+let wakeLock = null;
 
 async function disconnectDevice() {
     document.getElementById('bridge-id').textContent = '---'
@@ -136,8 +138,13 @@ async function disconnectDevice() {
         await port.disconnect()
     } catch(err) {}
 
+    try {
+        await wakeLock.release()
+    } catch(err) {}
+
     rtc = null
     port = null
+    wakeLock = null
 }
 
 async function prepareNewPort(type) {
@@ -292,6 +299,10 @@ async function connectDevice(type) {
         toastr.warning('Device disconnected')
         disconnectDevice()
     })
+
+    try {
+        wakeLock = await navigator.wakeLock.request('screen')
+    } catch (err) {}
 
     toastr.success('Bridge created')
 }
