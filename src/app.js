@@ -39,14 +39,15 @@ async function disconnectDevice() {
     }
 }
 
-async function connectDevice(type) {
+async function prepareNewPort(type) {
+    let new_port;
     analytics.track('Device Start Connection', { connection: type })
 
     if (type === 'ws') {
         let url
         if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
             url = prompt('WebREPL device address:', '192.168.1.123:8266')
-            if (!url) return;
+            if (!url) { return }
 
             if (url.startsWith("http://")) { url = url.slice(7) }
             if (url.startsWith("https://")) { url = url.slice(8) }
@@ -66,46 +67,39 @@ async function connectDevice(type) {
             toastr.error('Password is too short')
             return
         }
-        await disconnectDevice()
-        port = new WebSocketREPL(url, pass)
+        new_port = new WebSocketREPL(url, pass)
     } else if (type === 'ble') {
         if (iOS) {
             toastr.error('WebBluetooth is not available on iOS')
-            return;
+            return
         }
         if (window.location.protocol === "http:") {
             toastr.error('WebBluetooth cannot be accessed with unsecure connection')
-            return;
+            return
         }
-
         if (typeof navigator.bluetooth === 'undefined') {
             toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
-            return;
+            return
         }
-
-        await disconnectDevice()
-        port = new WebBluetooth()
+        new_port = new WebBluetooth()
     } else if (type === 'usb') {
         if (iOS) {
             toastr.error('WebSerial is not available on iOS')
-            return;
+            return
         }
         if (window.location.protocol === "http:") {
             toastr.error('WebSerial cannot be accessed with unsecure connection')
-            return;
+            return
         }
-
         if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
             toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
-            return;
+            return
         }
-
-        await disconnectDevice()
         if (typeof navigator.serial === 'undefined' || QID('force-serial-poly').checked) {
             console.log('Using WebSerial polyfill')
-            port = new WebSerial(webSerialPolyfill)
+            new_port = new WebSerial(webSerialPolyfill)
         } else {
-            port = new WebSerial()
+            new_port = new WebSerial()
         }
     } else if (type === 'rtc') {
         const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:')
@@ -114,27 +108,34 @@ async function connectDevice(type) {
             toastr.error('P2P ID is malformed')
             return
         }
-        await disconnectDevice()
-        port = new WebRTCTransport(id)
+        new_port = new WebRTCTransport(id)
     } else {
         toastr.error('Unknown connection type')
         return
     }
 
     try {
-        await port.requestAccess()
+        await new_port.requestAccess()
     } catch {
-        port = null
         return
     }
+    return new_port
+}
 
+async function connectDevice(type) {
+    const new_port = await prepareNewPort(type)
+    if (!new_port) { return }
+    // Disconnect previous port, if any
+    await disconnectDevice()
+    // Connect new port
     try {
-        await port.connect()
+        await new_port.connect()
     } catch (err) {
-        port = null
         report('Cannot connect', err)
         return
     }
+
+    port = new_port
 
     port.onReceive((data) => {
         term.write(data)

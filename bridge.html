@@ -7,67 +7,93 @@
 
     <link rel="icon" type="image/png" href="assets/favicon.png"/>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
+
     <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        overscroll-behavior: none;
-        touch-action: none;
-        box-sizing: border-box;
-        background: #2a2e32;
-        color: white;
-        font-family: system-ui;
-        font-weight: 300;
-        font-size: 16px;
-        line-height: 1.8em;
-    }
+:root {
+    --fg-color: white;
+    --bg-color: #2a2e32;
+    --bg-color-menu: #2a2e32ee;
+    --bg-color-edit: #1b1e20;
+    --font-size: 16px;
+    --connected-passive: #87c244;
+    --connected-active: #ffcc4d;
+    --connected-color: var(--connected-passive);
+    --animation: 0.3s ease-in-out;
+}
 
-    body {
-        padding: 20px;
-    }
+html, body {
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    touch-action: none;
+    box-sizing: border-box;
+    background: var(--bg-color);
+    color: var(--fg-color);
+    font-family: system-ui;
+    font-weight: 300;
+    font-size: var(--font-size);
+    line-height: 1.8em;
+}
 
-    a {
-        color: unset;
-        text-decoration: none;
-    }
+body {
+    padding: 20px;
+}
 
-    a.link {
-        text-decoration: underline dashed 1px;
-    }
+a {
+    color: unset;
+    text-decoration: none;
+}
 
-    .highlight {
-        background: #444;
-        border-radius: 3px;
-        padding: 1px 5px 1px 5px;
-        line-height: 19px;
-        white-space: nowrap;
-    }
+a.link {
+    text-decoration: underline dashed 1px;
+}
 
-    button {
-        background: none;
-        border: none;
-        color: unset;
-        cursor: pointer;
-        font-size: 1.3rem;
-    }
+.highlight {
+    background: var(--bg-color-edit);
+    border-radius: 3px;
+    padding: 1px 5px 1px 5px;
+    line-height: 19px;
+    white-space: nowrap;
+}
 
-    #bridge-id {
-        font-family: monospace, monospace;
-        font-weight: bold;
-    }
+.hidden {
+    display: none;
+}
+
+button {
+    background: none;
+    border: none;
+    color: unset;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.button.connected {
+    color: var(--connected-color);
+}
+
+
+#bridge-id {
+    font-family: monospace, monospace;
+    font-weight: bold;
+}
     </style>
 </head>
 <body>
     <h2>🚧 Experimental P2P Bridge 🚧</h2>
 
-    <p>
-        <span>1. Connect your device:</span>
-        <!--button class="button" title="Connect WebREPL"       onclick="startBridge('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-circle-nodes"></i></button>
-        <button class="button" title="Connect Bluetooth"     onclick="startBridge('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button-->
-        <button class="button" title="Connect USB/Serial"    onclick="startBridge('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
-    </p>
-    <p>2. Get Bridge P2P ID:<br><span class="highlight" id="bridge-id">---</span></p>
-    <p>3. In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-circle-nodes"></i> Connect P2P</span> button and insert your Bridge P2P ID</p>
+    <ol>
+        <li>
+            <span>Connect your device:</span>
+            <button class="button hidden" title="Connect P2P"           onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>
+            <button class="button" title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
+            <button class="button" title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+            <button class="button" title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+        </li>
+        <li>Grab a Bridge P2P ID:<br><span class="highlight" id="bridge-id">---</span></li>
+        <li>In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-circle-nodes"></i> Connect P2P</span> button and insert your Bridge P2P ID. </li>
+    </ol>
 
     <p>A secure, peer-to-peer connection should be established <b>across the internet</b>.</p>
 
@@ -81,58 +107,195 @@
 
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
+    <script type="module" crossorigin>
+        import { serial as webSerialPolyfill } from 'https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/+esm'
+        window.webSerialPolyfill = webSerialPolyfill
+    </script>
+
     <script src="./src/utils.js"></script>
     <script src="./src/transports.js"></script>
     <script>
-        window.analytics = {
-            track: function() {}
-        }
 
-        let port, rtc;
+window.analytics = {
+    track: function() {}
+}
 
-        async function disconnectAll() {
-            document.getElementById('bridge-id').textContent = '---'
+let port, rtc;
 
-            try {
-                await rtc.disconnect()
-            } catch(err) {}
+async function disconnectDevice() {
+    document.getElementById('bridge-id').textContent = '---'
+    for (const t of ["ws", "ble", "usb", "rtc"]) {
+        QID(`btn-conn-${t}`).classList.remove('connected')
+    }
 
-            try {
-                await port.disconnect()
-            } catch(err) {}
+    try {
+        await rtc.disconnect()
+    } catch(err) {}
 
-            rtc = null
-            port = null
-        }
+    try {
+        await port.disconnect()
+    } catch(err) {}
 
-        const startBridge = async () => {
-            try {
-                await disconnectAll()
+    rtc = null
+    port = null
+}
 
-                port = new WebSerial()
-                await port.requestAccess()
-                await port.connect()
+async function prepareNewPort(type) {
+    let new_port;
+    analytics.track('Device Start Connection', { connection: type })
 
-                rtc = new WebRTCTransport()
-                await rtc.requestAccess()
+    if (type === 'ws') {
+        let url
+        if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
+            url = prompt('WebREPL device address:', '192.168.1.123:8266')
+            if (!url) { return }
 
-                document.getElementById('bridge-id').textContent = rtc.info.id
+            if (url.startsWith("http://")) { url = url.slice(7) }
+            if (url.startsWith("https://")) { url = url.slice(8) }
+            if (!url.includes("://")) { url = "ws://" + url }
 
-                rtc.onReceive(async (data) => {
-                    await port.write(data)
-                })
-
-                port.onReceive(async (data) => {
-                    await rtc.write(data)
-                })
-
-                rtc.onDisconnect(() => {
-                    console.log('Peer disconnected.')
-                })
-            } catch (err) {
-                console.error('Error starting bridge:', err);
+            if (window.location.protocol === "https:" && url.startsWith("ws://")) {
+                /* Navigate to device, which should automatically reload and ask for WebREPL password */
+                window.location.assign(url.replace("ws://", "http://"))
+                return
             }
+        } else {
+            url = webrepl_url
         }
+        const pass = prompt('WebREPL password:')
+        if (pass == null) { return }
+        if (pass.length < 4) {
+            toastr.error('Password is too short')
+            return
+        }
+        new_port = new WebSocketREPL(url, pass)
+    } else if (type === 'ble') {
+        if (iOS) {
+            toastr.error('WebBluetooth is not available on iOS')
+            return
+        }
+        if (window.location.protocol === "http:") {
+            toastr.error('WebBluetooth cannot be accessed with unsecure connection')
+            return
+        }
+        if (typeof navigator.bluetooth === 'undefined') {
+            toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+            return
+        }
+        new_port = new WebBluetooth()
+    } else if (type === 'usb') {
+        if (iOS) {
+            toastr.error('WebSerial is not available on iOS')
+            return
+        }
+        if (window.location.protocol === "http:") {
+            toastr.error('WebSerial cannot be accessed with unsecure connection')
+            return
+        }
+        if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
+            toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+            return
+        }
+        if (typeof navigator.serial === 'undefined') {
+            console.log('Using WebSerial polyfill')
+            new_port = new WebSerial(webSerialPolyfill)
+        } else {
+            new_port = new WebSerial()
+        }
+    } else if (type === 'rtc') {
+        const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:')
+        if (id == null) { return }
+        if (id.length != 36) {
+            toastr.error('P2P ID is malformed')
+            return
+        }
+        new_port = new WebRTCTransport(id)
+    } else {
+        toastr.error('Unknown connection type')
+        return
+    }
+
+    try {
+        await new_port.requestAccess()
+    } catch {
+        return
+    }
+    return new_port
+}
+
+let activityTimeout = -1;
+
+// Function to indicate activity
+function indicateActivity() {
+    // Clear any existing timeout to reset the inactivity timer
+    if (activityTimeout !== -1) {
+        clearTimeout(activityTimeout);
+    }
+
+    // Set the connected color to active if not already set
+    if (activityTimeout === -1) {
+        document.documentElement.style.setProperty('--connected-color', 'var(--connected-active)');
+    }
+
+    // Change the color to passive after some inactivity
+    activityTimeout = setTimeout(() => {
+        // Set the connected color to passive
+        document.documentElement.style.setProperty('--connected-color', 'var(--connected-passive)');
+        activityTimeout = -1;
+    }, 100);
+}
+
+async function connectDevice(type) {
+    const new_port = await prepareNewPort(type)
+    if (!new_port) { return }
+    // Disconnect previous port, if any
+    await disconnectDevice()
+    // Connect new port
+    try {
+        await new_port.connect()
+    } catch (err) {
+        report('Cannot connect', err)
+        return
+    }
+
+    port = new_port
+
+    QID(`btn-conn-${type}`).classList.add('connected')
+
+    analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
+
+    rtc = new WebRTCTransport()
+    await rtc.requestAccess()
+
+    document.getElementById('bridge-id').textContent = rtc.info.id
+
+    rtc.onConnect(() => {
+        toastr.info(`Client ID: ${rtc.targetPeerId}`, 'ViperIDE connected')
+    })
+
+    rtc.onReceive(async (data) => {
+        await port.write(data)
+        indicateActivity()
+    })
+
+    port.onReceive(async (data) => {
+        await rtc.write(data)
+        indicateActivity()
+    })
+
+    rtc.onDisconnect(() => {
+        toastr.warning('ViperIDE disconnected')
+        disconnectDevice()
+    })
+
+    port.onDisconnect(() => {
+        toastr.warning('Device disconnected')
+        disconnectDevice()
+    })
+
+    toastr.success('Bridge created')
+}
+
     </script>
 </body>
 </html>

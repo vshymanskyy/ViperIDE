@@ -14,8 +14,8 @@ class Transport {
         this.mutex = new Mutex()
         this.inTransaction = false
         this.receivedData = ''
-        this.receiveCallback = null
-        this.disconnectCallback = null
+        this.receiveCallback = () => {}
+        this.disconnectCallback = () => {}
         this.writeChunk = 128
         this.emit = false
         this.info = {}
@@ -199,14 +199,10 @@ class WebSerial extends Transport {
             while (true) {
                 const { value, done } = await this.reader.read()
                 if (done) break
-                if (this.receiveCallback) {
-                    this.receiveCallback(decoder.decode(value))
-                }
+                this.receiveCallback(decoder.decode(value))
             }
         } catch (error) {
-            if (this.disconnectCallback) {
-                this.disconnectCallback()
-            }
+            this.disconnectCallback()
         }
     }
 }
@@ -254,9 +250,7 @@ class WebBluetooth extends Transport {
         })
 
         this.device.addEventListener("gattserverdisconnected", () => {
-            if (this.disconnectCallback) {
-                this.disconnectCallback()
-            }
+            this.disconnectCallback()
         })
         try {
             this.info = {
@@ -321,9 +315,7 @@ class WebBluetooth extends Transport {
     handleNotifications(event) {
         const decoder = new TextDecoder()
         const value = event.target.value
-        if (this.receiveCallback) {
-            this.receiveCallback(decoder.decode(value))
-        }
+        this.receiveCallback(decoder.decode(value))
     }
 }
 
@@ -359,15 +351,11 @@ class WebSocketREPL extends Transport {
         this.socket = await _conn(this.url)
         this.socket.binaryType = 'arraybuffer'
         this.socket.onmessage = (event) => {
-            if (this.receiveCallback) {
-                this.receiveCallback(event.data)
-            }
+            this.receiveCallback(event.data)
         }
 
         this.socket.onclose = () => {
-            if (this.disconnectCallback) {
-                this.disconnectCallback()
-            }
+            this.disconnectCallback()
         }
 
         const release = await this.startTransaction()
@@ -419,13 +407,21 @@ class WebSocketREPL extends Transport {
 class WebRTCTransport extends Transport {
     constructor(peerId = null) {
         super();
-        this.peer = new Peer()
+        this.peer = new Peer({ secure: true })
         this.targetPeerId = peerId
         this.connection = null
         this.peer.on('connection', (conn) => {
             console.log('WebRTC inbound connection', conn)
+            this.targetPeerId = conn.peer
             this._setup_conn(conn)
+            if (this.connectCallback) {
+                this.connectCallback()
+            }
         })
+    }
+
+    onConnect(callback) {
+        this.connectCallback = callback
     }
 
     async requestAccess() {
@@ -439,22 +435,23 @@ class WebRTCTransport extends Transport {
 
     _setup_conn(conn) {
         conn.on('data', (data) => {
-            if (this.receiveCallback) {
-                const decoder = new TextDecoder()
-                this.receiveCallback(decoder.decode(data))
-            }
+            const decoder = new TextDecoder()
+            this.receiveCallback(decoder.decode(data))
         })
         conn.on('close', () => {
-            if (this.disconnectCallback) {
-                this.disconnectCallback()
-            }
+            this.disconnectCallback()
         })
         this.connection = conn
     }
 
     connect() {
         return new Promise((resolve, reject) => {
-            const conn = this.peer.connect(this.targetPeerId)
+            this.peer.on('error', reject)
+
+            const conn = this.peer.connect(this.targetPeerId, {
+                serialization: 'binary',
+                reliable: true,
+            })
 
             conn.on('error', reject)
             conn.on('open', () => {
