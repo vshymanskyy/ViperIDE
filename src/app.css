@@ -288,6 +288,12 @@ option {
     color: #e6db74;
 }
 
+.space-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .CodeMirror {
     height: 100%;
     width: 100%;

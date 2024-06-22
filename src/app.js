@@ -802,6 +802,7 @@ function applyTranslation() {
         QS('label[for=use-natural-sort]').innerText = T('settings.use-natural-sort')
 
         QS('label[for=lang]').innerText = T('settings.lang')
+        QS('label[for=zoom]').innerText = T('settings.zoom')
 
         QS('#about-cta').innerHTML = T('about.cta')
         QS('#report-bug').innerHTML = T('about.report-bug')
@@ -871,7 +872,7 @@ reset = "\\033[0m"
 
 text = "  ${T('example.hello', 'Привіт')} MicroPython! 𓆙"
 
-# Print each letter with a different color
+# ${T('example.comment-colors', 'Print each letter with a different color')}
 print("=" * 32)
 for i, char in enumerate(text):
     color = colors[i % len(colors)]
@@ -879,7 +880,7 @@ for i, char in enumerate(text):
 print(reset)
 print("=" * 32)
 
-# Count 1 to 10
+# ${T('example.comment-count', 'Count 1 to 10')}
 for i in range(10):
     time.sleep(1)
     print(i + 1, "", end="")
