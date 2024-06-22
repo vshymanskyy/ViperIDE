@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebRTC Bridge</title>
+</head>
+<body>
+    <h1>WebRTC Bridge</h1>
+    <p>Bridge ID: <span id="bridge-id"></span></p>
+
+    <button class="button" title="Connect WebREPL"       onclick="startBridge('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-circle-nodes"></i></button>
+    <button class="button" title="Connect Bluetooth"     onclick="startBridge('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+    <button class="button" title="Connect USB/Serial"    onclick="startBridge('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+
+    <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.11.5/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.0.0/i18nextBrowserLanguageDetector.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+    <script src="./src/utils.js"></script>
+    <script src="./src/transports.js"></script>
+    <script>
+        let port;
+
+        const startBridge = async () => {
+            port = new WebSerial();
+            await port.requestAccess();
+            await port.connect();
+
+            const bridgeTransport = new WebRTCTransport();
+            await bridgeTransport.requestAccess();
+
+            document.getElementById('bridge-id').textContent = bridgeTransport.info.id;
+
+            bridgeTransport.onReceive(async (data) => {
+                await port.write(data);
+            });
+
+            port.onReceive(async (data) => {
+                await bridgeTransport.write(data);
+            });
+
+            bridgeTransport.onDisconnect(() => {
+                console.log('WebRTC peer disconnected.');
+            });
+        };
+    </script>
+</body>
+</html>
