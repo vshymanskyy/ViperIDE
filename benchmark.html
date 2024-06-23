@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ViperIDE P2P Bridge</title>
+    <title>Benchmark</title>
 
     <link rel="icon" type="image/png" href="assets/favicon.png"/>
 
@@ -15,7 +15,7 @@
     --bg-color: #2a2e32;
     --bg-color-menu: #2a2e32ee;
     --bg-color-edit: #1b1e20;
-    --font-size: 16px;
+    --font-size: 14px;
     --connected-passive: #87c244;
     --connected-active: #ffcc4d;
     --connected-color: var(--connected-passive);
@@ -82,7 +82,6 @@ button {
     </style>
 </head>
 <body>
-    <h2>Device Benchmark</h2>
 
     <div>
         <span>Connect your device:</span>
@@ -110,7 +109,6 @@ button {
     <script src="./src/utils.js"></script>
     <script src="./src/transports.js"></script>
     <script src="./src/rawmode.js"></script>
-
     <script>
 
 window.analytics = {
@@ -258,6 +256,8 @@ async function connectDevice(type) {
         Object.assign(devinfo, { connection: type })
         log(JSON.stringify(devinfo) + '\n')
 
+        await raw.makePath("test")
+
         /*
          * Binary data
          */
@@ -265,14 +265,14 @@ async function connectDevice(type) {
         log(`Writing binary file ${test_size} bytes...`)
         const data_bin = generateRandomBuffer(test_size);
         startTime = performance.now()
-        await raw.writeFile("_bench.dat", data_bin)
+        await raw.writeFile("test/_bench.dat", data_bin)
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
 
         log(`Reading...`)
         startTime = performance.now()
-        const actual_bin = await raw.readFile("_bench.dat")
+        const actual_bin = await raw.readFile("test/_bench.dat")
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
@@ -283,16 +283,42 @@ async function connectDevice(type) {
         log(`Writing ascii file ${test_size} bytes...`)
         const data_txt = generateRandomString(test_size);
         startTime = performance.now()
-        await raw.writeFile("_bench.txt", data_txt)
+        await raw.writeFile("test/_bench.txt", data_txt)
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
         log(`Reading...`)
         startTime = performance.now()
-        const actual_txt = await raw.readFile("_bench.txt")
+        const actual_txt = await raw.readFile("test/_bench.txt")
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
+        /*
+         * Walk FS
+         */
+
+        log(`Listing FS...`)
+        startTime = performance.now()
+        const fs = await raw.walkFs()
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        /*
+         * Cleanup
+         */
+
+        log(`Cleanup...`)
+        startTime = performance.now()
+        await raw.removeFile("test/_bench.dat")
+        await raw.removeFile("test/_bench.txt")
+        await raw.removeDir("test")
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        log("\n === OK ===\n")
+    } catch(err) {
+        log("\n === FAILED ===\n")
+        log(err.stack)
     } finally {
         await raw.end()
     }
