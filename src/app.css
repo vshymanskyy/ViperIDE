@@ -58,7 +58,7 @@ a {
 
 a.link {
     text-decoration: underline dotted 1px;
-    -webkit-text-decoration-line: underline;
+    -webkit-text-decoration: underline dotted 1px;
 }
 
 ::-webkit-scrollbar {
