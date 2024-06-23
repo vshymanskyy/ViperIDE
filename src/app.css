@@ -57,7 +57,8 @@ a {
 }
 
 a.link {
-    text-decoration: underline solid 1px;
+    text-decoration: underline dotted 1px;
+    -webkit-text-decoration-line: underline;
 }
 
 ::-webkit-scrollbar {

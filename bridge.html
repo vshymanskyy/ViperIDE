@@ -46,7 +46,8 @@ a {
 }
 
 a.link {
-    text-decoration: underline solid 1px;
+    text-decoration: underline dotted 1px;
+    -webkit-text-decoration-line: underline;
 }
 
 .highlight {
@@ -260,7 +261,7 @@ async function connectDevice(type) {
     document.getElementById('bridge-id').textContent = rtc.info.id
 
     rtc.onConnect(() => {
-        toastr.info(`Client ID: ${rtc.targetPeerId}`, 'ViperIDE connected')
+        toastr.info('ViperIDE connected')
     })
 
     rtc.onReceive(async (data) => {
