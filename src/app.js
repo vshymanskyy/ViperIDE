@@ -617,9 +617,9 @@ async function installReplTools() {
         v: 1,
         version: "0.1.0",
         urls: [
-            ["web_repl.py", "github:vshymanskyy/ViperIDE/mpy_repl/web_repl.py"],
-            ["ble_repl.py", "github:vshymanskyy/ViperIDE/mpy_repl/ble_repl.py"],
-            ["ble_nus.py",  "github:vshymanskyy/ViperIDE/mpy_repl/ble_nus.py"],
+            ["web_repl.py", "github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py"],
+            ["ble_repl.py", "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py"],
+            ["ble_nus.py",  "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py"],
         ]
     })
 }
