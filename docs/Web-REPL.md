@@ -45,3 +45,6 @@ WebREPL server started on http://192.168.1.123:8266/
 Visit the specified link to open the IDE.
 
 Alternatively, use WebREPL button in `ViperIDE` to connect to your device.
+
+> [!NOTE]
+> If it opens the original MicroPython WebREPL app, it means you're using the original `webrepl` package instead of the one included in `viper-tools`
