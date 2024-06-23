@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViperIDE P2P Bridge</title>
+
+    <link rel="icon" type="image/png" href="assets/favicon.png"/>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
+
+    <style>
+:root {
+    --fg-color: white;
+    --bg-color: #2a2e32;
+    --bg-color-menu: #2a2e32ee;
+    --bg-color-edit: #1b1e20;
+    --font-size: 16px;
+    --connected-passive: #87c244;
+    --connected-active: #ffcc4d;
+    --connected-color: var(--connected-passive);
+    --animation: 0.3s ease-in-out;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    touch-action: none;
+    box-sizing: border-box;
+    background: var(--bg-color);
+    color: var(--fg-color);
+    font-family: system-ui;
+    font-weight: 300;
+    font-size: var(--font-size);
+    line-height: 1.8em;
+}
+
+body {
+    padding: 20px;
+}
+
+a {
+    color: unset;
+    text-decoration: none;
+}
+
+a.link {
+    text-decoration: underline dotted 1px;
+    -webkit-text-decoration-line: underline;
+}
+
+.highlight {
+    background: var(--bg-color-edit);
+    border-radius: 3px;
+    padding: 1px 5px 1px 5px;
+    line-height: 19px;
+    white-space: nowrap;
+}
+
+.hidden {
+    display: none;
+}
+
+button {
+    background: none;
+    border: none;
+    color: unset;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.button.connected {
+    color: var(--connected-color);
+}
+
+
+#bridge-id {
+    font-family: monospace, monospace;
+    font-weight: bold;
+}
+    </style>
+</head>
+<body>
+    <h2>Device Benchmark</h2>
+
+    <div>
+        <span>Connect your device:</span>
+        <button class="button" title="Connect P2P"           onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>
+        <button class="button" title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
+        <button class="button" title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+        <button class="button" title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+    </div>
+
+    <pre id="log"></pre>
+
+    <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.11.5/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.0.0/i18nextBrowserLanguageDetector.min.js"></script>
+
+    <script type="module" crossorigin>
+        import { serial as webSerialPolyfill } from 'https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/+esm'
+        window.webSerialPolyfill = webSerialPolyfill
+    </script>
+
+    <script src="./src/utils.js"></script>
+    <script src="./src/transports.js"></script>
+    <script src="./src/rawmode.js"></script>
+
+    <script>
+
+window.analytics = {
+    track: function() {}
+}
+
+let port = null;
+let bridge_peer_id = null;
+let wakeLock = null;
+
+function log(s) {
+    QID('log').insertAdjacentHTML('beforeend', s)
+}
+
+async function disconnectDevice() {
+    for (const t of ["ws", "ble", "usb", "rtc"]) {
+        QID(`btn-conn-${t}`).classList.remove('connected')
+    }
+
+    try {
+        await port.disconnect()
+    } catch(err) {}
+
+    try {
+        await wakeLock.release()
+    } catch(err) {}
+
+    port = null
+    wakeLock = null
+}
+
+async function prepareNewPort(type) {
+    let new_port;
+    analytics.track('Device Start Connection', { connection: type })
+
+    if (type === 'ws') {
+        let url
+        if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
+            url = prompt('WebREPL device address:', '192.168.1.123:8266')
+            if (!url) { return }
+
+            if (url.startsWith("http://")) { url = url.slice(7) }
+            if (url.startsWith("https://")) { url = url.slice(8) }
+            if (!url.includes("://")) { url = "ws://" + url }
+
+            if (window.location.protocol === "https:" && url.startsWith("ws://")) {
+                /* Navigate to device, which should automatically reload and ask for WebREPL password */
+                window.location.assign(url.replace("ws://", "http://"))
+                return
+            }
+        } else {
+            url = webrepl_url
+        }
+        const pass = prompt('WebREPL password:')
+        if (pass == null) { return }
+        if (pass.length < 4) {
+            toastr.error('Password is too short')
+            return
+        }
+        new_port = new WebSocketREPL(url, pass)
+    } else if (type === 'ble') {
+        if (iOS) {
+            toastr.error('WebBluetooth is not available on iOS')
+            return
+        }
+        if (window.location.protocol === "http:") {
+            toastr.error('WebBluetooth cannot be accessed with unsecure connection')
+            return
+        }
+        if (typeof navigator.bluetooth === 'undefined') {
+            toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+            return
+        }
+        new_port = new WebBluetooth()
+    } else if (type === 'usb') {
+        if (iOS) {
+            toastr.error('WebSerial is not available on iOS')
+            return
+        }
+        if (window.location.protocol === "http:") {
+            toastr.error('WebSerial cannot be accessed with unsecure connection')
+            return
+        }
+        if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
+            toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+            return
+        }
+        if (typeof navigator.serial === 'undefined') {
+            console.log('Using WebSerial polyfill')
+            new_port = new WebSerial(webSerialPolyfill)
+        } else {
+            new_port = new WebSerial()
+        }
+    } else if (type === 'rtc') {
+        const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:')
+        if (id == null) { return }
+        if (id.length != 36) {
+            toastr.error('P2P ID is malformed')
+            return
+        }
+        new_port = new WebRTCTransport(id)
+    } else {
+        toastr.error('Unknown connection type')
+        return
+    }
+
+    try {
+        await new_port.requestAccess()
+    } catch {
+        return
+    }
+    return new_port
+}
+
+async function connectDevice(type) {
+    const new_port = await prepareNewPort(type)
+    if (!new_port) { return }
+    // Disconnect previous port, if any
+    await disconnectDevice()
+    // Connect new port
+    try {
+        await new_port.connect()
+    } catch (err) {
+        report('Cannot connect', err)
+        return
+    }
+
+    port = new_port
+
+    QID(`btn-conn-${type}`).classList.add('connected')
+
+    port.onActivity(indicateActivity)
+
+    port.onDisconnect(() => {
+        toastr.warning('Device disconnected')
+        disconnectDevice()
+    })
+
+    const test_size = 10*1024;
+    let startTime, endTime;
+    const raw = await MpRawMode.begin(port)
+    try {
+
+        const devinfo = await raw.getDeviceInfo()
+        Object.assign(devinfo, { connection: type })
+        log(JSON.stringify(devinfo) + '\n')
+
+        /*
+         * Binary data
+         */
+
+        log(`Writing binary file ${test_size} bytes...`)
+        const data_bin = generateRandomBuffer(test_size);
+        startTime = performance.now()
+        await raw.writeFile("_bench.dat", data_bin)
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+
+        log(`Reading...`)
+        startTime = performance.now()
+        const actual_bin = await raw.readFile("_bench.dat")
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        /*
+         * ASCII data
+         */
+
+        log(`Writing ascii file ${test_size} bytes...`)
+        const data_txt = generateRandomString(test_size);
+        startTime = performance.now()
+        await raw.writeFile("_bench.txt", data_txt)
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        log(`Reading...`)
+        startTime = performance.now()
+        const actual_txt = await raw.readFile("_bench.txt")
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+    } finally {
+        await raw.end()
+    }
+}
+
+function generateRandomBuffer(size) {
+    let buffer = new ArrayBuffer(size);
+    let view = new Uint8Array(buffer);
+    for (let i = 0; i < size; i++) {
+        view[i] = Math.floor(Math.random() * 256);
+    }
+    return buffer;
+}
+
+function generateRandomString(size) {
+    let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 {}[];!?,`~!@#$%^&*()_+-=\'\\|/"';
+    let randomString = '';
+    for (let i = 0; i < size; i++) {
+        let randomIndex = Math.floor(Math.random() * characters.length);
+        randomString += characters.charAt(randomIndex);
+    }
+    return randomString;
+}
+
+    </script>
+</body>
+</html>

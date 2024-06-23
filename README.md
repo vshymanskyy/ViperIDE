@@ -15,7 +15,7 @@ An innovative MicroPython IDE for Web and Mobile
 
 ## Tested with
 
-- Espressif ESP32, ESP32S3, ESP32C3
+- Espressif ESP8266, ESP32, ESP32S3, ESP32C3, ESP32C6
 - Raspberry Pi Pico W (RP2040)
 - Adafruit Feather STM32F405 Express
 - WeAct Studio Blackpill v3.1 (STM32F411CE)
