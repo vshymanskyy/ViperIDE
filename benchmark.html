@@ -256,7 +256,12 @@ async function connectDevice(type) {
         Object.assign(devinfo, { connection: type })
         log(JSON.stringify(devinfo) + '\n')
 
-        await raw.makePath("test")
+        let root = ""
+        if (devinfo.sys_path.indexOf("/flash") >= 0) {
+            root = "/flash"
+        }
+
+        await raw.makePath(`${root}/test`)
 
         /*
          * Binary data
@@ -265,16 +270,18 @@ async function connectDevice(type) {
         log(`Writing binary file ${test_size} bytes...`)
         const data_bin = generateRandomBuffer(test_size);
         startTime = performance.now()
-        await raw.writeFile("test/_bench.dat", data_bin)
+        await raw.writeFile(`${root}/test/_bench.dat`, data_bin)
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
 
         log(`Reading...`)
         startTime = performance.now()
-        const actual_bin = await raw.readFile("test/_bench.dat")
+        const actual_bin = await raw.readFile(`${root}/test/_bench.dat`)
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        // TODO: verify content
 
         /*
          * ASCII data
@@ -283,15 +290,17 @@ async function connectDevice(type) {
         log(`Writing ascii file ${test_size} bytes...`)
         const data_txt = generateRandomString(test_size);
         startTime = performance.now()
-        await raw.writeFile("test/_bench.txt", data_txt)
+        await raw.writeFile(`${root}/test/_bench.txt`, data_txt)
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
         log(`Reading...`)
         startTime = performance.now()
-        const actual_txt = await raw.readFile("test/_bench.txt")
+        const actual_txt = await raw.readFile(`${root}/test/_bench.txt`)
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        // TODO: verify content
 
         /*
          * Walk FS
@@ -302,6 +311,8 @@ async function connectDevice(type) {
         const fs = await raw.walkFs()
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        // TODO: check file sizes
 
         /*
          * Cleanup
