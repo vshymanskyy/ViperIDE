@@ -52,6 +52,28 @@ a.link {
     -webkit-text-decoration-thickness: 1px;
 }
 
+label {
+    user-select: none;
+}
+
+input[type="checkbox" i] {
+    margin: 3px 3px 3px 0px;
+}
+
+button {
+    padding: 5px 5px;
+}
+
+input, select, option {
+    font: unset;
+    color: unset;
+    background-color: unset;
+}
+
+option {
+    background-color: var(--bg-color);
+}
+
 .highlight {
     background: var(--bg-color-edit);
     border-radius: 3px;
@@ -84,7 +106,6 @@ button {
     </style>
 </head>
 <body>
-
     <div>
         <span>Connect your device:</span>
         <button class="button" title="Connect P2P"           onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>

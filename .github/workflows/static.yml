@@ -34,8 +34,9 @@ jobs:
       - name: Build
         run: |
           mkdir build
-          python3 build.py ViperIDE.html build/index.html
-          python3 build.py bridge.html   build/bridge.html
+          python3 build.py ViperIDE.html   build/index.html
+          python3 build.py bridge.html     build/bridge.html
+          python3 build.py benchmark.html  build/benchmark.html
           cp -r ./assets ./build/
           cp ./src/webrepl_content.js ./build/
           jq -c . < manifest.json > ./build/manifest.json

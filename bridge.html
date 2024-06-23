@@ -15,7 +15,7 @@
     --bg-color: #2a2e32;
     --bg-color-menu: #2a2e32ee;
     --bg-color-edit: #1b1e20;
-    --font-size: 16px;
+    --font-size: 14px;
     --connected-passive: #87c244;
     --connected-active: #ffcc4d;
     --connected-color: var(--connected-passive);
@@ -50,6 +50,28 @@ a.link {
     -webkit-text-decoration-line: underline;
     -webkit-text-decoration-style: dotted;
     -webkit-text-decoration-thickness: 1px;
+}
+
+label {
+    user-select: none;
+}
+
+input[type="checkbox" i] {
+    margin: 3px 3px 3px 0px;
+}
+
+button {
+    padding: 5px 5px;
+}
+
+input, select, option {
+    font: unset;
+    color: unset;
+    background-color: unset;
+}
+
+option {
+    background-color: var(--bg-color);
 }
 
 .highlight {
