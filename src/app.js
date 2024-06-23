@@ -104,11 +104,11 @@ async function prepareNewPort(type) {
     } else if (type === 'rtc') {
         const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:')
         if (id == null) { return }
-        if (id.length != 36) {
+        if (id.length != 10) {
             toastr.error('P2P ID is malformed')
             return
         }
-        new_port = new WebRTCTransport(id)
+        new_port = new WebRTCTransport(id.toUpperCase())
     } else {
         toastr.error('Unknown connection type')
         return

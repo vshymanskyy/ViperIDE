@@ -48,6 +48,37 @@ function getUserUID() {
     return uuid;
 }
 
+function encodeUniquePart(n, length) {
+    // Base 24 alphabet avoiding visually similar or inappropriate characters
+    const alphabet = "0W8N4Y1HP5DF9K6JM3C2XA7R";
+    const base = BigInt(24);
+    let res = "";
+    let prev = null;
+
+    while (res.length < length) {
+        let c = alphabet[n % base];
+        if (c === prev) {
+            c = alphabet[(n + BigInt(1)) % base];
+        }
+        prev = c;
+        res += c;
+        n /= base;
+    }
+
+    return res;
+}
+
+function getRandomBridgeID() {
+    const hexString = Array(16)
+        .fill()
+        .map(() => Math.round(Math.random() * 0xF).toString(16))
+        .join('');
+
+    const rnd = BigInt(`0x${hexString}`);
+
+    return encodeUniquePart(rnd, 10);
+}
+
 function getScreenInfo() {
     function getScreenOrientation() {
         if (window.matchMedia("(orientation: portrait)").matches) {

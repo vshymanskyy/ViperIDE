@@ -251,7 +251,7 @@ async function connectDevice(type) {
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
     // Try to reuse the peer id
-    rtc = new WebRTCTransport(null, null) // TODO bridge_peer_id
+    rtc = new WebRTCTransport(null, getRandomBridgeID()) // TODO bridge_peer_id
     await rtc.requestAccess()
     bridge_peer_id = rtc.peer.id
 
