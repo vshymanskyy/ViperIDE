@@ -861,7 +861,9 @@ function applyTranslation() {
     const zoom_sel = QID('zoom')
     zoom_sel.value = "1.00"
     zoom_sel.addEventListener('change', async function() {
-         document.documentElement.style.setProperty('--font-size', (14 * parseFloat(this.value)).toFixed(1) + 'px');
+        const size = (14 * parseFloat(this.value)).toFixed(1)
+        document.documentElement.style.setProperty('--font-size', size + 'px')
+        term.options.fontSize = size
     })
 
     applyTranslation()
