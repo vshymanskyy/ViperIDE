@@ -15,6 +15,8 @@ def translations_json():
 
 # Insert CSS and JS into HTML
 combined = readfile(sys.argv[1]).replace(
+    '<link rel="stylesheet" href="./src/app_common.css">', '<style>' + readfile('src/app_common.css') + '</style>'
+).replace(
     '<link rel="stylesheet" href="./src/app.css">', '<style>' + readfile('src/app.css') + '</style>'
 ).replace(
     '<script src="./src/app.js"></script>', '<script>' + readfile('src/app.js') + '</script>'

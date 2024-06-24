@@ -16,22 +16,23 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-fork-ribbon-css@0.2.3/gh-fork-ribbon.min.css">
 
+    <link rel="stylesheet" href="./src/app_common.css">
     <link rel="stylesheet" href="./src/app.css">
 </head>
 <body id="app">
     <div id="tool-panel">
         <div>
-            <button class="button" onclick="toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
+            <button onclick="toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
             <span class="logo">ViperIDE</span>
-            <button class="button" title="Save File [Ctrl+S]"   onclick="saveCurrentFile()" id="btn-save"><i class="fa-solid fa-download"></i></button>
-            <button class="button" title="Run File [F5]"        onclick="runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
+            <button title="Save File [Ctrl+S]"   onclick="saveCurrentFile()" id="btn-save"><i class="fa-solid fa-download"></i></button>
+            <button title="Run File [F5]"        onclick="runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
         </div>
         <div>
-            <button class="button" title="Connect P2P"          onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>
-            <button class="button" title="Connect WebREPL"      onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
-            <button class="button" title="Connect Bluetooth"    onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
-            <button class="button" title="Connect USB/Serial"   onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
-            <button class="button" title="Full Screen" onclick="toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
+            <button title="Connect P2P"          onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>
+            <button title="Connect WebREPL"      onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
+            <button title="Connect Bluetooth"    onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+            <button title="Connect USB/Serial"   onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+            <button title="Full Screen" onclick="toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
         </div>
     </div>
     <div id="container">
@@ -45,8 +46,8 @@
                 <div>
                     <a class="tab" data-target="menu-settings"><i class="fa-solid fa-gear fa-fw"></i></a>
                     <a class="tab" data-target="menu-about"><i class="fa-solid fa-circle-info fa-fw"></i></a>
-                    <!--button class="button" onclick="TODO"><i class="fa-regular fa-message fa-fw"></i></button>
-                    <button class="button" onclick="TODO"><i class="fa-regular fa-star fa-fw"></i></button-->
+                    <!--button onclick="TODO"><i class="fa-regular fa-message fa-fw"></i></button>
+                    <button onclick="TODO"><i class="fa-regular fa-star fa-fw"></i></button-->
                 </div>
             </div>
 
@@ -162,10 +163,10 @@
                         <!--a class="tab"        data-target="logs"><i class="fa-solid fa-bug"></i> IDE Logs</a-->
                     </div>
                     <div>
-                        <button class="button" title="Clear" onclick="term.clear()" id="term-clear"><i class="fa-solid fa-trash-can"></i></button>
-                        <button class="button" title="Soft Reset" onclick="reboot('soft')"><i class="fa-solid fa-arrows-rotate"></i></button>
-                        <button class="button" title="Hard Reset" onclick="reboot('hard')"><i class="fa-solid fa-power-off"></i></button>
-                        <button class="button" title="Full Screen" onclick="toggleFullScreen('terminal-container')" id="term-expand"><i class="fa-solid fa-expand"></i></button>
+                        <button title="Clear" onclick="term.clear()" id="term-clear"><i class="fa-solid fa-trash-can"></i></button>
+                        <button title="Soft Reset" onclick="reboot('soft')"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        <button title="Hard Reset" onclick="reboot('hard')"><i class="fa-solid fa-power-off"></i></button>
+                        <button title="Full Screen" onclick="toggleFullScreen('terminal-container')" id="term-expand"><i class="fa-solid fa-expand"></i></button>
                     </div>
                 </div>
                 <div id="xterm" class="tab-content active">

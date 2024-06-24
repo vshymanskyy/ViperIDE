@@ -1,0 +1,219 @@
+/*
+ * SPDX-FileCopyrightText: 2024 Volodymyr Shymanskyy
+ * SPDX-License-Identifier: MIT
+ *
+ * The software is provided "as is", without any warranties or guarantees (explicit or implied).
+ * This includes no assurances about being fit for any specific purpose.
+ */
+
+:root {
+    --fg-color: white;
+    --bg-color: #2a2e32;
+    --bg-color-menu: #2a2e32ee;
+    --bg-color-edit: #1b1e20;
+    --font-size: 14px;
+    --connected-passive: #87c244;
+    --connected-active: #ffcc4d;
+    --connected-color: var(--connected-passive);
+    --animation: 0.3s ease-in-out;
+}
+
+/*
+ * Sensible defaults
+ */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overscroll-behavior: none;
+    touch-action: none;
+    box-sizing: border-box;
+    background: var(--bg-color);
+    color: var(--fg-color);
+    font-family: system-ui;
+    font-weight: 300;
+    font-size: var(--font-size);
+    transition: font-size var(--animation),
+                background-color var(--animation),
+                color var(--animation),
+                opacity var(--animation);
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+
+::-webkit-scrollbar {
+    height: .5rem;
+    width:  .5rem;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+    border-radius: 0px; /* 9999px; */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: hsla(0, 0%, 60%, .8);
+    border-color: rgba(255,255,255,1);
+    border-radius: 0px; /* 9999px; */
+    border-width: 0px;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+}
+
+
+a {
+    color: unset;
+    text-decoration: none;
+}
+
+a.link {
+    text-decoration: underline dotted 1px;
+    -webkit-text-decoration-line: underline;
+    -webkit-text-decoration-style: dotted;
+    -webkit-text-decoration-thickness: 1px;
+}
+
+label {
+    user-select: none;
+}
+
+input[type="checkbox" i] {
+    margin: 3px 3px 3px 0px;
+}
+
+button {
+    padding: 5px 5px;
+}
+
+input, select, option {
+    font: unset;
+    color: unset;
+    background-color: unset;
+}
+
+option {
+    background-color: var(--bg-color);
+}
+
+button {
+    background: none;
+    border: none;
+    color: unset;
+    cursor: pointer;
+    font-size: 1.3rem;
+}
+
+button.connected {
+    color: var(--connected-color);
+}
+
+/*
+ * UI Helpers
+ */
+
+.windows {
+    font-family: Segoe WPC,Segoe UI,sans-serif;
+}
+
+.macos {
+    font-family: -apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+.linux {
+    font-family: system-ui,Ubuntu,Droid Sans,sans-serif;
+}
+
+.fa-power-off { color: #ffcc4d; }
+.fa-bug { color: #ffcc4d; }
+.fa-download { color: #87c244; }
+.fa-circle-play { color: #3b88c3; }
+.fa-circle-stop { color: #ff7272; }
+.fa-circle-info { color: #3b88c3; }
+.fa-file { color: #3b88c3; }
+.fa-folder { color: #ffcc4d; }
+.fa-cube { color: #ba9066; }
+.fa-cubes { color: #ba9066; }
+.fa-arrows-rotate { color: #3b88c3; }
+.fa-gear { color: #ccd6dd }
+.fa-trash-can { color: #ccd6dd }
+.fa-star { color: #ffcc4d; }
+
+.highlight {
+    background: var(--bg-color-edit);
+    border-radius: 3px;
+    padding: 1px 5px 1px 5px;
+    line-height: 19px;
+    white-space: nowrap;
+}
+
+.hidden {
+    display: none;
+}
+
+.space-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Title-lines */
+
+.title-lines {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    text-align: center;
+}
+
+.title-lines:before, .title-lines:after {
+    position: absolute;
+    top: 51%;
+    overflow: hidden;
+    width: 48%;
+    height: 1px;
+    content: '\a0';
+    background-color: #cccccc88;
+    margin-left: 2%;
+}
+
+.title-lines:before {
+    margin-left: -50%;
+    text-align: right;
+}
+
+/* Tabs */
+
+.tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    font-size: 1.1rem;;
+}
+
+.tab {
+    display: inline;
+    padding: 5px 10px;
+}
+
+.tab.active {
+    background: #666;
+}
+
+.tab-content {
+    display: none;
+    flex: 1;
+    padding: 5px 0px 5px 5px;
+}
+
+.tab-content.active {
+    display: block;
+}
+

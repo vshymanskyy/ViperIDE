@@ -3,115 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Benchmark</title>
+    <title>ViperIDE Benchmark</title>
 
     <link rel="icon" type="image/png" href="assets/favicon.png"/>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
 
+    <link rel="stylesheet" href="./src/app_common.css">
     <style>
-:root {
-    --fg-color: white;
-    --bg-color: #2a2e32;
-    --bg-color-menu: #2a2e32ee;
-    --bg-color-edit: #1b1e20;
-    --font-size: 14px;
-    --connected-passive: #87c244;
-    --connected-active: #ffcc4d;
-    --connected-color: var(--connected-passive);
-    --animation: 0.3s ease-in-out;
-}
-
-html, body {
-    margin: 0;
-    padding: 0;
-    overscroll-behavior: none;
-    touch-action: none;
-    box-sizing: border-box;
-    background: var(--bg-color);
-    color: var(--fg-color);
-    font-family: system-ui;
-    font-weight: 300;
-    font-size: var(--font-size);
-    line-height: 1.8em;
-}
-
-body {
-    padding: 20px;
-}
-
-a {
-    color: unset;
-    text-decoration: none;
-}
-
-a.link {
-    text-decoration: underline dotted 1px;
-    -webkit-text-decoration-line: underline;
-    -webkit-text-decoration-style: dotted;
-    -webkit-text-decoration-thickness: 1px;
-}
-
-label {
-    user-select: none;
-}
-
-input[type="checkbox" i] {
-    margin: 3px 3px 3px 0px;
-}
-
-button {
-    padding: 5px 5px;
-}
-
-input, select, option {
-    font: unset;
-    color: unset;
-    background-color: unset;
-}
-
-option {
-    background-color: var(--bg-color);
-}
-
-.highlight {
-    background: var(--bg-color-edit);
-    border-radius: 3px;
-    padding: 1px 5px 1px 5px;
-    line-height: 19px;
-    white-space: nowrap;
-}
-
-.hidden {
-    display: none;
-}
-
-button {
-    background: none;
-    border: none;
-    color: unset;
-    cursor: pointer;
-    font-size: 1.2rem;
-}
-
-.button.connected {
-    color: var(--connected-color);
-}
-
-
-#bridge-id {
-    font-family: monospace, monospace;
-    font-weight: bold;
-}
+    body {
+        padding: 20px;
+    }
     </style>
 </head>
 <body>
+    <h2>ViperIDE Benchmark</h2>
+
     <div>
         <span>Connect your device:</span>
-        <button class="button" title="Connect P2P"           onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>
-        <button class="button" title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
-        <button class="button" title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
-        <button class="button" title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+        <button title="Connect P2P"           onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>
+        <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
+        <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+        <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
     </div>
 
     <pre id="log"></pre>
