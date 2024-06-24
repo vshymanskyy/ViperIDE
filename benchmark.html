@@ -58,6 +58,10 @@ function log(s) {
     QID('log').insertAdjacentHTML('beforeend', s)
 }
 
+function areBytewiseEqual(a, b) {
+    return indexedDB.cmp(a, b) === 0;
+}
+
 async function disconnectDevice() {
     for (const t of ["ws", "ble", "usb", "rtc"]) {
         QID(`btn-conn-${t}`).classList.remove('connected')
@@ -189,6 +193,7 @@ async function connectDevice(type) {
         disconnectDevice()
     })
 
+    let success = true;
     const test_size = 10*1024;
     let startTime, endTime;
     const raw = await MpRawMode.begin(port)
@@ -223,7 +228,11 @@ async function connectDevice(type) {
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
-        // TODO: verify content
+        if (!areBytewiseEqual(data_bin, actual_bin)) {
+            log(`ERROR: content missmatch\n`)
+            success = false
+        }
+
 
         /*
          * ASCII data
@@ -242,7 +251,12 @@ async function connectDevice(type) {
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
-        // TODO: verify content
+        const encoder = new TextEncoder('utf-8')
+        const data_txt_encoded = new Uint8Array(Array.from(encoder.encode(data_txt)))
+        if (!areBytewiseEqual(data_txt_encoded, actual_txt)) {
+            log(`ERROR: content missmatch\n`)
+            success = false
+        }
 
         /*
          * Walk FS
@@ -268,7 +282,11 @@ async function connectDevice(type) {
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
-        log("\n === OK ===\n")
+        if (success) {
+            log("\n === OK ===\n")
+        } else {
+            log("\n === FAILED ===\n")
+        }
     } catch(err) {
         log("\n === FAILED ===\n")
         log(err.stack)
