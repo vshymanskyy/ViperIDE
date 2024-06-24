@@ -971,7 +971,7 @@ print()
     }).observe(QID('xterm'))
 
     window.addEventListener('keydown', (ev) => {
-        if (ev.code == "F5") {
+        if (ev.code == "F5" && !ev.ctrlKey) {
             runCurrentFile()
         } else if (ev.code == "KeyS" && ev.ctrlKey) {
             saveCurrentFile()
