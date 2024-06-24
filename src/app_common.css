@@ -33,7 +33,7 @@ html, body {
     background: var(--bg-color);
     color: var(--fg-color);
     font-family: system-ui;
-    font-weight: 300;
+    font-weight: normal;
     font-size: var(--font-size);
     transition: font-size var(--animation),
                 background-color var(--animation),

@@ -115,7 +115,7 @@ body.loaded {
     padding: 0 8px;
 }
 .hexed-address {
-    font-weight: 200;
+    font-weight: 300;
     border-right: 1px solid var(--bg-color);
 }
 .hexed-hex-part {
@@ -149,7 +149,7 @@ body.loaded {
 }
 
 .cm-s-monokai .CodeMirror-linenumber {
-    font-weight: 200;
+    font-weight: 300;
 }
 
 .CodeMirror-scrollbar-filler {
