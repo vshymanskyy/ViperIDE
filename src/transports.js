@@ -478,7 +478,7 @@ class WebRTCTransport extends Transport {
 
         if (this.connection && this.connection.open) {
             this.connection.send(value)
-            await sleep(1)  // TODO find a better way
+            await sleep(50)  // TODO find a better way
         }
     }
 }

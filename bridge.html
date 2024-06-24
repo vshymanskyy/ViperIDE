@@ -15,6 +15,10 @@
         padding: 20px;
         line-height: 1.8rem;
     }
+    #bridge-id {
+        font-size: 1.5rem;
+        line-height: 1.5em;
+    }
     </style>
 </head>
 <body>
@@ -32,7 +36,9 @@
             <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
             <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
         </li>
-        <li>Grab a Bridge P2P ID: <span class="highlight monospace" id="bridge-id">---</span></li>
+        <li>Grab a Bridge P2P ID:<br>
+            <span class="highlight monospace" id="bridge-id">---</span>
+        </li>
         <li>In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-circle-nodes"></i> Connect P2P</span> button and insert your Bridge P2P ID. </li>
     </ol>
 
