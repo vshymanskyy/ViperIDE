@@ -105,7 +105,7 @@ async function prepareNewPort(type) {
     if (type === 'ws') {
         let url
         if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
-            url = prompt('WebREPL device address:', '192.168.1.123:8266')
+            url = prompt('WebREPL device address:', defaultWsURL)
             if (!url) { return }
             defaultWsURL = url
 
@@ -185,10 +185,14 @@ async function prepareNewPort(type) {
 }
 
 async function connectDevice(type) {
+    if (port) {
+        if (!confirm('Disconnect current device?')) { return }
+        await disconnectDevice()
+        return
+    }
+
     const new_port = await prepareNewPort(type)
     if (!new_port) { return }
-    // Disconnect previous port, if any
-    await disconnectDevice()
     // Connect new port
     try {
         await new_port.connect()
@@ -259,7 +263,6 @@ async function connectDevice(type) {
         await raw.writeFile(`${root}/test/_bench.dat`, data_bin)
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
-
 
         log(`Reading...`)
         startTime = performance.now()

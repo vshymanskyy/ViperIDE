@@ -174,10 +174,14 @@ async function prepareNewPort(type) {
 }
 
 async function connectDevice(type) {
+    if (port) {
+        if (!confirm('Disconnect current device?')) { return }
+        await disconnectDevice()
+        return
+    }
+
     const new_port = await prepareNewPort(type)
     if (!new_port) { return }
-    // Disconnect previous port, if any
-    await disconnectDevice()
     // Connect new port
     try {
         await new_port.connect()

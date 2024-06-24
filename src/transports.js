@@ -477,11 +477,9 @@ class WebRTCTransport extends Transport {
         const value = encoder.encode(data)
 
         if (this.connection && this.connection.open) {
-            this.connection.send(value);
-            //await sleep(10) // TODO
-        } /*else {
-            throw new Error('Connection is not open.');
-        }*/
+            this.connection.send(value)
+            await sleep(1)  // TODO find a better way
+        }
     }
 }
 
