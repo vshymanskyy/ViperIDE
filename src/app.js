@@ -773,10 +773,6 @@ function createCodeMirror() {
         lineWrapping: QID('use-word-wrap').checked,
         indentUnit: 4,
         matchBrackets: true,
-        extraKeys: {
-            "F5": (cm) => runCurrentFile(),
-            "Ctrl-S": (cm) => saveCurrentFile(),
-        }
     })
 }
 
@@ -967,6 +963,17 @@ print()
         fitAddon.fit()
         if (editor) editor.refresh()
     }).observe(QID('xterm'))
+
+    window.addEventListener('keydown', (ev) => {
+        if (ev.code == "F5") {
+            runCurrentFile()
+        } else if (ev.code == "KeyS" && ev.ctrlKey) {
+            saveCurrentFile()
+        } else {
+            return
+        }
+        ev.preventDefault()
+    })
 
     setTimeout(() => {
         document.body.classList.add('loaded')
