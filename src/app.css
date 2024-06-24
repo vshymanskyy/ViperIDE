@@ -107,11 +107,6 @@ body.loaded {
 }
 
 .hexed-viewer {
-    font-family: "Droid Sans Mono", "monospace", monospace;
-    font-weight: normal;
-    white-space: pre;
-    font-size: 0.9rem;
-    line-height: 1.2rem;
 }
 .hexed-line {
     display: flex;

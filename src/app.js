@@ -652,7 +652,7 @@ function autoHideSideMenu() {
 
 function hexViewer(arrayBuffer, targetElement) {
     const containerDiv = document.createElement('div')
-    containerDiv.className = 'hexed-viewer'
+    containerDiv.className = 'hexed-viewer monospace'
 
     const dataView = new DataView(arrayBuffer)
     const numBytes = dataView.byteLength
