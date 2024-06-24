@@ -55,9 +55,9 @@
     <script src="./src/transports.js"></script>
     <script>
 
+const my_p2p_id = getRandomBridgeID();
 let port = null;
 let rtc = null;
-let bridge_peer_id = null;
 let wakeLock = null;
 
 async function disconnectDevice() {
@@ -190,10 +190,9 @@ async function connectDevice(type) {
 
     QID(`btn-conn-${type}`).classList.add('connected')
 
-    // Try to reuse the peer id
-    rtc = new WebRTCTransport(null, getRandomBridgeID()) // TODO bridge_peer_id
+    rtc = new WebRTCTransport(null, my_p2p_id)
+
     await rtc.requestAccess()
-    bridge_peer_id = rtc.peer.id
 
     document.getElementById('bridge-id').textContent = rtc.info.id
 
