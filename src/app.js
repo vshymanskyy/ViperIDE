@@ -1110,7 +1110,8 @@ function initDrag(e) {
 function doDrag(e) {
     const clientY = e.clientY || e.touches[0].clientY
     const terminalContainer = QID('terminal-container')
-    terminalContainer.style.height = (startHeight - (clientY - startY)) + 'px'
+    const height = (startHeight - (clientY - startY))
+    terminalContainer.style.height = Math.max(height, 50) + 'px'
 }
 
 function stopDrag() {
