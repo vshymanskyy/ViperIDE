@@ -39,6 +39,10 @@ async function disconnectDevice() {
     }
 }
 
+let defaultWsURL = '192.168.1.123:8266'
+let defaultWsPass = ''
+let defaultRtcID = ''
+
 async function prepareNewPort(type) {
     let new_port;
     analytics.track('Device Start Connection', { connection: type })
@@ -46,8 +50,9 @@ async function prepareNewPort(type) {
     if (type === 'ws') {
         let url
         if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
-            url = prompt('WebREPL device address:', '192.168.1.123:8266')
+            url = prompt('WebREPL device address:', defaultWsURL)
             if (!url) { return }
+            defaultWsURL = url
 
             if (url.startsWith("http://")) { url = url.slice(7) }
             if (url.startsWith("https://")) { url = url.slice(8) }
@@ -61,12 +66,13 @@ async function prepareNewPort(type) {
         } else {
             url = webrepl_url
         }
-        const pass = prompt('WebREPL password:')
+        const pass = prompt('WebREPL password:', defaultWsPass)
         if (pass == null) { return }
         if (pass.length < 4) {
             toastr.error('Password is too short')
             return
         }
+        defaultWsPass = pass
         new_port = new WebSocketREPL(url, pass)
     } else if (type === 'ble') {
         if (iOS) {
@@ -102,12 +108,13 @@ async function prepareNewPort(type) {
             new_port = new WebSerial()
         }
     } else if (type === 'rtc') {
-        const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:')
+        const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:', defaultRtcID)
         if (id == null) { return }
         if (id.length != 10) {
             toastr.error('P2P ID is malformed')
             return
         }
+        defaultRtcID = id
         new_port = new WebRTCTransport(id.toUpperCase())
     } else {
         toastr.error('Unknown connection type')
