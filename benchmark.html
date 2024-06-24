@@ -62,6 +62,21 @@ function areBytewiseEqual(a, b) {
     return indexedDB.cmp(a, b) === 0;
 }
 
+function findFile(fs, filePath) {
+  for (const item of fs) {
+    if (item.path === filePath) {
+      return item;
+    }
+    if (item.content) {
+      const f = findFile(item.content, filePath);
+      if (f !== undefined) {
+        return f;
+      }
+    }
+  }
+  return undefined;
+}
+
 async function disconnectDevice() {
     for (const t of ["ws", "ble", "usb", "rtc"]) {
         QID(`btn-conn-${t}`).classList.remove('connected')
@@ -211,30 +226,6 @@ async function connectDevice(type) {
         await raw.makePath(`${root}/test`)
 
         /*
-         * Binary data
-         */
-
-        log(`Writing binary file ${test_size} bytes...`)
-        const data_bin = generateRandomBuffer(test_size);
-        startTime = performance.now()
-        await raw.writeFile(`${root}/test/_bench.dat`, data_bin)
-        endTime = performance.now()
-        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
-
-
-        log(`Reading...`)
-        startTime = performance.now()
-        const actual_bin = await raw.readFile(`${root}/test/_bench.dat`)
-        endTime = performance.now()
-        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
-
-        if (!areBytewiseEqual(data_bin, actual_bin)) {
-            log(`ERROR: content missmatch\n`)
-            success = false
-        }
-
-
-        /*
          * ASCII data
          */
 
@@ -259,6 +250,29 @@ async function connectDevice(type) {
         }
 
         /*
+         * Binary data
+         */
+
+        log(`Writing binary file ${test_size} bytes...`)
+        const data_bin = generateRandomBuffer(test_size);
+        startTime = performance.now()
+        await raw.writeFile(`${root}/test/_bench.dat`, data_bin)
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+
+        log(`Reading...`)
+        startTime = performance.now()
+        const actual_bin = await raw.readFile(`${root}/test/_bench.dat`)
+        endTime = performance.now()
+        log(` ${(endTime-startTime).toFixed(1)}ms\n`)
+
+        if (!areBytewiseEqual(data_bin, actual_bin)) {
+            log(`ERROR: content missmatch\n`)
+            success = false
+        }
+
+        /*
          * Walk FS
          */
 
@@ -268,7 +282,19 @@ async function connectDevice(type) {
         endTime = performance.now()
         log(` ${(endTime-startTime).toFixed(1)}ms\n`)
 
-        // TODO: check file sizes
+        for (const fn of ['_bench.dat', '_bench.txt'])
+        {
+            const fd = findFile(fs, `${root}/test/${fn}`)
+            if (fd) {
+                if (fd.size !== test_size) {
+                    log(`ERROR: ${fn} size mismatch\n`)
+                    success = false
+                }
+            } else {
+                log(`ERROR: ${fn} not found\n`)
+                success = false
+            }
+        }
 
         /*
          * Cleanup
