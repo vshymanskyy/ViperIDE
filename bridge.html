@@ -20,9 +20,9 @@
 <body>
     <h2>ViperIDE P2P Bridge</h2>
 
-    <p><span class="highlight">🚧 This is experimental 🚧</span></p>
+    <p><span class="highlight">🚧 THIS IS EXPERIMENTAL, BEWARE OF BUGS 🚧</span></p>
 
-    <p>The Bridge allows creating a secure, peer-to-peer connection between the device and ViperIDE <b>across the internet</b>.</p>
+    <p>The bridge allows creating a secure, peer-to-peer connection between the device and ViperIDE <b>across the internet</b>.</p>
 
     <ol>
         <li>
@@ -54,10 +54,6 @@
     <script src="./src/utils.js"></script>
     <script src="./src/transports.js"></script>
     <script>
-
-window.analytics = {
-    track: function() {}
-}
 
 let port = null;
 let rtc = null;
@@ -187,8 +183,6 @@ async function connectDevice(type) {
 
     QID(`btn-conn-${type}`).classList.add('connected')
 
-    analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
-
     // Try to reuse the peer id
     rtc = new WebRTCTransport(null, getRandomBridgeID()) // TODO bridge_peer_id
     await rtc.requestAccess()
@@ -212,7 +206,6 @@ async function connectDevice(type) {
 
     rtc.onDisconnect(() => {
         toastr.warning('ViperIDE disconnected')
-        disconnectDevice()
     })
 
     port.onDisconnect(() => {
@@ -225,6 +218,10 @@ async function connectDevice(type) {
     } catch (err) {}
 
     toastr.success('Bridge created')
+}
+
+window.analytics = {
+    track: function() {}
 }
 
     </script>

@@ -50,10 +50,6 @@
     <script src="./src/rawmode.js"></script>
     <script>
 
-window.analytics = {
-    track: function() {}
-}
-
 let port = null;
 let bridge_peer_id = null;
 let wakeLock = null;
@@ -292,6 +288,10 @@ function generateRandomString(size) {
         randomString += characters.charAt(randomIndex);
     }
     return randomString;
+}
+
+window.analytics = {
+    track: function() {}
 }
 
     </script>
