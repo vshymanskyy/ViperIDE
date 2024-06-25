@@ -4,7 +4,7 @@
 [![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=success)](https://github.com/vshymanskyy/ViperIDE/issues) 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/vshymanskyy/ViperIDE) 
 
-An innovative MicroPython IDE for Web and Mobile
+**An innovative [MicroPython](https://micropython.org) IDE for Web and Mobile**
 
 ![image](docs/images/screenshot-desktop-chrome.png)
 
