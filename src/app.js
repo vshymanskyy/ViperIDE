@@ -1112,7 +1112,13 @@ checkForUpdates()
 let startY, startHeight
 
 function initDrag(e) {
-    startY = e.clientY || e.touches[0].clientY
+    if (typeof e.clientY !== 'undefined') {
+        startY = e.clientY
+    } else if (typeof e.touches !== 'undefined') {
+        startY = e.touches[0].clientY
+    } else {
+        return
+    }
     startHeight = parseInt(document.defaultView.getComputedStyle(QID('terminal-container')).height, 10)
     document.documentElement.addEventListener('mousemove', doDrag, false)
     document.documentElement.addEventListener('touchmove', doDrag, false)
@@ -1121,7 +1127,14 @@ function initDrag(e) {
 }
 
 function doDrag(e) {
-    const clientY = e.clientY || e.touches[0].clientY
+    let clientY
+    if (typeof e.clientY !== 'undefined') {
+        clientY = e.clientY
+    } else if (typeof e.touches !== 'undefined') {
+        clientY = e.touches[0].clientY
+    } else {
+        return
+    }
     const terminalContainer = QID('terminal-container')
     const height = (startHeight - (clientY - startY))
     terminalContainer.style.height = Math.max(height, 50) + 'px'
