@@ -109,8 +109,7 @@ async function prepareNewPort(type) {
             if (!url.includes("://")) { url = "ws://" + url }
 
             if (window.location.protocol === "https:" && url.startsWith("ws://")) {
-                /* Navigate to device, which should automatically reload and ask for WebREPL password */
-                window.location.assign(url.replace("ws://", "http://"))
+                toastr.error('Connection to an unsecure WebSocket is blocked on a secure website')
                 return
             }
         } else {
