@@ -1,10 +1,10 @@
 
 ## Web REPL + Secure WebSocket Relay
 
-A `Secure WebSocket Relay` can be used to connect to your device using the internet (from anywhere in the world).
+A `Secure WebSocket Relay` can be used to connect to your device over the internet (from anywhere in the world).
 
 > [!WARNING]
-> 🚧 This connection method is in development and not ready to use yet 🚧
+> **🚧 This connection method is in development and not ready to use yet 🚧**
 
 #### 1. Connect ViperIDE to your device using USB
 
