@@ -22,6 +22,8 @@ An innovative MicroPython IDE for Web and Mobile
 - PYBv1.1 (STM32F405RG)
 - Seeed XIAO nRF52840 Sense
 - Nordic nRF9161 DK with Zephyr port
+- PJRC Teensy 4.0 (NXP MIMXRT1062)
+- Portenta C33 (Renesas R7FA6M4)
 - Micro:bit (nRF51822)
 - Micro:bit v2 (nRF52833) with [`CircuitPython`](https://circuitpython.org/board/microbit_v2)
 - Air602 (WM W600) with [`robert-hh` port](https://github.com/robert-hh/Shared-Stuff/tree/master/w600_firmware)
