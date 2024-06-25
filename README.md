@@ -6,31 +6,18 @@
 
 An innovative MicroPython IDE for Web and Mobile
 
-- No software installation required, works out of the box
-- Direct USB / Serial connection works on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
-- [`WebREPL`](docs/Web-REPL.md), [`Bluetooth LE`](docs/Bluetooth-REPL.md) and [`P2P/WebRTC`](https://viper-ide.org/bridge.html) connection support
-- Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
-
 ![image](docs/images/screenshot-desktop-chrome.png)
-
-## Tested with
-
-- Espressif ESP8266, ESP32, ESP32S3, ESP32C3, ESP32C6
-- Raspberry Pi Pico W (RP2040)
-- Adafruit Feather STM32F405 Express
-- WeAct Studio Blackpill v3.1 (STM32F411CE)
-- PYBv1.1 (STM32F405RG)
-- Seeed XIAO nRF52840 Sense
-- Nordic nRF9161 DK with Zephyr port
-- PJRC Teensy 4.0 (NXP MIMXRT1062)
-- Portenta C33 (Renesas R7FA6M4)
-- Micro:bit (nRF51822)
-- Micro:bit v2 (nRF52833) with [`CircuitPython`](https://circuitpython.org/board/microbit_v2)
-- Air602 (WM W600) with [`robert-hh` port](https://github.com/robert-hh/Shared-Stuff/tree/master/w600_firmware)
-- Realtek RTL8721 with [`ambiot` port](https://github.com/ambiot/micropython/releases)
 
 ## Features
 
+- No software installation required, works out of the box
+- Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
+- **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
+  - Direct USB / Serial
+  - [`WebREPL in local network`](docs/Web-REPL-Server.md)
+  - [`Bluetooth LE`](docs/Bluetooth-REPL.md)
+  - [`🚧 P2P/WebRTC`](https://viper-ide.org/bridge.html)
+  - [`🚧 WebREPL over internet 🌎`](docs/Web-REPL-Relay.md)
 - **File Editor**
   - Syntax highlighting for `.py`, `.json`, `.inf`, `.toml`, `.pem`
   - Auto expand/minify of `.json` files
@@ -56,6 +43,22 @@ An innovative MicroPython IDE for Web and Mobile
 
 > [!TIP]
 > `mpremote` is still a great tool for automation. Learn to use it!
+
+## Tested with
+
+- Espressif ESP8266, ESP32, ESP32S3, ESP32C3, ESP32C6
+- Raspberry Pi Pico W (RP2040)
+- Adafruit Feather STM32F405 Express
+- WeAct Studio Blackpill v3.1 (STM32F411CE)
+- PYBv1.1 (STM32F405RG)
+- Seeed XIAO nRF52840 Sense
+- Nordic nRF9161 DK with Zephyr port
+- PJRC Teensy 4.0 (NXP MIMXRT1062)
+- Portenta C33 (Renesas R7FA6M4)
+- Micro:bit (nRF51822)
+- Micro:bit v2 (nRF52833) with [`CircuitPython`](https://circuitpython.org/board/microbit_v2)
+- Air602 (WM W600) with [`robert-hh` port](https://github.com/robert-hh/Shared-Stuff/tree/master/w600_firmware)
+- Realtek RTL8721 with [`ambiot` port](https://github.com/ambiot/micropython/releases)
 
 ## Links
 

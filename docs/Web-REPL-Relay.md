@@ -1,5 +1,10 @@
 
-## Web REPL
+## Web REPL + Secure WebSocket Relay
+
+A `Secure WebSocket Relay` can be used to connect to your device using the internet (from anywhere in the world).
+
+> [!WARNING]
+> 🚧 This connection method is in development and not ready to use yet 🚧
 
 #### 1. Connect ViperIDE to your device using USB
 
@@ -11,9 +16,6 @@
 # Set your WiFi network credentials
 WIFI_SSID='WiFi_SSID'
 WIFI_PASS='WiFi_Password'
-
-# Password will be required to access the REPL (4-8 symbols)
-REPL_PASS='1234'
 
 import network, time
 sta = network.WLAN(network.STA_IF)
@@ -29,7 +31,13 @@ if not sta.isconnected():
         print("Error: Could not connect to WiFi!")
 
 import web_repl
-web_repl.start(password=REPL_PASS)
+web_repl.start_client()
+```
+
+You can run your own relay server. In this case, please specify url:
+
+```py
+web_repl.start_client(url='wss://viper-ide.org/relay')
 ```
 
 #### 4. Reset your device
@@ -37,14 +45,12 @@ web_repl.start(password=REPL_PASS)
 In the terminal, you should see something like:
 
 ```log
-WebREPL server started on http://192.168.1.123:8266/
+WebREPL client started on https://viper-ide.org?webrepl=MYDEVICEID
 ```
 
 #### 5. Connect ViperIDE to your device using `WebREPL`
 
 Visit the specified link to open the IDE.
 
-Alternatively, use WebREPL button in `ViperIDE` to connect to your device.
+Alternatively, use WebREPL button in `ViperIDE` to connect to your device, use `wss://viper-ide.org/relay/MYDEVICEID`
 
-> [!NOTE]
-> If it opens the original MicroPython WebREPL app, it means you're using the original `webrepl` package instead of the one included in `viper-tools`
