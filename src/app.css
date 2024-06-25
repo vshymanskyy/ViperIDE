@@ -160,11 +160,11 @@ body.loaded {
     color: #afac99;
 }
 
-#menu-file-title, #menu-pkg-title, #menu-settings-title {
+#menu-file-title, #menu-pkg-title, #menu-settings-title, #menu-tools-title {
     font-weight: bold;
 }
 
-#menu-file-tree div, #menu-pkg-list div, #menu-settings-list div {
+#menu-file-tree div, #menu-pkg-list div, #menu-settings-list div, #menu-tools-list div {
     margin: 5px 0;
     line-height: 1.2em;
 }

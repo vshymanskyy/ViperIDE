@@ -43,6 +43,7 @@
                 <div>
                     <a class="tab active" data-target="menu-files" onclick="fetchFileList();return false;"><i class="fa-solid fa-folder fa-fw"></i></a>
                     <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes();return false;"><i class="fa-solid fa-cubes fa-fw"></i></a>
+                    <a class="tab" data-target="menu-tools"><i class="fa-solid fa-tools fa-fw"></i></a>
                 </div>
                 <div>
                     <a class="tab" data-target="menu-settings"><i class="fa-solid fa-gear fa-fw"></i></a>
@@ -65,6 +66,16 @@
             <div id="menu-pkg" class="tab-content">
                 <div id="menu-pkg-title">Package Manager</div>
                 <div id="menu-pkg-list">
+                </div>
+            </div>
+            <div id="menu-tools" class="tab-content">
+                <div id="menu-tools-title">Tools</div>
+                <div id="menu-tools-list">
+                    <div class="title-lines" id="menu-tools-line-conn">device connection</div>
+                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Web-REPL.md" target="_blank">      <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> Bluetooth REPL</a></div>
+                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Bluetooth-REPL.md" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> Web REPL</a></div>
+                    <div><a href="bridge.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> P2P Bridge 🚧</a></div>
+                    <div><a href="benchmark.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> Device Benchmark</a></div>
                 </div>
             </div>
             <div id="menu-settings" class="tab-content">
