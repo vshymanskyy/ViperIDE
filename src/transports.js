@@ -327,17 +327,20 @@ class WebBluetooth extends Transport {
  */
 
 class WebSocketREPL extends Transport {
-    constructor(url, pass) {
+    constructor(url) {
         super()
         if (!url) {
             throw new Error("WebSocket URL is required")
         }
         this.url = url
-        this.pass = pass
         this.socket = null
         this.info = {
             url: this.url
         }
+    }
+
+    onPasswordRequest(callback) {
+        this._passReqCallback = callback
     }
 
     async requestAccess() {
@@ -354,7 +357,12 @@ class WebSocketREPL extends Transport {
         this.socket = await _conn(this.url)
         this.socket.binaryType = 'arraybuffer'
         this.socket.onmessage = (event) => {
-            this.receiveCallback(event.data)
+            if (event.data instanceof ArrayBuffer) {
+                const decoder = new TextDecoder()
+                this.receiveCallback(decoder.decode(event.data))
+            } else {
+                this.receiveCallback(event.data)
+            }
             this.activityCallback()
         }
 
@@ -364,8 +372,16 @@ class WebSocketREPL extends Transport {
 
         const release = await this.startTransaction()
         try {
-            await this.readUntil('Password:')
-            await this.write(this.pass + '\n')
+            try {
+                await this.readUntil('Password:', timeout=500)
+            } catch (err) {
+                return
+            }
+            const pass = await this._passReqCallback()
+            if (!pass) {
+                throw new Error("Password is required")
+            }
+            await this.write(pass + '\n')
             await this.readUntil('\n') // skip echo
             const rsp = (await this.readUntil('\n')).trim()
             if (rsp == "WebREPL connected") {

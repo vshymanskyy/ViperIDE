@@ -120,14 +120,17 @@ async function prepareNewPort(type) {
         } else {
             url = webrepl_url
         }
-        const pass = prompt('WebREPL password:', defaultWsPass)
-        if (pass == null) { return }
-        if (pass.length < 4) {
-            toastr.error('Password is too short')
-            return
-        }
-        defaultWsPass = pass
-        new_port = new WebSocketREPL(url, pass)
+        new_port = new WebSocketREPL(url)
+        new_port.onPasswordRequest(async () => {
+            const pass = prompt('WebREPL password:', defaultWsPass)
+            if (pass == null) { return }
+            if (pass.length < 4) {
+                toastr.error('Password is too short')
+                return
+            }
+            defaultWsPass = pass
+            return pass
+        })
     } else if (type === 'ble') {
         if (iOS) {
             toastr.error('WebBluetooth is not available on iOS')
