@@ -1,6 +1,15 @@
 
 ## Bluetooth Low Energy REPL
 
+This can be used on devices with native BLE support:
+- Raspberry Pi Pico W
+- ESP32
+
+> [!IMPORTANT]
+> - This connection method requires a Chrome-based browser like Edge, Opera, Chromium, Brave, etc.
+> - It usually works on Windows, Linux, MacOS, Android
+> - Not available on iOS
+
 #### 1. Connect ViperIDE to your device using USB
 
 #### 2. In the left panel: `Package Manager` -> install `viper-tools`

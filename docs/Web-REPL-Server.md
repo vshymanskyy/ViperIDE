@@ -1,9 +1,12 @@
 
 ## Web REPL Server
 
+This connection method requires `ViperIDE` to establish a direct network connection to your MicroPython board.
+The board acts as a web server, so usually you need to be connected to the same local network.
+
 > [!IMPORTANT]
-> This connection method requires `ViperIDE` to establish a direct network connection to your MicroPython board.  
-> The board acts as a web server, so usually you need to be connected to the same local network.  
+> It uses an **unsecure** WebSocket connection, which is not available for secure websites like ViperIDE.
+> To workaround this, ViperIDE will also be served from the device on the local network (and your browser will be automatically redirected to the device).
 > **If you'd like to connect to your device over the internet, consider using a [Secure WebSocket Relay](./Web-REPL-Relay.md)**
 
 #### 1. Connect ViperIDE to your device using USB

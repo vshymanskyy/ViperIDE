@@ -13,7 +13,7 @@
 - No software installation required, works out of the box
 - Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
 - **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
-  - Direct USB / Serial
+  - [`Direct USB / Serial`](docs/USB-Serial-REPL.md)
   - [`WebREPL in local network`](docs/Web-REPL-Server.md)
   - [`Bluetooth LE`](docs/Bluetooth-REPL.md)
   - [`🚧 P2P/WebRTC`](https://viper-ide.org/bridge.html)
@@ -69,9 +69,10 @@
 
 ## Limitations
 
+- `WebUSB` and `WebBluetooth` require a Chrome-based browser like Edge, Opera, Chromium, Brave, etc.
 - Older MicroPython versions may or may not work. Keep your MicroPython up to date.
-  *That said, ViperIDE has been reported to work with MicroPython v1.14 back from Feb 2021* 🤠
+  *That said, ViperIDE has been reported to work with MicroPython v1.13 back from Sep 2020* 🤠
 - Some USB devices require drivers installation.
 - Some boards are not detected by Android via USB OTG. In such cases, only `BLE`, `WebREPL`, `P2P` connection is possible.
-- On iOS, `WebBluetooth` and `WebUSB` are not available. Only `WebREPL` and `P2P` works.
+- On iOS, `WebUSB` and `WebBluetooth` are not available. Only `WebREPL` and `P2P` works.
 
