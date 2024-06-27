@@ -227,7 +227,7 @@ class WebSocket(io.IOBase):
         self.open = False
         self._sock.close()
 
-class WebSocketClient(Websocket):
+class WebSocketClient(WebSocket):
     is_client = True
 
 def connect(uri):
@@ -266,4 +266,4 @@ def connect(uri):
     while header:
         header = sock.readline()[:-2]
 
-    return WebsocketClient(sock)
+    return WebSocketClient(sock)
