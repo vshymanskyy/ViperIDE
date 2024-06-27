@@ -986,15 +986,6 @@ print()
         ev.preventDefault()
     })
 
-    setTimeout(() => {
-        document.body.classList.add('loaded')
-    }, 100)
-
-    if (typeof webrepl_url !== 'undefined') {
-        await sleep(500)
-        await connectDevice('ws')
-    }
-
     try {
         if (typeof window.analytics.track === 'undefined') {
             throw new Error()
@@ -1059,6 +1050,21 @@ print()
         window.analytics = {
             track: function() {}
         }
+    }
+
+    setTimeout(() => {
+        document.body.classList.add('loaded')
+    }, 100)
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const relay = urlParams.get('relay')
+    if (relay) {
+        window.webrepl_url = 'wss://vsh.pp.ua/relay/' + relay
+    }
+
+    if (typeof webrepl_url !== 'undefined') {
+        await sleep(500)
+        await connectDevice('ws')
     }
 
 })();
