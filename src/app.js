@@ -629,11 +629,13 @@ async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
 async function installReplTools() {
     await installPkg(null, "viper-tools", "latest", {
         v: 1,
-        version: "0.1.0",
+        version: "0.1.1",
         urls: [
-            ["web_repl.py", "github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py"],
-            ["ble_repl.py", "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py"],
-            ["ble_nus.py",  "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py"],
+            ["web_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py"],
+            ["ble_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py"],
+            ["ble_nus.py",    "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py"],
+            ["ws_client.py",  "github:vshymanskyy/ViperIDE/packages/viper-tools/ws_client.py"],
+            ["wss_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/wss_repl.py"],
         ]
     })
 }

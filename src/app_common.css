@@ -92,6 +92,10 @@ button {
     padding: 5px 5px;
 }
 
+select {
+    border: none;
+}
+
 input, select, option {
     font: unset;
     color: unset;

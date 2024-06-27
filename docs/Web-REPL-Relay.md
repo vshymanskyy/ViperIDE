@@ -30,14 +30,20 @@ if not sta.isconnected():
     else:
         print("Error: Could not connect to WiFi!")
 
-import web_repl
-web_repl.start_client()
+import wss_repl
+wss_repl.start()
 ```
 
-You can run your own relay server. In this case, please specify url:
+You can specify the UID. **Must be at least 10 random symbols, case-insensitive**:
 
 ```py
-web_repl.start_client(url='wss://viper-ide.org/relay')
+wss_repl.start(uid='YOUR-DEVICE-UID')
+```
+
+You can also run your own relay server. In this case, please specify url:
+
+```py
+wss_repl.start(url='wss://viper-ide.org/relay')
 ```
 
 #### 4. Reset your device
@@ -45,7 +51,7 @@ web_repl.start_client(url='wss://viper-ide.org/relay')
 In the terminal, you should see something like:
 
 ```log
-WebREPL client started on https://viper-ide.org?webrepl=MYDEVICEID
+WebREPL available on https://viper-ide.org?webrepl=MYDEVICEID
 ```
 
 #### 5. Connect ViperIDE to your device using `WebREPL`
