@@ -34,7 +34,7 @@ if not sta.isconnected():
         if sta.isconnected():
             break
     else:
-        print("Error: Could not connect to WiFi!")
+        print('Error: Could not connect to WiFi!')
 
 import web_repl
 web_repl.start(password=REPL_PASS)

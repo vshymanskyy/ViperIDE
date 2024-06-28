@@ -28,7 +28,7 @@ if not sta.isconnected():
         if sta.isconnected():
             break
     else:
-        print("Error: Could not connect to WiFi!")
+        print('Error: Could not connect to WiFi!')
 
 import wss_repl
 wss_repl.start()
