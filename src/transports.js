@@ -428,7 +428,19 @@ class WebSocketREPL extends Transport {
 class WebRTCTransport extends Transport {
     constructor(peerId = null, myId = null) {
         super();
-        this.peer = new Peer(myId, { secure: true })
+        this.peer = new Peer(myId, {
+            secure: true,
+            config: {
+              iceServers: [
+                { url: 'stun:stun.l.google.com:19302' },
+                {
+                  url: 'turn:vsh.pp.ua:3478',  // ?transport=udp
+                  username: 'viper',
+                  credential: 'ide',
+                },
+              ]
+            }
+        })
         this.targetPeerId = peerId
         this.connection = null
         this.connectCallback = () => {}
