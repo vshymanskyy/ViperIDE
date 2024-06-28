@@ -428,27 +428,9 @@ class WebSocketREPL extends Transport {
 class WebRTCTransport extends Transport {
     constructor(peerId = null, myId = null) {
         super();
-        this.peer = new Peer(myId, {
-            secure: true,
-            config: {
-              iceServers: [
-                { url: 'stun:stun.l.google.com:19302' },
-                {
-                  url: 'turn:vsh.pp.ua:3478',  // ?transport=udp
-                  username: 'viper-ide',
-                  credential: 'K70h5k>6ni/a',
-                },
-              ]
-            }
-        })
-        this.targetPeerId = peerId
-        this.connection = null
-        this.connectCallback = () => {}
-        this.peer.on('connection', (conn) => {
-            this.targetPeerId = conn.peer
-            this._setup_conn(conn)
-            this.connectCallback()
-        })
+
+        this.peerId = peerId
+        this.myId = myId
     }
 
     onConnect(callback) {
@@ -456,6 +438,65 @@ class WebRTCTransport extends Transport {
     }
 
     async requestAccess() {
+        let iceServers = [
+            {
+                urls: [
+                    'stun:stun.l.google.com:19302',
+                    'stun:stun1.l.google.com:19302',
+                    'stun:stun2.l.google.com:19302',
+                    'stun:stun3.l.google.com:19302',
+                    'stun:stun4.l.google.com:19302',
+                    'stun:stun.cloudflare.com:3478',
+                    'stun:stun.nextcloud.com:3478',
+                ]
+            }
+        ]
+
+        const controller = new AbortController()
+        const timeout = setTimeout(() => {
+            controller.abort()
+        }, 3000);
+
+        try {
+            const ice = await (await fetch('https://vsh.pp.ua/viper_ice.json', {
+                cache: "no-store",
+                signal: controller.signal,
+            })).json()
+            iceServers.push(...ice)
+        } catch (err) {
+        } finally {
+            clearTimeout(timeout)
+        }
+
+        iceServers.push(...[
+            {
+                urls: [
+                    'turn:eu-0.turn.peerjs.com:3478',
+                    'turn:us-0.turn.peerjs.com:3478',
+                ],
+                username: "peerjs",
+                credential: "peerjsp"
+            }, {
+                url: 'turn:vsh.pp.ua:3478?transport=udp',
+                username: 'viper-ide',
+                credential: 'K70h5k>6ni/a',
+            }
+        ]);
+
+        alert(JSON.stringify(iceServers))
+
+        this.peer = new Peer(this.myId, {
+            secure: true,
+            config: { iceServers }
+        })
+        this.connection = null
+        this.connectCallback = () => {}
+        this.peer.on('connection', (conn) => {
+            this.peerId = conn.peer
+            this._setup_conn(conn)
+            this.connectCallback()
+        })
+
         // Generate a unique ID if not provided
         if (!this.peer.id) {
             await new Promise((resolve) => this.peer.on('open', resolve))
@@ -480,7 +521,7 @@ class WebRTCTransport extends Transport {
         return new Promise((resolve, reject) => {
             this.peer.on('error', reject)
 
-            const conn = this.peer.connect(this.targetPeerId, {
+            const conn = this.peer.connect(this.peerId, {
                 serialization: 'binary',
                 reliable: true,
             })
