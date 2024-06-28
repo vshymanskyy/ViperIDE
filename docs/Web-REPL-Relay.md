@@ -60,8 +60,8 @@ Visit the specified link to open the IDE.
 If you're running a [relay server](../src/websocket_relay.js), please specify the URL:
 
 ```py
-wss_repl.start(url='wss://your-server.org')
+wss_repl.start(url='wss://your-server-url')
 ```
 
 1. Use WebREPL button in `ViperIDE` to connect to your device
-2. Your device address will look like this: `wss://your-server/YOUR-DEVICE-UID`
+2. Your device address will look like this: `wss://your-server-url/YOUR-DEVICE-UID`
