@@ -548,7 +548,7 @@ async function fetchPkgList(index_url) {
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div>
         <span><i class="fa-solid fa-cube fa-fw"></i> viper-tools</span>
-        <a href="#" class="menu-action" onclick="installReplTools();return false;">0.1.0 <i class="fa-regular fa-circle-down"></i></a>
+        <a href="#" class="menu-action" onclick="installReplTools();return false;">${viper_tools_pkg.version} <i class="fa-regular fa-circle-down"></i></a>
     </div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
     for (const pkg of mipindex.packages) {
@@ -626,18 +626,20 @@ async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
     }
 }
 
+const viper_tools_pkg = {
+    v: 1,
+    version: "0.1.1",
+    urls: [
+        ["web_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py"],
+        ["ble_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py"],
+        ["ble_nus.py",    "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py"],
+        ["ws_client.py",  "github:vshymanskyy/ViperIDE/packages/viper-tools/ws_client.py"],
+        ["wss_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/wss_repl.py"],
+    ]
+}
+
 async function installReplTools() {
-    await installPkg(null, "viper-tools", "latest", {
-        v: 1,
-        version: "0.1.1",
-        urls: [
-            ["web_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py"],
-            ["ble_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py"],
-            ["ble_nus.py",    "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py"],
-            ["ws_client.py",  "github:vshymanskyy/ViperIDE/packages/viper-tools/ws_client.py"],
-            ["wss_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/wss_repl.py"],
-        ]
-    })
+    await installPkg(null, "viper-tools", "latest", viper_tools_pkg)
 }
 
 /*
