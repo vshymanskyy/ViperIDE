@@ -34,7 +34,7 @@ import wss_repl
 wss_repl.start()
 ```
 
-The device will generate a new random ID on every boot. Most likely, you'll want to have a fixed ID.
+The device will generate a new random ID on every boot. Most likely, you'll want to have a fixed ID.  
 This is easy, just take the auto-generated ID and put it into your code like this:
 
 ```py
@@ -46,7 +46,7 @@ wss_repl.start(uid='YOUR-DEVICE-UID')
 In the terminal, you should see something like:
 
 ```log
-WebREPL available on https://viper-ide.org?webrepl=YOUR-DEVICE-UID
+Secure WebREPL available on https://viper-ide.org?relay=YOUR-DEVICE-UID
 ```
 
 #### 5. Connect ViperIDE to your device using `WebREPL`
