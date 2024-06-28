@@ -435,8 +435,8 @@ class WebRTCTransport extends Transport {
                 { url: 'stun:stun.l.google.com:19302' },
                 {
                   url: 'turn:vsh.pp.ua:3478',  // ?transport=udp
-                  username: 'viper',
-                  credential: 'ide',
+                  username: 'viper-ide',
+                  credential: 'K70h5k>6ni/a',
                 },
               ]
             }
