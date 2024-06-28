@@ -1061,9 +1061,9 @@ print()
     }, 100)
 
     const urlParams = new URLSearchParams(window.location.search)
-    const relayID = urlParams.get('relay')
-    if (relayID) {
-        window.webrepl_url = 'wss://vsh.pp.ua/relay/' + relayID
+    const wssID = urlParams.get('wss')
+    if (wssID) {
+        window.webrepl_url = 'wss://vsh.pp.ua/relay/' + wssID
     }
     const rtcID = urlParams.get('rtc')
     if (rtcID) {

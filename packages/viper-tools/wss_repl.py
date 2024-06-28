@@ -1,6 +1,11 @@
 # REPL over a Secure WebSocket Relay
 
-import os, ws_client, socket
+import os, ws_client, socket, machine
+
+client_s = None
+timer_hb = machine.Timer(-1)
+_url = None
+_uid = None
 
 try:
     import tls
@@ -32,17 +37,32 @@ def generate_uid():
     num = _curious_base24(num, 16)
     return num[0:4]+"-"+num[4:8]+"-"+num[8:12]
 
-def stop():
-    global client_s
-    os.dupterm(None)
-    if client_s:
-        client_s.close()
+def _hbeat(tmr):
+    global client_s, _uid, _url
+    if not _url:
+        return
 
-def start(uid=None, url=_default_url):
-    global client_s
+    try:
+        client_s.ping()
+    except:
+        try:
+            _start(_uid, _url)
+        except:
+            pass
+    finally:
+        timer_hb.init(mode=timer_hb.ONE_SHOT, period=50*1000, callback=_hbeat)
+
+def _start(uid, url):
+    global client_s, timer_hb, _uid, _url
     if not uid:
         # TODO: store the UID in device configuration
         uid = generate_uid()
+
+    _uid, _url = uid, url
+
+    # Heartbeat / reconnect every 50 seconds
+    timer_hb.init(mode=timer_hb.ONE_SHOT, period=50*1000, callback=_hbeat)
+
     client_s = ws_client.connect(url + "/new/" + uid, ssl=ssl_ctx)
 
     client_s._sock.setblocking(False)
@@ -51,11 +71,27 @@ def start(uid=None, url=_default_url):
         client_s.raw_sock.setsockopt(socket.SOL_SOCKET, 20, os.dupterm_notify)
     os.dupterm(client_s)
 
-    sec = "Secure" if url.startswith("wss:") else "Insecure"
+def start(uid=None, url=_default_url):
+    try:
+        _start(uid, url)
+        if _url == _default_url:
+            lnk = "https://viper-ide.org?wss=" + _uid
+        else:
+            lnk += "/" + _uid
+        print("Secure" if _url.startswith("wss:") else "Insecure",
+              "WebREPL available on", lnk)
+    except:
+        print("WebREPL connection failed, will retry periodically")
 
-    if url == _default_url:
-        url = "https://viper-ide.org?relay=" + uid
-    else:
-        url += "/" + uid
+def stop():
+    global client_s, timer_hb
+    os.dupterm(None)
+    if timer_hb:
+        timer_hb.deinit()
+    if client_s:
+        client_s.close()
+    timer_hb = None
+    client_s = None
+    _url = None
+    _uid = None
 
-    print(sec, "WebREPL available on", url)
