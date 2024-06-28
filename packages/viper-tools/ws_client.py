@@ -230,7 +230,7 @@ class WebSocket(io.IOBase):
 class WebSocketClient(WebSocket):
     is_client = True
 
-def connect(uri):
+def connect(uri, ssl=None):
     """
     Connect a websocket.
     """
@@ -238,13 +238,17 @@ def connect(uri):
     uri = urlparse(uri)
     assert uri
 
-    sock = socket.socket()
     addr = socket.getaddrinfo(uri.hostname, uri.port)
-    # TODO: wss
-    sock.connect(addr[0][4])
+
+    raw = socket.socket()
+    raw.connect(addr[0][-1])
+    if uri.scheme == 'wss':
+        sock = ssl.wrap_socket(raw, server_hostname=uri.hostname)
+    else:
+        sock = raw
 
     def send_header(header, *args):
-        sock.send(header % args + '\r\n')
+        sock.write(header % args + '\r\n')
 
     # Sec-WebSocket-Key is 16 bytes of random base64 encoded
     key = binascii.b2a_base64(bytes(random.getrandbits(8)
@@ -267,4 +271,6 @@ def connect(uri):
     while header:
         header = sock.readline()[:-2]
 
-    return WebSocketClient(sock)
+    ws = WebSocketClient(sock)
+    ws.raw_sock = raw
+    return ws

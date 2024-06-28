@@ -2,7 +2,15 @@
 
 import os, ws_client, socket
 
-_default_url = "ws://vsh.pp.ua/relay"
+try:
+    import tls
+    ssl_ctx = tls.SSLContext(tls.PROTOCOL_TLS_CLIENT)
+    ssl_ctx.verify_mode = tls.CERT_NONE
+    #ssl_ctx.load_verify_locations(...)
+    _default_url = "wss://vsh.pp.ua/relay"
+except:
+    ssl_ctx = None
+    _default_url = "ws://vsh.pp.ua/relay"
 
 def _curious_base24(n, length):
     # Base 24 alphabet avoiding visually similar or inappropriate characters
@@ -35,17 +43,19 @@ def start(uid=None, url=_default_url):
     if not uid:
         # TODO: store the UID in device configuration
         uid = generate_uid()
-    client_s = ws_client.connect(url + "/new/" + uid)
+    client_s = ws_client.connect(url + "/new/" + uid, ssl=ssl_ctx)
 
     client_s._sock.setblocking(False)
-    # notify REPL on socket incoming data (ESP32/ESP8266-only)
+    # Notify REPL on socket incoming data
     if hasattr(os, "dupterm_notify"):
-        client_s._sock.setsockopt(socket.SOL_SOCKET, 20, os.dupterm_notify)
+        client_s.raw_sock.setsockopt(socket.SOL_SOCKET, 20, os.dupterm_notify)
     os.dupterm(client_s)
+
+    sec = "Secure" if url.startswith("wss:") else "Insecure"
 
     if url == _default_url:
         url = "https://viper-ide.org?relay=" + uid
     else:
         url += "/" + uid
 
-    print("WebREPL available on", url)
+    print(sec, "WebREPL available on", url)
