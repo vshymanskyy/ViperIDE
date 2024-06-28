@@ -36,9 +36,11 @@
             <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
         </li>
         <li>Grab a Bridge P2P ID:<br>
-            <span class="highlight monospace" id="bridge-id">---</span>
+            <span class="highlight monospace" id="bridge-id"></span>
         </li>
-        <li>In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-link"></i> Connect WebREPL</span> button and insert your Bridge P2P ID. </li>
+        <li>In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-link"></i> Connect WebREPL</span> button and insert your Bridge P2P ID.<br>
+            You can also use a direct link: <span class="highlight monospace" id="ide-link"></span>
+        </li>
     </ol>
 
     <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
@@ -66,7 +68,9 @@ let rtc = null;
 let wakeLock = null;
 
 async function disconnectDevice() {
-    document.getElementById('bridge-id').textContent = '---'
+    QID('bridge-id').textContent = '---'
+    QID('ide-link').textContent = 'https://viper-ide.org?rtc=YOUR-BRIDGE-ID'
+
     for (const t of ["ws", "ble", "usb"]) {
         QID(`btn-conn-${t}`).classList.remove('connected')
     }
@@ -207,7 +211,8 @@ async function connectDevice(type) {
 
     await rtc.requestAccess()
 
-    document.getElementById('bridge-id').textContent = "rtc://" + rtc.info.id
+    QID('bridge-id').textContent = "rtc://" + rtc.info.id
+    QID('ide-link').textContent = 'https://viper-ide.org?rtc=' + rtc.info.id
 
     rtc.onConnect(() => {
         toastr.info('ViperIDE connected')
@@ -242,6 +247,8 @@ async function connectDevice(type) {
 window.analytics = {
     track: function() {}
 }
+
+disconnectDevice()
 
     </script>
 </body>
