@@ -483,8 +483,6 @@ class WebRTCTransport extends Transport {
             }
         ]);
 
-        alert(JSON.stringify(iceServers))
-
         this.peer = new Peer(this.myId, {
             secure: true,
             config: { iceServers }
