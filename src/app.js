@@ -6,7 +6,7 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-const VIPER_IDE_VERSION = "0.3.4"
+const VIPER_IDE_VERSION = "0.3.5"
 
 function getBuildDate() {
     if (window.VIPER_IDE_BUILD) {
