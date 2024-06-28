@@ -17,7 +17,7 @@
   - [`🚧 WebREPL over internet 🌎`](docs/Web-REPL-Relay.md)
   - [`WebREPL in local network`](docs/Web-REPL-Server.md)
   - [`Bluetooth LE`](docs/Bluetooth-REPL.md)
-  - [`🚧 P2P/WebRTC`](https://viper-ide.org/bridge.html)
+  - [`🚧 P2P/WebRTC Bridge`](https://viper-ide.org/bridge.html)
 - **File Editor**
   - Syntax highlighting for `.py`, `.json`, `.inf`, `.toml`, `.pem`
   - Auto expand/minify of `.json` files
