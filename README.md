@@ -12,7 +12,7 @@
 
 - No software installation required, works out of the box
 - Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
-- **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
+- **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **iOS**, **Chromebook**
   - [`Direct USB / Serial`](docs/USB-Serial-REPL.md)
   - [`🚧 WebREPL over internet 🌎`](docs/Web-REPL-Relay.md)
   - [`WebREPL in local network`](docs/Web-REPL-Server.md)
