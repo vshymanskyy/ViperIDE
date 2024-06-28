@@ -101,7 +101,6 @@ class WebSocket(io.IOBase):
         return fin, opcode, data
 
     def write_frame(self, opcode, data=b''):
-
         fin = True
         mask = self.is_client  # messages sent by client are masked
 
@@ -140,8 +139,6 @@ class WebSocket(io.IOBase):
         self._sock.write(data)
 
     def recv(self):
-        assert self.open
-
         while self.open:
             try:
                 fin, opcode, data = self.read_frame()
@@ -175,10 +172,12 @@ class WebSocket(io.IOBase):
             else:
                 raise ValueError(opcode)
 
-    def send(self, buf):
-
+    def ping(self, data=b''):
         assert self.open
+        self.write_frame(OP_PING, data)
 
+    def send(self, buf):
+        assert self.open
         if isinstance(buf, str):
             opcode = OP_TEXT
             buf = buf.encode('utf-8')
