@@ -4,7 +4,7 @@
 A `Secure WebSocket Relay` can be used to connect to your device over the internet (from anywhere in the world).
 
 > [!WARNING]
-> **🚧 This connection method is in development and not ready to use yet 🚧**
+> **🚧 THIS IS EXPERIMENTAL, BEWARE OF BUGS 🚧**
 
 #### 1. Connect ViperIDE to your device using USB
 
@@ -34,16 +34,11 @@ import wss_repl
 wss_repl.start()
 ```
 
-You can specify the UID. **Must be at least 10 random symbols, case-insensitive**:
+The device will generate a new random ID on every boot. Most likely, you'll want to have a fixed ID.
+This is easy, just take the auto-generated ID and put it into your code like this:
 
 ```py
 wss_repl.start(uid='YOUR-DEVICE-UID')
-```
-
-You can also run your own relay server. In this case, please specify url:
-
-```py
-wss_repl.start(url='wss://viper-ide.org/relay')
 ```
 
 #### 4. Reset your device
@@ -51,12 +46,22 @@ wss_repl.start(url='wss://viper-ide.org/relay')
 In the terminal, you should see something like:
 
 ```log
-WebREPL available on https://viper-ide.org?webrepl=MYDEVICEID
+WebREPL available on https://viper-ide.org?webrepl=YOUR-DEVICE-UID
 ```
 
 #### 5. Connect ViperIDE to your device using `WebREPL`
 
 Visit the specified link to open the IDE.
 
-Alternatively, use WebREPL button in `ViperIDE` to connect to your device, use `wss://viper-ide.org/relay/MYDEVICEID`
+---
 
+## Advanced: Running your own WebSocket relay server
+
+If you're running a [relay server](../src/websocket_relay.js), please specify the URL:
+
+```py
+wss_repl.start(url='wss://your-server.org')
+```
+
+1. Use WebREPL button in `ViperIDE` to connect to your device
+2. Your device address will look like this: `wss://your-server/YOUR-DEVICE-UID`
