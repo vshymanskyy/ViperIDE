@@ -14,10 +14,10 @@
 - Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
 - **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **Chromebook**
   - [`Direct USB / Serial`](docs/USB-Serial-REPL.md)
+  - [`🚧 WebREPL over internet 🌎`](docs/Web-REPL-Relay.md)
   - [`WebREPL in local network`](docs/Web-REPL-Server.md)
   - [`Bluetooth LE`](docs/Bluetooth-REPL.md)
   - [`🚧 P2P/WebRTC`](https://viper-ide.org/bridge.html)
-  - [`🚧 WebREPL over internet 🌎`](docs/Web-REPL-Relay.md)
 - **File Editor**
   - Syntax highlighting for `.py`, `.json`, `.inf`, `.toml`, `.pem`
   - Auto expand/minify of `.json` files
