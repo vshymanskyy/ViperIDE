@@ -10,7 +10,7 @@ This can be used on devices with native BLE support:
 > - It usually works on Windows, Linux, MacOS, Android
 > - Not available on iOS
 
-#### 1. Connect ViperIDE to your device using USB
+#### 1. Connect [ViperIDE](https://viper-ide.org) to your device using USB
 
 #### 2. In the left panel: `Package Manager` -> install `viper-tools`
 

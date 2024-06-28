@@ -13,7 +13,7 @@ Verify that the OS recognizes the device.
 - Some USB devices require drivers installation
 - Some boards are not detected by Android via USB OTG and thus won't work
 
-#### 2. Connect ViperIDE to your device using USB / Serial
+#### 2. Connect [ViperIDE](https://viper-ide.org) to your device using USB / Serial
 
 Use USB button in `ViperIDE` to connect to your device.
 

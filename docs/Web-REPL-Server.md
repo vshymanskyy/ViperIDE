@@ -9,7 +9,7 @@ The board acts as a web server, so usually you need to be connected to the same 
 > To workaround this, ViperIDE will also be served from the device on the local network (and your browser will be automatically redirected to the device).
 > **If you'd like to connect to your device over the internet, consider using a [Secure WebSocket Relay](./Web-REPL-Relay.md)**
 
-#### 1. Connect ViperIDE to your device using USB
+#### 1. Connect [ViperIDE](https://viper-ide.org) to your device using USB
 
 #### 2. In the left panel: `Package Manager` -> install `viper-tools`
 

@@ -6,7 +6,7 @@ A `Secure WebSocket Relay` can be used to connect to your device over the intern
 > [!WARNING]
 > **🚧 THIS IS EXPERIMENTAL, BEWARE OF BUGS 🚧**
 
-#### 1. Connect ViperIDE to your device using USB
+#### 1. Connect [ViperIDE](https://viper-ide.org) to your device using USB
 
 #### 2. In the left panel: `Package Manager` -> install `viper-tools`
 
