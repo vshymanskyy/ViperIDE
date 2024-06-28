@@ -76,8 +76,8 @@ function getRandomBridgeID() {
         .join('');
 
     const rnd = BigInt(`0x${hexString}`);
-    const num = encodeUniquePart(rnd, 10);
-    return num.slice(0,4) + '-' + num.slice(4,8) + '-' + num.slice(8, 12);
+    const num = encodeUniquePart(rnd, 16);
+    return num.slice(0,4) + '-' + num.slice(4,8) + '-' + num.slice(8,12);
 }
 
 function getScreenInfo() {
