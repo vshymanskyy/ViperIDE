@@ -2,6 +2,8 @@
 
 import os, ws_client, socket
 
+_default_url = "ws://vsh.pp.ua/relay"
+
 def _curious_base24(n, length):
     # Base 24 alphabet avoiding visually similar or inappropriate characters
     alphabet = "0W8N4Y1HP5DF9K6JM3C2XA7R"
@@ -18,9 +20,9 @@ def _curious_base24(n, length):
     return res
 
 def generate_uid():
-    num = os.urandom(16)
-    num = int.from_bytes(num, 'big')
-    return _curious_base24(num, 10)
+    num = int.from_bytes(os.urandom(10), "big")
+    num = _curious_base24(num, 16)
+    return num[0:4]+"-"+num[4:8]+"-"+num[8:12]
 
 def stop():
     global client_s
@@ -28,8 +30,7 @@ def stop():
     if client_s:
         client_s.close()
 
-def start(uid=None, url="ws://vsh.pp.ua/relay"):
-    # TODO: use Secure WebSocket
+def start(uid=None, url=_default_url):
     global client_s
     if not uid:
         # TODO: store the UID in device configuration
@@ -42,4 +43,9 @@ def start(uid=None, url="ws://vsh.pp.ua/relay"):
         client_s._sock.setsockopt(socket.SOL_SOCKET, 20, os.dupterm_notify)
     os.dupterm(client_s)
 
-    print('WebREPL available on', url + "/" + uid)
+    if url == _default_url:
+        url = "https://viper-ide.org?relay=" + uid
+    else:
+        url += "/" + uid
+
+    print("WebREPL available on", url)

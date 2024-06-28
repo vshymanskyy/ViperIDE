@@ -69,14 +69,15 @@ function encodeUniquePart(n, length) {
 }
 
 function getRandomBridgeID() {
-    const hexString = Array(16)
+    // Generate 10 random bytes
+    const hexString = Array(20)
         .fill()
         .map(() => Math.round(Math.random() * 0xF).toString(16))
         .join('');
 
     const rnd = BigInt(`0x${hexString}`);
-
-    return encodeUniquePart(rnd, 10);
+    const num = encodeUniquePart(rnd, 10);
+    return num.slice(0,4) + '-' + num.slice(4,8) + '-' + num.slice(8, 12);
 }
 
 function getScreenInfo() {

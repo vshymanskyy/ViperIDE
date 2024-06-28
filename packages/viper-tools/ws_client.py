@@ -189,11 +189,11 @@ class WebSocket(io.IOBase):
             raise TypeError()
 
         self.write_frame(opcode, buf)
-        
+
     def write(self, buf):
         self.send(buf)
         return len(buf)
-        
+
     def readinto(self, buf):
         if not self._rbuff or not len(self._rbuff):
             self._rbuff = self.recv()
@@ -206,7 +206,7 @@ class WebSocket(io.IOBase):
             self._rbuff = self._rbuff[n:]
             return n
         return None
-    
+
     def ioctl(self, kind, arg):
         if kind == 4:
             self.close()
@@ -240,6 +240,7 @@ def connect(uri):
 
     sock = socket.socket()
     addr = socket.getaddrinfo(uri.hostname, uri.port)
+    # TODO: wss
     sock.connect(addr[0][4])
 
     def send_header(header, *args):
