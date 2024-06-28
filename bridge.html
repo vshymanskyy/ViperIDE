@@ -31,7 +31,6 @@
     <ol>
         <li>
             <span>Connect your device:</span>
-            <button title="Connect P2P" class="hidden" onclick="connectDevice('rtc')" id="btn-conn-rtc"><i class="fa-solid fa-circle-nodes"></i></button>
             <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
             <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
             <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
@@ -39,7 +38,7 @@
         <li>Grab a Bridge P2P ID:<br>
             <span class="highlight monospace" id="bridge-id">---</span>
         </li>
-        <li>In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-circle-nodes"></i> Connect P2P</span> button and insert your Bridge P2P ID. </li>
+        <li>In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-link"></i> Connect WebREPL</span> button and insert your Bridge P2P ID. </li>
     </ol>
 
     <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
@@ -68,7 +67,7 @@ let wakeLock = null;
 
 async function disconnectDevice() {
     document.getElementById('bridge-id').textContent = '---'
-    for (const t of ["ws", "ble", "usb", "rtc"]) {
+    for (const t of ["ws", "ble", "usb"]) {
         QID(`btn-conn-${t}`).classList.remove('connected')
     }
 
@@ -91,7 +90,6 @@ async function disconnectDevice() {
 
 let defaultWsURL = '192.168.1.123:8266'
 let defaultWsPass = ''
-let defaultRtcID = ''
 
 async function prepareNewPort(type) {
     let new_port;
@@ -115,17 +113,29 @@ async function prepareNewPort(type) {
         } else {
             url = webrepl_url
         }
-        new_port = new WebSocketREPL(url)
-        new_port.onPasswordRequest(async () => {
-            const pass = prompt('WebREPL password:', defaultWsPass)
-            if (pass == null) { return }
-            if (pass.length < 4) {
-                toastr.error('Password is too short')
+
+        if (url.startsWith('ws://') || url.startsWith('wss://')) {
+            new_port = new WebSocketREPL(url)
+            new_port.onPasswordRequest(async () => {
+                const pass = prompt('WebREPL password:', defaultWsPass)
+                if (pass == null) { return }
+                if (pass.length < 4) {
+                    toastr.error('Password is too short')
+                    return
+                }
+                defaultWsPass = pass
+                return pass
+            })
+        } else if (url.startsWith('rtc://')) {
+            const id = url.replace('rtc://', '')
+            if (id.length != 14) {
+                toastr.error('P2P ID is malformed')
                 return
             }
-            defaultWsPass = pass
-            return pass
-        })
+            new_port = new WebRTCTransport(id.toUpperCase())
+        } else {
+            toastr.error('Unknown link type')
+        }
     } else if (type === 'ble') {
         if (iOS) {
             toastr.error('WebBluetooth is not available on iOS')
@@ -159,15 +169,6 @@ async function prepareNewPort(type) {
         } else {
             new_port = new WebSerial()
         }
-    } else if (type === 'rtc') {
-        const id = prompt('Open https://viper-ide.org/bridge.html on the target machine.\n\nP2P ID:', defaultRtcID)
-        if (id == null) { return }
-        if (id.length != 10) {
-            toastr.error('P2P ID is malformed')
-            return
-        }
-        defaultRtcID = id
-        new_port = new WebRTCTransport(id.toUpperCase())
     } else {
         toastr.error('Unknown connection type')
         return
@@ -206,7 +207,7 @@ async function connectDevice(type) {
 
     await rtc.requestAccess()
 
-    document.getElementById('bridge-id').textContent = rtc.info.id
+    document.getElementById('bridge-id').textContent = "rtc://" + rtc.info.id
 
     rtc.onConnect(() => {
         toastr.info('ViperIDE connected')
