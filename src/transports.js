@@ -350,8 +350,23 @@ class WebSocketREPL extends Transport {
         function _conn(url) {
             return new Promise(function(resolve, reject) {
                 const ws = new WebSocket(url)
-                ws.onopen = function() { resolve(ws) }
-                ws.onerror = function(err) { reject(err) }
+                let finished = false
+                ws.onopen = async function() {
+                    await sleep(300)    // TODO: find a better way
+                    if (!finished) {
+                        finished = true
+                        resolve(ws)
+                    }
+                }
+                ws.onerror = function(err) {
+                    reject(err)
+                }
+                ws.onclose = function(ev) {
+                    if (!finished) {
+                        finished = true
+                        reject(new Error(ev.reason))
+                    }
+                }
             })
         }
         this.socket = await _conn(this.url)
@@ -366,7 +381,7 @@ class WebSocketREPL extends Transport {
             this.activityCallback()
         }
 
-        this.socket.onclose = () => {
+        this.socket.onclose = (ev) => {
             this.disconnectCallback()
         }
 
