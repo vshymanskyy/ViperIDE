@@ -458,7 +458,7 @@ class WebRTCTransport extends Transport {
         }, 3000);
 
         try {
-            const ice = await (await fetch('https://vsh.pp.ua/viper_ice.json', {
+            const ice = await (await fetch('https://hub.viper-ide.org/ice.json', {
                 cache: "no-store",
                 signal: controller.signal,
             })).json()
@@ -477,7 +477,7 @@ class WebRTCTransport extends Transport {
                 username: "peerjs",
                 credential: "peerjsp"
             }, {
-                url: 'turn:vsh.pp.ua:3478?transport=udp',
+                url: 'turn:hub.viper-ide.org:3478?transport=udp',
                 username: 'viper-ide',
                 credential: 'K70h5k>6ni/a',
             }

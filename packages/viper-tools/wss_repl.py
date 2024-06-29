@@ -12,10 +12,10 @@ try:
     ssl_ctx = tls.SSLContext(tls.PROTOCOL_TLS_CLIENT)
     ssl_ctx.verify_mode = tls.CERT_NONE
     #ssl_ctx.load_verify_locations(...)
-    _default_url = "wss://vsh.pp.ua/relay"
+    _default_url = "wss://hub.viper-ide.org/relay"
 except:
     ssl_ctx = None
-    _default_url = "ws://vsh.pp.ua/relay"
+    _default_url = "ws://hub.viper-ide.org/relay"
 
 def _curious_base24(n, length):
     # Base 24 alphabet avoiding visually similar or inappropriate characters

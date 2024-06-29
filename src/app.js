@@ -1063,7 +1063,7 @@ print()
     const urlParams = new URLSearchParams(window.location.search)
     const wssID = urlParams.get('wss')
     if (wssID) {
-        window.webrepl_url = 'wss://vsh.pp.ua/relay/' + wssID
+        window.webrepl_url = 'wss://hub.viper-ide.org/relay/' + wssID
     }
     const rtcID = urlParams.get('rtc')
     if (rtcID) {
