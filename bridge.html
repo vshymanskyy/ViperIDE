@@ -65,7 +65,7 @@
     <script src="./src/transports.js"></script>
     <script>
 
-const my_p2p_id = getRandomBridgeID();
+const my_p2p_id = ConnectionUID.random().value();
 let port = null;
 let rtc = null;
 let wakeLock = null;
@@ -95,7 +95,7 @@ async function disconnectDevice() {
     wakeLock = null
 }
 
-let defaultWsURL = '192.168.1.123:8266'
+let defaultWsURL = 'ws://192.168.1.123:8266'
 let defaultWsPass = ''
 
 async function prepareNewPort(type) {
@@ -105,7 +105,7 @@ async function prepareNewPort(type) {
     if (type === 'ws') {
         let url
         if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
-            url = prompt('WebREPL device address:', defaultWsURL)
+            url = prompt('Enter WebREPL device address.\nSupported protocols: ws wss rtc', defaultWsURL)
             if (!url) { return }
             defaultWsURL = url
 

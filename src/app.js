@@ -39,7 +39,7 @@ async function disconnectDevice() {
     }
 }
 
-let defaultWsURL = '192.168.1.123:8266'
+let defaultWsURL = 'ws://192.168.1.123:8266'
 let defaultWsPass = ''
 
 async function prepareNewPort(type) {
@@ -49,7 +49,7 @@ async function prepareNewPort(type) {
     if (type === 'ws') {
         let url
         if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
-            url = prompt('WebREPL device address:', defaultWsURL)
+            url = prompt('Enter WebREPL device address.\nSupported protocols: ws wss rtc', defaultWsURL)
             if (!url) { return }
             defaultWsURL = url
 
