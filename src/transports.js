@@ -107,8 +107,8 @@ class Transport {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
-        let endTime = +Date.now() + timeout
-        while (timeout <= 0 || (+Date.now() < endTime)) {
+        let endTime = Date.now() + timeout
+        while (timeout <= 0 || (Date.now() < endTime)) {
             if (this.receivedData.length >= n) {
                 const res = this.receivedData.substring(0, n)
                 this.receivedData = this.receivedData.substring(n)
@@ -117,7 +117,7 @@ class Transport {
             const prev_avail = this.receivedData.length
             await sleep(10)
             if (this.receivedData.length > prev_avail) {
-                endTime = +Date.now() + timeout
+                endTime = Date.now() + timeout
             }
         }
         throw new Error('Timeout')
@@ -127,8 +127,8 @@ class Transport {
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
-        let endTime = +Date.now() + timeout
-        while (timeout <= 0 || (+Date.now() < endTime)) {
+        let endTime = Date.now() + timeout
+        while (timeout <= 0 || (Date.now() < endTime)) {
             const idx = this.receivedData.indexOf(ending) + ending.length
             if (idx >= ending.length) {
                 const res = this.receivedData.substring(0, idx)
@@ -138,7 +138,7 @@ class Transport {
             const prev_avail = this.receivedData.length
             await sleep(10)
             if (this.receivedData.length > prev_avail) {
-                endTime = +Date.now() + timeout
+                endTime = Date.now() + timeout
             }
         }
         throw new Error('Timeout reached before finding the ending sequence')
@@ -334,6 +334,7 @@ class WebSocketREPL extends Transport {
         }
         this.url = url
         this.socket = null
+        this.last_activity = 0
         this.info = {
             url: this.url
         }
@@ -371,6 +372,16 @@ class WebSocketREPL extends Transport {
         }
         this.socket = await _conn(this.url)
         this.socket.binaryType = 'arraybuffer'
+
+        this.hbeat = setInterval(() => {
+            // Send empty data frame
+            const now = Date.now()
+            if (this.socket && (now - this.last_activity > 55*1000)) {
+                this.socket.send('')
+                this.last_activity = now
+            }
+        }, 10*1000)
+
         this.socket.onmessage = (event) => {
             if (event.data instanceof ArrayBuffer) {
                 const decoder = new TextDecoder()
@@ -379,6 +390,7 @@ class WebSocketREPL extends Transport {
                 this.receiveCallback(event.data)
             }
             this.activityCallback()
+            this.last_activity = Date.now()
         }
 
         this.socket.onclose = (ev) => {
@@ -413,7 +425,10 @@ class WebSocketREPL extends Transport {
 
     async disconnect() {
         if (this.socket) {
+            clearInterval(this.hbeat)
             this.socket.close()
+            this.socket = null
+            this.hbeat = null
         }
     }
 
@@ -430,6 +445,7 @@ class WebSocketREPL extends Transport {
                     await sleep(150)
                 }
             }
+            this.last_activity = Date.now()
         } catch (err) {
             report("Write error", err)
         }
