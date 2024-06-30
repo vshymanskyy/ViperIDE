@@ -132,12 +132,8 @@ async function prepareNewPort(type) {
                 return pass
             })
         } else if (url.startsWith('rtc://')) {
-            const id = url.replace('rtc://', '')
-            if (id.length != 14) {
-                toastr.error('P2P ID is malformed')
-                return
-            }
-            new_port = new WebRTCTransport(id.toUpperCase())
+            const id = ConnectionUID.parse(url.replace('rtc://', ''))
+            new_port = new WebRTCTransport(id.value())
         } else {
             toastr.error('Unknown link type')
         }

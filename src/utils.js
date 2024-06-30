@@ -63,9 +63,7 @@ class ConnectionUID {
     static uidcs = '0W8N4Y1HP5DF9K6JM3C2XA7R';
     static uidre = new RegExp(`^([${ConnectionUID.uidcs}]{4}-)*[${ConnectionUID.uidcs}]{4}$`);
     static uidtr = {
-        'B':'8',    'E':'F',    'G':'6',
-        'I':'1',    'i':'1',    'l':'1',
-        'O':'0',    'Q':'0',    'S':'5',
+        'B':'8',  'E':'F',  'G':'6',  'I':'1',  'L':'1',  'O':'0',  'Q':'0',  'S':'5',
     };
 
     static random() {
@@ -82,9 +80,9 @@ class ConnectionUID {
 
     static parse(input) {
         // Normalize (and validate) input
-        return new ConnectionUID(input.split('').map(char =>
+        return new ConnectionUID(input.toUpperCase().split('').map(char =>
             ConnectionUID.uidtr[char] || char
-        ).join('').toUpperCase());
+        ).join(''));
     }
 
     static _base24(n, length) {

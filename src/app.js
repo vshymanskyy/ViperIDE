@@ -79,12 +79,8 @@ async function prepareNewPort(type) {
                 return pass
             })
         } else if (url.startsWith('rtc://')) {
-            const id = url.replace('rtc://', '')
-            if (id.length != 14) {
-                toastr.error('P2P ID is malformed')
-                return
-            }
-            new_port = new WebRTCTransport(id.toUpperCase())
+            const id = ConnectionUID.parse(url.replace('rtc://', ''))
+            new_port = new WebRTCTransport(id.value())
         } else {
             toastr.error('Unknown link type')
         }
@@ -1063,15 +1059,25 @@ print()
     const urlParams = new URLSearchParams(window.location.search)
     const wssID = urlParams.get('wss')
     if (wssID) {
-        window.webrepl_url = 'wss://hub.viper-ide.org/relay/' + wssID
+        try {
+            const connID = ConnectionUID.parse(wssID).value()
+            window.webrepl_url = 'wss://hub.viper-ide.org/relay/' + connID
+        } catch (err) {
+            report('Cannot connect', err)
+        }
     }
     const rtcID = urlParams.get('rtc')
     if (rtcID) {
-        window.webrepl_url = 'rtc://' + rtcID
+        try {
+            const connID = ConnectionUID.parse(rtcID).value()
+            window.webrepl_url = 'rtc://' + connID
+        } catch (err) {
+            report('Cannot connect', err)
+        }
     }
 
     if (typeof webrepl_url !== 'undefined') {
-        await sleep(500)
+        await sleep(100)
         await connectDevice('ws')
     }
 
