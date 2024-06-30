@@ -65,7 +65,7 @@
 [ViperIDE Online ](https://viper-ide.org)  
 [Documentation](./docs/)  
 [Discussion](https://github.com/orgs/micropython/discussions/15219)   
-[CodeMirror](https://codemirror.net), [Xterm.js](https://xtermjs.org)
+[CodeMirror](https://codemirror.net), [Xterm.js](https://xtermjs.org), [PeerJS](https://peerjs.com)
 
 ## Limitations
 
