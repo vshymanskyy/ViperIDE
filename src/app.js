@@ -64,6 +64,8 @@ async function prepareNewPort(type) {
             }
         } else {
             url = webrepl_url
+            defaultWsURL = webrepl_url
+            webrepl_url = ''
         }
 
         if (url.startsWith('ws://') || url.startsWith('wss://')) {
