@@ -372,26 +372,24 @@ async function _raw_loadFile(raw, fn) {
             isBinary = true
         }
     }
+    await _loadContent(fn, content)
+}
 
+async function _loadContent(fn, content) {
     const editorElement = QID('editor')
 
-    if (isBinary) {
+    if (content instanceof Uint8Array) {
         hexViewer(content.buffer, editorElement)
         editor = null
     } else if (fn.endsWith('.md') && QID('render-markdown').checked) {
         editorElement.innerHTML = `<div class="marked-viewer">` + marked.marked(content) + `</div>`
         editor = null
     } else {
-        if (!editor) {
-            editorElement.innerHTML = '' // Clear existing content
-            createCodeMirror()
-        }
-        editor.setValue('')
-
+        let options;
         if (fn.endsWith('.py')) {
-            editor.setOption('mode', { name: 'python', version: 3, singleLineStringErrors: false })
+            options = { 'mode': { name: 'python', version: 3, singleLineStringErrors: false } }
         } else if (fn.endsWith('.json')) {
-            editor.setOption('mode', { name: 'application/ld+json' })
+            options = { 'mode': { name: 'application/ld+json' } }
 
             if (QID('expand-minify-json').checked) {
                 try {
@@ -402,18 +400,28 @@ async function _raw_loadFile(raw, fn) {
                 }
             }
         } else if (fn.endsWith('.pem')) {
-            editor.setOption('mode', 'pem')
+            options = { 'mode': 'pem' }
         } else if (fn.endsWith('.ini') || fn.endsWith('.inf') ) {
-            editor.setOption('mode', 'ini')
+            options = { 'mode': 'ini' }
         } else if (fn.endsWith('.toml')) {
-            editor.setOption('mode', 'toml')
+            options = { 'mode': 'toml' }
         } else if (fn.endsWith('.md')) {
-            editor.setOption('mode', 'markdown')
+            options = { 'mode': 'markdown' }
         } else {
-            editor.setOption('mode', 'text')
+            options = { 'mode': 'text' }
         }
 
-        editor.setValue(content)
+        editorElement.innerHTML = '' // Clear existing content
+        editor = CodeMirror(editorElement, {
+            value: content,
+            theme: 'monokai',
+            lineNumbers: true,
+            lineWrapping: QID('use-word-wrap').checked,
+            indentUnit: 4,
+            matchBrackets: true,
+            ...options,
+        })
+
         editorFn = fn
     }
     autoHideSideMenu()
@@ -777,16 +785,6 @@ function updateWordWrapping() {
     editor.setOption('lineWrapping', QID('use-word-wrap').checked)
 }
 
-function createCodeMirror() {
-    editor = CodeMirror(QID('editor'), {
-        theme: 'monokai',
-        lineNumbers: true,
-        lineWrapping: QID('use-word-wrap').checked,
-        indentUnit: 4,
-        matchBrackets: true,
-    })
-}
-
 function applyTranslation() {
     try {
         // sanity check
@@ -885,9 +883,7 @@ function applyTranslation() {
 
     toastr.options.preventDuplicates = true;
 
-    createCodeMirror()
-    editorFn = "test.py"
-    editor.setValue(`
+    await _loadContent("test.py", `
 # ViperIDE - MicroPython Web IDE
 
 import time
