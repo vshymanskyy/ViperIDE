@@ -9,39 +9,32 @@
 
     <link rel="manifest" href="manifest.json">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/lib/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/addon/dialog/dialog.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/theme/monokai.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-fork-ribbon-css@0.2.3/gh-fork-ribbon.min.css">
-
-    <link rel="stylesheet" href="./src/app_common.css">
-    <link rel="stylesheet" href="./src/app.css">
+    <link rel="stylesheet" href="./app.css">
 </head>
 <body id="app">
     <div id="tool-panel">
         <div>
-            <button onclick="toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
+            <button onclick="app.toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
             <span class="logo">ViperIDE</span>
-            <button title="Save File [Ctrl+S]"   onclick="saveCurrentFile()" id="btn-save"><i class="fa-solid fa-download"></i></button>
-            <button title="Run File [F5]"        onclick="runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
+            <button title="Save File [Ctrl+S]"   onclick="app.saveCurrentFile()" id="btn-save"><i class="fa-solid fa-download"></i></button>
+            <button title="Run File [F5]"        onclick="app.runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
         </div>
         <div>
-            <button title="Connect WebREPL"      onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
-            <button title="Connect Bluetooth"    onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
-            <button title="Connect USB/Serial"   onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
-            <button title="Full Screen" onclick="toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
+            <button title="Connect WebREPL"      onclick="app.connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
+            <button title="Connect Bluetooth"    onclick="app.connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+            <button title="Connect USB/Serial"   onclick="app.connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+            <button title="Full Screen" onclick="app.toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
         </div>
     </div>
     <div id="container">
-        <div id="overlay" onclick="autoHideSideMenu()"></div>
+        <div id="overlay" onclick="app.autoHideSideMenu()"></div>
         <div id="side-menu">
             <div class="tabs" id="menu-tabs">
                 <div>
-                    <a class="tab active" data-target="menu-files" onclick="fetchFileList();return false;"><i class="fa-solid fa-folder fa-fw"></i></a>
-                    <a class="tab" data-target="menu-pkg" onclick="loadAllPkgIndexes();return false;"><i class="fa-solid fa-cubes fa-fw"></i></a>
+                    <a class="tab active" data-target="menu-files" onclick="app.fetchFileList();return false;"><i class="fa-solid fa-folder fa-fw"></i></a>
+                    <a class="tab" data-target="menu-pkg" onclick="app.loadAllPkgIndexes();return false;"><i class="fa-solid fa-cubes fa-fw"></i></a>
                     <a class="tab" data-target="menu-tools"><i class="fa-solid fa-tools fa-fw"></i></a>
                 </div>
                 <div>
@@ -57,8 +50,8 @@
                 <div id="menu-file-tree">
                     <div><span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span></div>
                     <div>
-                        <a href="#" class="name" onclick="connectDevice('usb');return false;">&emsp;🤔 <span id="no-files">no files</span></a>
-                        <a href="#" class="menu-action" onclick="connectDevice('usb');return false;"><i class="fa-solid fa-plug"></i></a>
+                        <a href="#" class="name" onclick="app.connectDevice('usb');return false;">&emsp;🤔 <span id="no-files">no files</span></a>
+                        <a href="#" class="menu-action" onclick="app.connectDevice('usb');return false;"><i class="fa-solid fa-plug"></i></a>
                     </div>
                 </div>
             </div>
@@ -86,7 +79,7 @@
                     <div><input type="checkbox" id="force-serial-poly"/><label for="force-serial-poly">Force WebSerial polyfill</label></div>
                     <div class="title-lines" id="menu-line-editor">editor</div>
                     <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Auto expand/minify JSON</label></div>
-                    <div><input type="checkbox" id="use-word-wrap" onclick="updateWordWrapping()" /><label for="use-word-wrap">Word wrapping</label></div>
+                    <div><input type="checkbox" id="use-word-wrap"/><label for="use-word-wrap">Word wrapping</label></div>
                     <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
                     <div class="title-lines" id="menu-line-other">other</div>
                     <div class="space-between">
@@ -169,16 +162,16 @@
                 <!-- CodeMirror or MarkedJS editor content goes here -->
             </div>
             <div id="terminal-container">
-                <div class="tabs" id="terminal-tabs" onmousedown="initDrag(event)" ontouchstart="initDrag(event)">
+                <div class="tabs" id="terminal-tabs" onmousedown="app.initDrag(event)" ontouchstart="app.initDrag(event)">
                     <div>
                         <a class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> <span id="tab-term">Terminal</span></a>
                         <!--a class="tab"        data-target="logs"><i class="fa-solid fa-bug"></i> IDE Logs</a-->
                     </div>
                     <div>
-                        <button title="Clear" onclick="term.clear()" id="term-clear"><i class="fa-solid fa-trash-can"></i></button>
-                        <button title="Soft Reset" onclick="reboot('soft')"><i class="fa-solid fa-arrows-rotate"></i></button>
-                        <button title="Hard Reset" onclick="reboot('hard')"><i class="fa-solid fa-power-off"></i></button>
-                        <button title="Full Screen" onclick="toggleFullScreen('terminal-container')" id="term-expand"><i class="fa-solid fa-expand"></i></button>
+                        <button title="Clear" onclick="app.clearTerminal()" id="term-clear"><i class="fa-solid fa-trash-can"></i></button>
+                        <button title="Soft Reset" onclick="app.reboot('soft')"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        <button title="Hard Reset" onclick="app.reboot('hard')"><i class="fa-solid fa-power-off"></i></button>
+                        <button title="Full Screen" onclick="app.toggleFullScreen('terminal-container')" id="term-expand"><i class="fa-solid fa-expand"></i></button>
                     </div>
                 </div>
                 <div id="xterm" class="tab-content active">
@@ -194,43 +187,11 @@
 
     <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
 
+    <script>window.analytics = { _writeKey: "WdDAz9IvQknVcbSS" }</script>
+    <script src="https://unpkg.com/@june-so/analytics-next/dist/umd/standalone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/i18next@23.11.5/i18next.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.0.0/i18nextBrowserLanguageDetector.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/lib/codemirror.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/python/python.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/javascript/javascript.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/markdown/markdown.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/mode/toml/toml.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/addon/mode/simple.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/addon/search/search.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/addon/search/searchcursor.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/addon/search/jump-to-line.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/codemirror@6.65.7/addon/dialog/dialog.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
-
-    <script>window.analytics = { _writeKey: "WdDAz9IvQknVcbSS" };</script>
-    <script src="https://unpkg.com/@june-so/analytics-next/dist/umd/standalone.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@1.0.38/src/ua-parser.min.js"></script>
-
-    <script type="module" crossorigin>
-        import { serial as webSerialPolyfill } from 'https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/+esm'
-        window.webSerialPolyfill = webSerialPolyfill
-    </script>
-
-    <script src="./src/utils.js"></script>
-    <script src="./src/transports.js"></script>
-    <script src="./src/rawmode.js"></script>
-    <script src="./src/app.js"></script>
+    <script src="./app.js"></script>
 </body>
 </html>

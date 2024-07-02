@@ -6,28 +6,13 @@ def readfile(fn):
     with open(fn, 'r', encoding='utf-8') as f:
         return f.read()
 
-def translations_json():
-    result = {}
-    for fn in glob.glob('*.json', root_dir='./lang/'):
-        lang = fn.replace('.json', '')
-        result[lang] = json.loads(readfile('./lang/' + fn))
-    return json.dumps(result, separators=(',',':'), ensure_ascii=False, sort_keys=True)
-
 # Insert CSS and JS into HTML
 combined = readfile(sys.argv[1]).replace(
-    '<link rel="stylesheet" href="./src/app_common.css">', '<style>' + readfile('src/app_common.css') + '</style>'
+    '<link rel="stylesheet" href="./common.css">', '<style>\n' + readfile('src/app_common.css') + '\n</style>'
 ).replace(
-    '<link rel="stylesheet" href="./src/app.css">', '<style>' + readfile('src/app.css') + '</style>'
+    '<link rel="stylesheet" href="./app.css">', '<style>\n' + readfile('build/app.css') + '\n</style>'
 ).replace(
-    '<script src="./src/app.js"></script>', '<script>' + readfile('src/app.js') + '</script>'
-).replace(
-    '<script src="./src/transports.js"></script>', '<script>' + readfile('src/transports.js') + '</script>'
-).replace(
-    '<script src="./src/rawmode.js"></script>', '<script>' + readfile('src/rawmode.js') + '</script>'
-).replace(
-    '<script src="./src/utils.js"></script>', '<script>' + readfile('src/utils.js') + '</script>'
-).replace(
-    'require("translations.json")', translations_json()
+    '<script src="./app.js"></script>', '<script>\n' + readfile('build/app.js') + '\n</script>'
 ).replace(
     'window.VIPER_IDE_BUILD', str(int(time.time() * 1000))
 )

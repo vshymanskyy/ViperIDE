@@ -6,6 +6,8 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
+import { sleep, Mutex, report } from './utils.js'
+
 class Transport {
     constructor() {
         if (this.constructor === Transport) {
@@ -50,7 +52,7 @@ class Transport {
                 offset += this.writeChunk
             }
         } catch (err) {
-            report("Write error", err)
+            report("Write error", err) // TODO
         }
     }
 
@@ -72,17 +74,19 @@ class Transport {
 
     async startTransaction() {
         const release = await this.mutex.acquire()
-        const prevRecvCbk = this.receiveCallback
+        this.prevRecvCbk = this.receiveCallback
         this.inTransaction = true
         this.receivedData = ''
         this.receiveCallback = (data) => {
             this.receivedData += data
-            if (this.emit && prevRecvCbk) { prevRecvCbk(data) }
+            if (this.emit && this.prevRecvCbk) { this.prevRecvCbk(data) }
         }
 
         return () => {
-            this.receiveCallback = prevRecvCbk
-            if (prevRecvCbk) { prevRecvCbk(this.receivedData) }
+            if (this.prevRecvCbk) {
+                this.receiveCallback = this.prevRecvCbk
+                this.receiveCallback(this.receivedData)
+            }
             this.receivedData = null
             this.inTransaction = false
 
@@ -149,7 +153,7 @@ class Transport {
  * USB / Serial
  */
 
-class WebSerial extends Transport {
+export class WebSerial extends Transport {
     constructor(serial=null) {
         super()
         this.port = null
@@ -203,7 +207,7 @@ class WebSerial extends Transport {
                 this.receiveCallback(decoder.decode(value))
                 this.activityCallback()
             }
-        } catch (error) {
+        } catch (err) {
             this.disconnectCallback()
         }
     }
@@ -225,7 +229,7 @@ const ADA_VER = 'adaf0100-4669-6c65-5472-616e73666572'
 const ADA_FT = 'adaf0200-4669-6c65-5472-616e73666572'
 const ADA_NUS_TX_LIMIT = 20
 
-class WebBluetooth extends Transport {
+export class WebBluetooth extends Transport {
     constructor() {
         super()
         this.device = null
@@ -326,7 +330,7 @@ class WebBluetooth extends Transport {
  * WebSocket
  */
 
-class WebSocketREPL extends Transport {
+export class WebSocketREPL extends Transport {
     constructor(url) {
         super()
         if (!url) {
@@ -447,7 +451,7 @@ class WebSocketREPL extends Transport {
             }
             this.last_activity = Date.now()
         } catch (err) {
-            report("Write error", err)
+            report("Write error", err) // TODO
         }
     }
 }
@@ -456,7 +460,9 @@ class WebSocketREPL extends Transport {
  * P2P / WebRTC
  */
 
-class WebRTCTransport extends Transport {
+import { Peer } from 'peerjs'
+
+export class WebRTCTransport extends Transport {
     constructor(peerId = null, myId = null) {
         super();
 

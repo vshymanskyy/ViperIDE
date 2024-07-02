@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
 
-    <link rel="stylesheet" href="./src/app_common.css">
+    <link rel="stylesheet" href="./common.css">
     <style>
     body {
         padding: 20px;
@@ -51,23 +51,14 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/i18next@23.11.5/i18next.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.0.0/i18nextBrowserLanguageDetector.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
-
-    <script type="module" crossorigin>
-        import { serial as webSerialPolyfill } from 'https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/+esm'
-        window.webSerialPolyfill = webSerialPolyfill
-    </script>
-
-    <script src="./src/utils.js"></script>
-    <script src="./src/transports.js"></script>
+    <script src="./viper_lib.js"></script>
     <script>
 
+    Object.assign(window, viper)
+
 const my_p2p_id = ConnectionUID.random().value();
-let port = null;
 let rtc = null;
+let port = null;
 let wakeLock = null;
 
 async function disconnectDevice() {
@@ -119,6 +110,8 @@ async function prepareNewPort(type) {
             }
         } else {
             url = webrepl_url
+            defaultWsURL = webrepl_url
+            webrepl_url = ''
         }
 
         if (url.startsWith('ws://') || url.startsWith('wss://')) {

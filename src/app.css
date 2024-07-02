@@ -78,6 +78,7 @@ body.loaded {
     flex: 0 0 32px;
     cursor: row-resize;
     padding: 0 5px;
+    background: var(--bg-color);
 }
 
 #menu-tabs {
@@ -125,39 +126,9 @@ body.loaded {
     color: #e6db74;
 }
 
-.CodeMirror {
+.cm-editor {
     height: 100%;
     width: 100%;
-}
-
-.CodeMirror * {
-    font-family: "Droid Sans Mono", "monospace", monospace;
-    font-weight: normal;
-    font-size: 0.9rem;
-    line-height: 1.2rem;
-    font-feature-settings: "liga" 0, "calt" 0;
-    font-variation-settings: normal;
-    letter-spacing: 0px;
-}
-
-.cm-s-monokai.CodeMirror {
-    background: var(--bg-color-edit);
-}
-.cm-s-monokai .CodeMirror-gutters {
-    background: var(--bg-color-edit);
-    border-right: 1px solid var(--bg-color);
-}
-
-.cm-s-monokai .CodeMirror-linenumber {
-    font-weight: 300;
-}
-
-.CodeMirror-scrollbar-filler {
-    background: none;
-}
-
-.cm-s-monokai span.cm-comment {
-    color: #afac99;
 }
 
 #menu-file-title, #menu-pkg-title, #menu-settings-title, #menu-tools-title {

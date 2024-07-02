@@ -6,11 +6,11 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-function sleep(ms) {
+export function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-class Mutex {
+export class Mutex {
     constructor() {
         this._lock = Promise.resolve()
     }
@@ -24,7 +24,7 @@ class Mutex {
     }
 }
 
-function getUserUID() {
+export function getUserUID() {
     const localStorageKey = 'uuid';
 
     // Check if UUID already exists in local storage
@@ -48,61 +48,7 @@ function getUserUID() {
     return uuid;
 }
 
-class ConnectionUID {
-    constructor(uid) {
-        if (!ConnectionUID.uidre.test(uid)) {
-            throw new Error('Malformed Connection ID');
-        }
-        this.uid = uid;
-    }
-
-    value() {
-        return this.uid;
-    }
-
-    static uidcs = '0W8N4Y1HP5DF9K6JM3C2XA7R';
-    static uidre = new RegExp(`^([${ConnectionUID.uidcs}]{4}-)*[${ConnectionUID.uidcs}]{4}$`);
-    static uidtr = {
-        'B':'8',  'E':'F',  'G':'6',  'I':'1',  'L':'1',  'O':'0',  'Q':'0',  'S':'5',
-    };
-
-    static random() {
-        // Generate 10 random bytes
-        const hexString = Array(20)
-            .fill()
-            .map(() => Math.round(Math.random() * 0xF).toString(16))
-            .join('');
-
-        const rnd = BigInt(`0x${hexString}`);
-        const num = ConnectionUID._base24(rnd, 16);
-        return new ConnectionUID(num.slice(0, 4) + '-' + num.slice(4, 8) + '-' + num.slice(8, 12));
-    }
-
-    static parse(input) {
-        // Normalize (and validate) input
-        return new ConnectionUID(input.toUpperCase().split('').map(char =>
-            ConnectionUID.uidtr[char] || char
-        ).join(''));
-    }
-
-    static _base24(n, length) {
-        const base = BigInt(24);
-        let res = "";
-        let prev = null;
-        while (res.length < length) {
-            let c = ConnectionUID.uidcs[n % base];
-            if (c === prev) {
-                c = ConnectionUID.uidcs[(n + BigInt(1)) % base];
-            }
-            prev = c;
-            res += c;
-            n /= base;
-        }
-        return res;
-    }
-}
-
-function getScreenInfo() {
+export function getScreenInfo() {
     function getScreenOrientation() {
         if (window.matchMedia("(orientation: portrait)").matches) {
             return "portrait";
@@ -131,7 +77,7 @@ function getScreenInfo() {
     }
 }
 
-class IdleMonitor {
+export class IdleMonitor {
     constructor(idleTimeout = 60000) {
         this.idleTimeout = idleTimeout;
         this.onIdle = () => {};
@@ -200,7 +146,7 @@ class IdleMonitor {
     }
 }
 
-function splitPath(path) {
+export function splitPath(path) {
     const parts = path.split('/').filter(part => part !== '')
     const filename = parts.pop()
     const directoryPath = parts.join('/')
@@ -218,20 +164,20 @@ const QSA = (x) => [...document.querySelectorAll(x)]
 const QS  = document.querySelector.bind(document)
 const QID = document.getElementById.bind(document)
 
-const T = i18next.t.bind(i18next)
-
 const iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent)
 
-function sanitizeHTML(s) {
+export { addCss, getCssPropertyValue, QSA, QS, QID, iOS }
+
+export function sanitizeHTML(s) {
     //return '<pre>' + (new Option(s)).innerHTML + '</pre>'
     return (new Option(s)).innerHTML.replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;')
 }
 
-function isRunningStandalone() {
+export function isRunningStandalone() {
     return (window.matchMedia('(display-mode: standalone)').matches);
 }
 
-function sizeFmt(size, places=1) {
+export function sizeFmt(size, places=1) {
     if (size == null) { return "unknown" }
     const suffixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
     let i = 0
@@ -247,21 +193,10 @@ function sizeFmt(size, places=1) {
     }
 }
 
-function toggleFullScreen(elementId) {
-    const element = QID(elementId)
-    if (!document.fullscreenElement) {
-        element.requestFullscreen().catch(err => {
-            report('Error enabling full-screen mode', err)
-        })
-    } else {
-        document.exitFullscreen()
-    }
-}
-
 let activityTimeout = -1;
 
 // Function to indicate activity
-function indicateActivity() {
+export function indicateActivity() {
     // Clear any existing timeout to reset the inactivity timer
     if (activityTimeout !== -1) {
         clearTimeout(activityTimeout);
@@ -280,7 +215,7 @@ function indicateActivity() {
     }, 100);
 }
 
-function setupTabs(containerNode) {
+export function setupTabs(containerNode) {
     const tabs = containerNode.querySelectorAll('.tab')
     const tabContents = containerNode.querySelectorAll('.tab-content')
 
@@ -317,7 +252,7 @@ if (navigator.appVersion.indexOf("Win") >= 0) {
  * Error handling
  */
 
-function report(title, err) {
+export function report(title, err) {
     console.error(err, err.stack)
     toastr.error(sanitizeHTML(err.message), title)
     analytics.track('Error', {

@@ -33,13 +33,19 @@ jobs:
         uses: actions/checkout@v4
       - name: Build
         run: |
-          mkdir build
+          npm install
+          npm run build
+          # Combine
           python3 build.py ViperIDE.html   build/index.html
           python3 build.py bridge.html     build/bridge.html
           python3 build.py benchmark.html  build/benchmark.html
           cp -r ./assets ./build/
           cp ./src/webrepl_content.js ./build/
           jq -c . < manifest.json > ./build/manifest.json
+          # Cleanup
+          rm build/app.css
+          rm build/app.js
+          rm build/translations.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

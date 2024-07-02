@@ -6,7 +6,45 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-const VIPER_IDE_VERSION = "0.3.5"
+import '@xterm/xterm/css/xterm.css'
+import 'github-fork-ribbon-css/gh-fork-ribbon.css'
+import './app_common.css'
+import './app.css'
+
+import i18next from 'i18next'
+import LanguageDetector from 'i18next-browser-languagedetector'
+
+import { Terminal } from '@xterm/xterm'
+import { WebLinksAddon } from '@xterm/addon-web-links'
+import { FitAddon } from '@xterm/addon-fit'
+
+import { basicSetup } from 'codemirror'
+import { EditorView, keymap } from '@codemirror/view'
+import { EditorState } from '@codemirror/state'
+import { StreamLanguage, indentUnit } from '@codemirror/language'
+import { indentWithTab } from '@codemirror/commands'
+import { python } from '@codemirror/lang-python'
+import { json as modeJSON } from '@codemirror/lang-json'
+import { markdown as modeMD } from '@codemirror/lang-markdown'
+import { simpleMode } from '@codemirror/legacy-modes/mode/simple-mode'
+import { toml as modeTOML } from '@codemirror/legacy-modes/mode/toml'
+import { monokaiInit } from '@uiw/codemirror-theme-monokai'
+import { tags as cmTags } from '@lezer/highlight'
+
+import { serial as webSerialPolyfill } from 'web-serial-polyfill'
+import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
+import { MpRawMode } from './rawmode.js'
+import { ConnectionUID } from './connection_uid.js'
+import translations from '../build/translations.json'
+import { version } from '../package.json'
+import { marked } from 'marked'
+import { UAParser } from 'ua-parser-js'
+
+import { splitPath, sleep, getUserUID, getScreenInfo, IdleMonitor,
+         getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, isRunningStandalone,
+         sizeFmt, indicateActivity, setupTabs, report } from './utils.js'
+
+const VIPER_IDE_VERSION = version
 
 function getBuildDate() {
     if (window.VIPER_IDE_BUILD) {
@@ -15,6 +53,8 @@ function getBuildDate() {
         return "unknown"
     }
 }
+
+const T = i18next.t.bind(i18next)
 
 /*
  * Device Management
@@ -132,7 +172,7 @@ async function prepareNewPort(type) {
     return new_port
 }
 
-async function connectDevice(type) {
+export async function connectDevice(type) {
     if (port) {
         if (!confirm('Disconnect current device?')) { return }
         await disconnectDevice()
@@ -207,7 +247,7 @@ async function connectDevice(type) {
  * File Management
  */
 
-async function createNewFile(path) {
+export async function createNewFile(path) {
     if (!port) return;
     const fn = prompt(`Creating new file inside ${path}\nPlease enter the name:`)
     if (fn == null || fn == "") return
@@ -232,7 +272,7 @@ async function createNewFile(path) {
     }
 }
 
-async function removeFile(path) {
+export async function removeFile(path) {
     if (!port) return;
     if (!confirm(`Remove ${path}?`)) return
     const raw = await MpRawMode.begin(port)
@@ -244,7 +284,7 @@ async function removeFile(path) {
     }
 }
 
-async function removeDir(path) {
+export async function removeDir(path) {
     if (!port) return;
     if (!confirm(`Remove ${path}?`)) return
     const raw = await MpRawMode.begin(port)
@@ -264,7 +304,7 @@ async function execReplNoFollow(cmd) {
     //await port.write('\x04')            // Ctrl-D: execute
 }
 
-async function fetchFileList() {
+export async function fetchFileList() {
     if (!port) return;
     const raw = await MpRawMode.begin(port)
     try {
@@ -301,7 +341,7 @@ async function _raw_updateFileList(raw) {
     const fileTree = QID('menu-file-tree')
     fileTree.innerHTML = `<div>
         <span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span>
-        <a href="#" class="menu-action" onclick="createNewFile('/');return false;"><i class="fa-solid fa-plus"></i></a>
+        <a href="#" class="menu-action" onclick="app.createNewFile('/');return false;"><i class="fa-solid fa-plus"></i></a>
         <span class="menu-action">${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
     </div>`
     function traverse(node, depth) {
@@ -310,8 +350,8 @@ async function _raw_updateFileList(raw) {
             if ("content" in n) {
                 fileTree.insertAdjacentHTML('beforeend', `<div>
                     <span class="folder name">${offset}<i class="fa-solid fa-folder fa-fw"></i> ${n.name}</span>
-                    <a href="#" class="menu-action" onclick="removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
-                    <a href="#" class="menu-action" onclick="createNewFile('${n.path}/');return false;"><i class="fa-solid fa-plus"></i></a>
+                    <a href="#" class="menu-action" onclick="app.removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
+                    <a href="#" class="menu-action" onclick="app.createNewFile('${n.path}/');return false;"><i class="fa-solid fa-plus"></i></a>
                 </div>`)
                 traverse(n.content, depth+1)
             } else {
@@ -323,8 +363,8 @@ async function _raw_updateFileList(raw) {
                     icon = '<i class="fa-regular fa-file fa-fw"></i>'
                 }
                 fileTree.insertAdjacentHTML('beforeend', `<div>
-                    <a href="#" class="name" onclick="fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
-                    <a href="#" class="menu-action" onclick="removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
+                    <a href="#" class="name" onclick="app.fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
+                    <a href="#" class="menu-action" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
                     <span class="menu-action">${sizeFmt(n.size)}</span>
                 </div>`)
             }
@@ -333,14 +373,14 @@ async function _raw_updateFileList(raw) {
     traverse(result, 1)
 
     fileTree.insertAdjacentHTML('beforeend', `<div>
-        <a href="#" class="name" onclick="fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md</a>
+        <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md</a>
         <span class="menu-action">virtual</span>
     </div>`)
 
     return result
 }
 
-async function fileClick(fn) {
+export async function fileClick(fn) {
     if (!port) return;
 
     const e = window.event.target || window.event.srcElement;
@@ -382,14 +422,14 @@ async function _loadContent(fn, content) {
         hexViewer(content.buffer, editorElement)
         editor = null
     } else if (fn.endsWith('.md') && QID('render-markdown').checked) {
-        editorElement.innerHTML = `<div class="marked-viewer">` + marked.marked(content) + `</div>`
+        editorElement.innerHTML = `<div class="marked-viewer">` + marked(content) + `</div>`
         editor = null
     } else {
-        let options;
+        let mode = []
         if (fn.endsWith('.py')) {
-            options = { 'mode': { name: 'python', version: 3, singleLineStringErrors: false } }
+            mode = [ indentUnit.of("    "), python({ version: 3 }) ]
         } else if (fn.endsWith('.json')) {
-            options = { 'mode': { name: 'application/ld+json' } }
+            mode = [ modeJSON() ]
 
             if (QID('expand-minify-json').checked) {
                 try {
@@ -400,26 +440,49 @@ async function _loadContent(fn, content) {
                 }
             }
         } else if (fn.endsWith('.pem')) {
-            options = { 'mode': 'pem' }
+            mode = [ StreamLanguage.define(modePEM) ]
         } else if (fn.endsWith('.ini') || fn.endsWith('.inf') ) {
-            options = { 'mode': 'ini' }
+            mode = [ StreamLanguage.define(modeINI) ]
         } else if (fn.endsWith('.toml')) {
-            options = { 'mode': 'toml' }
+            mode = [ StreamLanguage.define(modeTOML) ]
         } else if (fn.endsWith('.md')) {
-            options = { 'mode': 'markdown' }
-        } else {
-            options = { 'mode': 'text' }
+            mode = [ modeMD() ]
         }
 
         editorElement.innerHTML = '' // Clear existing content
-        editor = CodeMirror(editorElement, {
-            value: content,
-            theme: 'monokai',
-            lineNumbers: true,
-            lineWrapping: QID('use-word-wrap').checked,
-            indentUnit: 4,
-            matchBrackets: true,
-            ...options,
+
+        if (QID('use-word-wrap').checked) {
+            mode.push(EditorView.lineWrapping)
+        }
+
+        editor = new EditorView({
+            state: EditorState.create({
+                doc: content,
+                extensions: [
+                    basicSetup,
+                    monokaiInit({
+                        settings: {
+                            fontFamily: '"Droid Sans Mono", "monospace", monospace',
+                            background: 'var(--bg-color-edit)',
+                            gutterBackground: 'var(--bg-color-edit)',
+                        },
+                        styles: [
+                            {
+                                tag: [cmTags.name, cmTags.deleted, cmTags.character, cmTags.macroName],
+                                color: 'white'
+                            }, {
+                                tag: [cmTags.meta, cmTags.comment],
+                                color: '#afac99',
+                                fontStyle: "italic",
+                                //fontWeight: "300",
+                            }
+                        ]
+                    }),
+                    keymap.of([indentWithTab]),
+                    ...mode
+                ],
+            }),
+            parent: editorElement
         })
 
         editorFn = fn
@@ -428,10 +491,10 @@ async function _loadContent(fn, content) {
     editorElement.scrollTop = 0
 }
 
-async function saveCurrentFile() {
+export async function saveCurrentFile() {
     if (!port) return;
 
-    let content = editor.getValue()
+    let content = editor.state.doc.toString()
     if (editorFn.endsWith(".json") && QID('expand-minify-json').checked) {
         try {
             // Minify JSON
@@ -452,7 +515,11 @@ async function saveCurrentFile() {
     toastr.success('File Saved')
 }
 
-async function reboot(mode = "hard") {
+export function clearTerminal() {
+    term.clear()
+}
+
+export async function reboot(mode = "hard") {
     if (!port) return;
 
     const release = await port.startTransaction()
@@ -469,7 +536,7 @@ async function reboot(mode = "hard") {
     }
 }
 
-async function runCurrentFile() {
+export async function runCurrentFile() {
     if (!port) return;
 
     if (isInRunMode) {
@@ -494,7 +561,7 @@ async function runCurrentFile() {
         btnRunIconClass.add('fa-circle-stop')
         isInRunMode = true
         const emit = true
-        await raw.exec(editor.getValue(), timeout, emit)
+        await raw.exec(editor.state.doc.toString(), timeout, emit)
     } catch (err) {
         if (err.message.includes("KeyboardInterrupt")) {
             // Interrupted manually
@@ -524,7 +591,7 @@ const MIP_INDEXES = [
     'https://micropython.org/pi/v2'
 ]
 
-async function loadAllPkgIndexes() {
+export async function loadAllPkgIndexes() {
     if (!loadedPackages) {
         for (const index of MIP_INDEXES) {
             try {
@@ -556,13 +623,13 @@ async function fetchPkgList(index_url) {
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div>
         <span><i class="fa-solid fa-cube fa-fw"></i> viper-tools</span>
-        <a href="#" class="menu-action" onclick="installReplTools();return false;">${viper_tools_pkg.version} <i class="fa-regular fa-circle-down"></i></a>
+        <a href="#" class="menu-action" onclick="app.installReplTools();return false;">${viper_tools_pkg.version} <i class="fa-regular fa-circle-down"></i></a>
     </div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
     for (const pkg of mipindex.packages) {
         pkgList.insertAdjacentHTML('beforeend', `<div>
             <span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
-            <a href="#" class="menu-action" onclick="installPkg('${index_url}','${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
+            <a href="#" class="menu-action" onclick="app.installPkg('${index_url}','${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
         </div>`)
     }
 }
@@ -624,7 +691,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
     }
 }
 
-async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
+export async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
     if (!port) return;
     const raw = await MpRawMode.begin(port)
     try {
@@ -646,7 +713,7 @@ const viper_tools_pkg = {
     ]
 }
 
-async function installReplTools() {
+export async function installReplTools() {
     await installPkg(null, "viper-tools", "latest", viper_tools_pkg)
 }
 
@@ -657,7 +724,7 @@ async function installReplTools() {
 const fileTree = QID('side-menu')
 const overlay = QID('overlay')
 
-function toggleSideMenu() {
+export function toggleSideMenu() {
     if (window.innerWidth <= 768) {
         fileTree.classList.remove('hidden')
         fileTree.classList.toggle('show')
@@ -669,7 +736,7 @@ function toggleSideMenu() {
     }
 }
 
-function autoHideSideMenu() {
+export function autoHideSideMenu() {
     if (window.innerWidth <= 768) {
         fileTree.classList.remove('show')
         overlay.classList.remove('show')
@@ -742,7 +809,7 @@ if (!document.fullscreenEnabled) {
     QID('term-expand').style.display = 'none'
 }
 
-CodeMirror.defineSimpleMode('pem', {
+const modePEM = simpleMode({
     start: [
         {regex: /-----BEGIN CERTIFICATE-----/, token: 'keyword', next: 'middle'},
         {regex: /[^-]+/, token: 'comment'}
@@ -761,16 +828,16 @@ CodeMirror.defineSimpleMode('pem', {
     }
 })
 
-CodeMirror.defineSimpleMode('ini', {
+const modeINI = simpleMode({
     start: [
         {regex: /\/\/.*/,       token: 'comment'},
-        {regex: /\#.*/,         token: 'comment'},
-        {regex: /\;.*/,         token: 'comment'},
+        {regex: /#.*/,         token: 'comment'},
+        {regex: /;.*/,         token: 'comment'},
         {regex: /\[[^\]]+\]/,   token: 'keyword'},
-        {regex: /[^\s\=\,]+/,   token: 'variable', next: 'property'}
+        {regex: /[^\s=,]+/,   token: 'variable', next: 'property'}
     ],
     property: [
-        {regex: /\=/,   token: 'def', next: 'value'},
+        {regex: /\s*=\s*/,   token: 'def', next: 'value'},
         {regex: /.*/,   token: null,  next: 'start'}
     ],
     value: [
@@ -779,13 +846,20 @@ CodeMirror.defineSimpleMode('ini', {
         {regex: /[-+]?\d+$/,            token: 'number', next: 'start'},
         {regex: /.*/,                   token: 'string', next: 'start'}
     ]
-});
+})
 
-function updateWordWrapping() {
-    editor.setOption('lineWrapping', QID('use-word-wrap').checked)
+export function toggleFullScreen(elementId) {
+    const element = QID(elementId)
+    if (!document.fullscreenElement) {
+        element.requestFullscreen().catch(err => {
+            report('Error enabling full-screen mode', err)
+        })
+    } else {
+        document.exitFullscreen()
+    }
 }
 
-function applyTranslation() {
+export function applyTranslation() {
     try {
         // sanity check
         if (!i18next.exists('example.hello')) {
@@ -846,16 +920,10 @@ function applyTranslation() {
 }
 
 (async () => {
-    let lang_res
-    try {
-        lang_res = require("translations.json")
-    } catch (err) {
-        lang_res = {}
-    }
-    await i18next.use(i18nextBrowserLanguageDetector).init({
+    await i18next.use(LanguageDetector).init({
         fallbackLng: 'en',
         //debug: true,
-        resources: lang_res,
+        resources: translations,
     })
 
     const currentLang = i18next.resolvedLanguage || "en";
@@ -957,20 +1025,18 @@ print()
         }
     })
 
-    const fitAddon = new FitAddon.FitAddon()
+    const fitAddon = new FitAddon()
     term.loadAddon(fitAddon)
     fitAddon.fit()
 
-    term.loadAddon(new WebLinksAddon.WebLinksAddon())
+    term.loadAddon(new WebLinksAddon())
 
     addEventListener('resize', (event) => {
         fitAddon.fit()
-        if (editor) editor.refresh()
     })
 
     new ResizeObserver(() => {
         fitAddon.fit()
-        if (editor) editor.refresh()
     }).observe(QID('xterm'))
 
     window.addEventListener('keydown', (ev) => {
@@ -1098,7 +1164,7 @@ async function checkForUpdates() {
     QID('viper-ide-build').innerText = "build " + getBuildDate()
 
     const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: "no-store"})
-    manifest = await manifest_rsp.json()
+    const manifest = await manifest_rsp.json()
     if (manifest.version !== VIPER_IDE_VERSION) {
         toastr.info(`New ViperIDE version ${manifest.version} is available`)
         QID('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:updateApp()">update</a>)`
@@ -1115,7 +1181,7 @@ async function checkForUpdates() {
     }
 }
 
-function updateApp() {
+export function updateApp() {
     window.location.reload()
 }
 
@@ -1134,7 +1200,7 @@ checkForUpdates()
 
 let startY, startHeight
 
-function initDrag(e) {
+export function initDrag(e) {
     if (typeof e.clientY !== 'undefined') {
         startY = e.clientY
     } else if (typeof e.touches !== 'undefined') {

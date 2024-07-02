@@ -6,7 +6,7 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-class MpRawMode {
+export class MpRawMode {
     constructor(port) {
         this.port = port
     }
@@ -64,7 +64,7 @@ class MpRawMode {
         }
         this.port.emit = emit
         if (emit) {
-            term.write(this.port.receivedData)
+            this.port.prevRecvCbk(this.port.receivedData)
         }
         const res = (await this.port.readUntil('\x04', timeout)).slice(0, -1)
         const err = (await this.port.readUntil('\x04', timeout)).slice(0, -1)
