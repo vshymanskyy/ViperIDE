@@ -36,9 +36,9 @@ jobs:
           npm install
           npm run build
           # Combine
-          python3 build.py ViperIDE.html   build/index.html
-          python3 build.py bridge.html     build/bridge.html
-          python3 build.py benchmark.html  build/benchmark.html
+          python3 build.py src/ViperIDE.html   build/index.html
+          python3 build.py src/bridge.html     build/bridge.html
+          python3 build.py src/benchmark.html  build/benchmark.html
           cp -r ./assets ./build/
           cp ./src/webrepl_content.js ./build/
           jq -c . < manifest.json > ./build/manifest.json

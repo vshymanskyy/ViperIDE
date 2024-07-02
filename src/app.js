@@ -304,16 +304,6 @@ async function execReplNoFollow(cmd) {
     //await port.write('\x04')            // Ctrl-D: execute
 }
 
-export async function fetchFileList() {
-    if (!port) return;
-    const raw = await MpRawMode.begin(port)
-    try {
-        await _raw_updateFileList(raw)
-    } finally {
-        await raw.end()
-    }
-}
-
 async function _raw_updateFileList(raw) {
     let [fs_used, fs_free, fs_size] = [null, null, null];
     try {
@@ -362,8 +352,9 @@ async function _raw_updateFileList(raw) {
                 } else {
                     icon = '<i class="fa-regular fa-file fa-fw"></i>'
                 }
+                let sel = (n.path === editorFn) ? 'selected' : ''
                 fileTree.insertAdjacentHTML('beforeend', `<div>
-                    <a href="#" class="name" onclick="app.fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
+                    <a href="#" class="name ${sel}" onclick="app.fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
                     <a href="#" class="menu-action" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
                     <span class="menu-action">${sizeFmt(n.size)}</span>
                 </div>`)
@@ -507,6 +498,7 @@ export async function saveCurrentFile() {
     const raw = await MpRawMode.begin(port)
     try {
         await raw.writeFile(editorFn, content)
+        await _raw_updateFileList(raw)
     } finally {
         await raw.end()
     }
