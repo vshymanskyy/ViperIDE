@@ -688,6 +688,7 @@ export async function installPkg(index_url, pkg, version='latest', pkg_info=null
     const raw = await MpRawMode.begin(port)
     try {
         await _raw_installPkg(raw, index_url, pkg, version, pkg_info)
+        await _raw_updateFileList(raw)
     } finally {
         await raw.end()
     }
