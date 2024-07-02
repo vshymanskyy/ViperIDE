@@ -394,7 +394,6 @@ export async function fileClick(fn) {
 
 async function _raw_loadFile(raw, fn) {
     let content
-    let isBinary = false
     if (fn == "~sysinfo.md") {
         content = await raw.readSysInfoMD()
     } else {
@@ -402,7 +401,6 @@ async function _raw_loadFile(raw, fn) {
         try {
             content = (new TextDecoder('utf-8', { fatal: true })).decode(content)
         } catch (err) {
-            isBinary = true
         }
     }
     await _loadContent(fn, content)
