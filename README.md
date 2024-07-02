@@ -47,8 +47,7 @@
 > [!TIP]
 > `mpremote` is still a great tool for automation. Learn to use it!
 
-<details>
-  <summary>**Supported boards**</summary>
+## Supported boards
 
 - Espressif ESP8266, ESP32, ESP32S3, ESP32C3, ESP32C6
 - Raspberry Pi Pico W (RP2040)
@@ -63,8 +62,6 @@
 - Micro:bit v2 (nRF52833) with [`CircuitPython`](https://circuitpython.org/board/microbit_v2)
 - Air602 (WM W600) with [`robert-hh` port](https://github.com/robert-hh/Shared-Stuff/tree/master/w600_firmware)
 - Realtek RTL8721 with [`ambiot` port](https://github.com/ambiot/micropython/releases)
-
-</details>
 
 ## Links
 
