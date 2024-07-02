@@ -131,6 +131,14 @@ body.loaded {
     width: 100%;
 }
 
+.cm-foldGutter {
+    border-right: 1px solid var(--bg-color);
+}
+
+.cm-lineNumbers {
+    font-weight: 300;
+}
+
 #menu-file-title, #menu-pkg-title, #menu-settings-title, #menu-tools-title {
     font-weight: bold;
 }
