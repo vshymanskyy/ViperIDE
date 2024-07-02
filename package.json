@@ -9,6 +9,7 @@
     "@codemirror/lang-markdown": "^6.2.5",
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/legacy-modes": "^6.4.0",
+    "@pybricks/mpy-cross-v6": "github:code4fukui/mpy-cross-v6",
     "@uiw/codemirror-theme-material": "^4.22.2",
     "@uiw/codemirror-theme-monokai": "^4.22.2",
     "@xterm/addon-fit": "^0.10.0",

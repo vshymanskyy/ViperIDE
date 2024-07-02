@@ -31,6 +31,8 @@ import { toml as modeTOML } from '@codemirror/legacy-modes/mode/toml'
 import { monokaiInit } from '@uiw/codemirror-theme-monokai'
 import { tags as cmTags } from '@lezer/highlight'
 
+import { compile as mpyCrossCompileV6 } from '@pybricks/mpy-cross-v6'
+
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
 import { MpRawMode } from './rawmode.js'
@@ -493,6 +495,18 @@ export async function saveCurrentFile() {
         } catch (error) {
             toastr.error('JSON is malformed')
             return
+        }
+    } else if (editorFn.endsWith(".py")) {
+        try {
+            const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
+            const options = undefined
+            const result = await mpyCrossCompileV6("temp.py", content, options, wasmUrlV6)
+            if (result.status !== 0) {
+                toastr.warning(sanitizeHTML(result.err), 'Compilation error')
+            }
+            console.log(result)
+        } catch (err) {
+            //report('Cannot run mpy-cross')
         }
     }
     const raw = await MpRawMode.begin(port)

@@ -40,6 +40,7 @@ jobs:
           python3 build.py src/bridge.html     build/bridge.html
           python3 build.py src/benchmark.html  build/benchmark.html
           cp -r ./assets ./build/
+          cp node_modules/@pybricks/mpy-cross-v6/build/mpy-cross-v6.wasm ./build/assets/
           cp ./src/webrepl_content.js ./build/
           jq -c . < manifest.json > ./build/manifest.json
           # Cleanup
