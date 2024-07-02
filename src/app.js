@@ -31,7 +31,7 @@ import { toml as modeTOML } from '@codemirror/legacy-modes/mode/toml'
 import { monokaiInit } from '@uiw/codemirror-theme-monokai'
 import { tags as cmTags } from '@lezer/highlight'
 
-//import { serial as webSerialPolyfill } from 'web-serial-polyfill'
+import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
 import { MpRawMode } from './rawmode.js'
 import { ConnectionUID } from './connection_uid.js'

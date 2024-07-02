@@ -20,7 +20,8 @@
     "i18next-browser-languagedetector": "^8.0.0",
     "marked": "^13.0.1",
     "peerjs": "^1.5.4",
-    "ua-parser-js": "^1.0.38"
+    "ua-parser-js": "^1.0.38",
+    "web-serial-polyfill": "^1.0.15"
   },
   "devDependencies": {
     "@eslint/js": "^9.6.0",
