@@ -1,4 +1,4 @@
-# <a href="https://viper-ide.org" target="_blank">ViperIDE</a>
+# ViperIDE
 
 <!-- [![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md) -->
 [![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=success)](https://github.com/vshymanskyy/ViperIDE/issues) 
@@ -6,7 +6,9 @@
 
 **An innovative [MicroPython](https://micropython.org) IDE for Web and Mobile**
 
-![image](docs/images/screenshot-desktop-chrome.png)
+👉 <a href="https://viper-ide.org" target="_blank">Open ViperIDE</a>
+
+[![image](docs/images/screenshot-desktop-chrome.png)](docs/images)
 
 ## Features
 
