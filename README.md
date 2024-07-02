@@ -6,7 +6,7 @@
 
 **An innovative [MicroPython](https://micropython.org) IDE for Web and Mobile**
 
-👉 <a href="https://viper-ide.org" target="_blank">Open ViperIDE</a>
+👉 [Open ViperIDE Online](https://viper-ide.org)
 
 [![image](docs/images/screenshot-desktop-chrome.png)](docs/images)
 
@@ -31,11 +31,12 @@
   - Add, remove files and directories
   - Create multiple levels of directories at once (use multiple "/" in the name)
   - Root FS stats display
+  - File upload / download - ***planned***
 - **Package Manager**
   - Official `micropython-lib` index
 - **Terminal / REPL**
   - VT100 (ANSI escape sequences) support
-  - Snippet support - *WIP*
+  - Snippet support - ***planned***
 - Improved UX
   - Progressive Web App
   - Device and system info display
@@ -46,7 +47,8 @@
 > [!TIP]
 > `mpremote` is still a great tool for automation. Learn to use it!
 
-## Tested with
+<details>
+  <summary>**Supported boards**</summary>
 
 - Espressif ESP8266, ESP32, ESP32S3, ESP32C3, ESP32C6
 - Raspberry Pi Pico W (RP2040)
@@ -61,6 +63,8 @@
 - Micro:bit v2 (nRF52833) with [`CircuitPython`](https://circuitpython.org/board/microbit_v2)
 - Air602 (WM W600) with [`robert-hh` port](https://github.com/robert-hh/Shared-Stuff/tree/master/w600_firmware)
 - Realtek RTL8721 with [`ambiot` port](https://github.com/ambiot/micropython/releases)
+
+</details>
 
 ## Links
 
