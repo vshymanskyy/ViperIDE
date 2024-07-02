@@ -31,6 +31,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "eslint": "^9.6.0",
+    "globals": "^15.8.0",
     "postcss": "^8.4.39",
     "rollup": "^4.18.0",
     "rollup-plugin-postcss": "^4.0.2"
