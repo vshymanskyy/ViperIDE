@@ -25,11 +25,10 @@ body.loaded {
 }
 
 #tool-panel {
-    height: 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 10px;
+    padding: 3px 5px;
     user-select: none;
 }
 
@@ -75,9 +74,9 @@ body.loaded {
 }
 
 #terminal-tabs {
-    flex: 0 0 32px;
+    flex: 0 0;
     cursor: row-resize;
-    padding: 0 5px;
+    padding: 3px 5px;
     background: var(--bg-color);
 }
 
