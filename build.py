@@ -5,6 +5,10 @@ import json, glob
 from os import remove as rm, system, path, makedirs
 from shutil import copyfile as cp, copytree, rmtree
 
+def run(cmd):
+    if system(cmd) != 0:
+        raise Exception(f"Command failed: {cmd}")
+
 def readfile(fn):
     with open(fn, 'r', encoding='utf-8') as f:
         return f.read()
@@ -43,8 +47,9 @@ if __name__ == "__main__":
 
     # Build
     if not path.isdir("node_modules"):
-        system("npm install")
-    system("npm run build")
+        run("npm install")
+    run("npx eslint")
+    run("npm run build")
 
     # Combine everything
     combine("src/ViperIDE.html",   "build/index.html")
@@ -52,13 +57,13 @@ if __name__ == "__main__":
     combine("src/benchmark.html",  "build/benchmark.html")
 
     # Cleanup
-    system("rm build/*.css")
-    system("rm build/*.js")
-    system("rm build/*.json")
+    run("rm build/*.css")
+    run("rm build/*.js")
+    run("rm build/*.json")
 
     # Add assets, manifest, etc
     copytree("./assets", "./build/assets")
-    system("jq -c . < manifest.json > ./build/manifest.json")
+    run("jq -c . < manifest.json > ./build/manifest.json")
     cp("node_modules/@pybricks/mpy-cross-v6/build/mpy-cross-v6.wasm", "./build/assets/mpy-cross-v6.wasm")
     cp("./src/webrepl_content.js", "./build/webrepl_content.js")
 

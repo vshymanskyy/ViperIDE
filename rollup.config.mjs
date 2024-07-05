@@ -3,11 +3,29 @@ import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
 import postcss from 'rollup-plugin-postcss'
 import terser from '@rollup/plugin-terser'
-//import { eslint } from 'rollup-plugin-eslint'
 
-const common = (name) => ({
+const debug = (cfg) => Object.assign(cfg, {
+  output: Object.assign(cfg.output, {
+    indent: false,
+  }),
+  treeshake: false,
+})
+
+const release = (cfg) => Object.assign(cfg, {
+  plugins: [
+    ...cfg.plugins,
+    terser()
+  ]
+})
+
+const common = (name) => release({
+  output: {
+    name,
+    dir: 'build',
+    format: 'iife',
+  },
   context: 'window',
-  onwarn: (warning, warn) => {
+  onwarn: (warning, _warn) => {
     throw new Error(warning.message)
   },
   plugins: [
@@ -20,24 +38,13 @@ const common = (name) => ({
     json({
       compact: true
     }),
-    terser(),
   ]
 })
 
 export default [{
   input: './src/app.js',
-  output: {
-    name: 'app',
-    dir: 'build',
-    format: 'iife',
-  },
   ...common('app')
 },{
   input: './src/viper_lib.js',
-  output: {
-    name: 'viper',
-    dir: 'build',
-    format: 'iife',
-  },
   ...common('viper_lib')
 }]

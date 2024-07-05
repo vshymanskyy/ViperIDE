@@ -1,13 +1,13 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
+import globals from "globals"
+import pluginJs from "@eslint/js"
 
 export default [
-  { ignores: ["build/"] },
+  { ignores: ["build/", "src/websocket_relay.js"] },
   { languageOptions: { globals: globals.browser }},
   pluginJs.configs.recommended,
   {
     rules: {
-      "no-unused-vars": [ "error",
+      "no-unused-vars": [ "warn",
           { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       "no-undef": "error",

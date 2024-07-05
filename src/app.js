@@ -108,7 +108,7 @@ async function prepareNewPort(type) {
 
     if (type === 'ws') {
         let url
-        if (typeof webrepl_url === 'undefined' || webrepl_url == '') {
+        if (typeof window.webrepl_url === 'undefined' || window.webrepl_url == '') {
             url = prompt('Enter WebREPL device address.\nSupported protocols: ws wss rtc', defaultWsURL)
             if (!url) { return }
             defaultWsURL = url
@@ -123,9 +123,9 @@ async function prepareNewPort(type) {
                 return
             }
         } else {
-            url = webrepl_url
-            defaultWsURL = webrepl_url
-            webrepl_url = ''
+            url = window.webrepl_url
+            defaultWsURL = url
+            window.webrepl_url = ''
         }
 
         if (url.startsWith('ws://') || url.startsWith('wss://')) {
@@ -577,9 +577,7 @@ export async function runCurrentFile() {
     const timeout = -1
     const raw = await MpRawMode.begin(port, soft_reboot)
     try {
-        const btnRun = QID("btn-run-icon")
-        btnRun.classList.remove('fa-circle-play')
-        btnRun.classList.add('fa-circle-stop')
+        QID("btn-run-icon").classList.replace('fa-circle-play', 'fa-circle-stop')
         isInRunMode = true
         const emit = true
         await raw.exec(editor.state.doc.toString(), timeout, emit)
@@ -593,9 +591,7 @@ export async function runCurrentFile() {
     } finally {
         port.emit = false
         await raw.end()
-        const btnRun = QID("btn-run-icon")
-        btnRun.classList.remove('fa-circle-stop')
-        btnRun.classList.add('fa-circle-play')
+        QID("btn-run-icon").classList.replace('fa-circle-stop', 'fa-circle-play')
         isInRunMode = false
         term.write('\r\n>>> ')
     }
@@ -751,11 +747,15 @@ export function toggleSideMenu() {
     if (window.innerWidth <= 768) {
         fileTree.classList.remove('hidden')
         fileTree.classList.toggle('show')
-        overlay.classList.toggle('show')
     } else {
-        overlay.classList.toggle('show')
         fileTree.classList.remove('show')
         fileTree.classList.toggle('hidden')
+    }
+
+    if (fileTree.classList.contains('show') && !fileTree.classList.contains('hidden')) {
+        overlay.classList.add('show')
+    } else {
+        overlay.classList.remove('show')
     }
 }
 
