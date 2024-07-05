@@ -7,10 +7,11 @@
  */
 
 import '@xterm/xterm/css/xterm.css'
-import 'github-fork-ribbon-css/gh-fork-ribbon.css'
+import 'toastr/build/toastr.css'
 import './app_common.css'
 import './app.css'
 
+import toastr from 'toastr'
 import i18next from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 
@@ -45,6 +46,23 @@ import { UAParser } from 'ua-parser-js'
 import { splitPath, sleep, getUserUID, getScreenInfo, IdleMonitor,
          getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, isRunningStandalone,
          sizeFmt, indicateActivity, setupTabs, report } from './utils.js'
+
+import { library, dom } from '@fortawesome/fontawesome-svg-core'
+import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
+import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faCubes,
+         faCube, faTools, faGear, faCircleInfo, faStar, faExpand,
+         faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
+         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark
+       } from '@fortawesome/free-solid-svg-icons'
+import { faFile, faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
+
+library.add(faUsb, faBluetoothB)
+library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faCubes,
+         faCube, faTools, faGear, faCircleInfo, faStar, faExpand,
+         faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
+         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
+library.add(faFile, faMessage, faCircleDown)
+dom.watch()
 
 const VIPER_IDE_VERSION = version
 
@@ -555,14 +573,13 @@ export async function runCurrentFile() {
 
     term.write('\r\n')
 
-    const btnRunIconClass = QID("btn-run-icon").classList
-
     const soft_reboot = false
     const timeout = -1
     const raw = await MpRawMode.begin(port, soft_reboot)
     try {
-        btnRunIconClass.remove('fa-circle-play')
-        btnRunIconClass.add('fa-circle-stop')
+        const btnRun = QID("btn-run-icon")
+        btnRun.classList.remove('fa-circle-play')
+        btnRun.classList.add('fa-circle-stop')
         isInRunMode = true
         const emit = true
         await raw.exec(editor.state.doc.toString(), timeout, emit)
@@ -576,8 +593,9 @@ export async function runCurrentFile() {
     } finally {
         port.emit = false
         await raw.end()
-        btnRunIconClass.remove('fa-circle-stop')
-        btnRunIconClass.add('fa-circle-play')
+        const btnRun = QID("btn-run-icon")
+        btnRun.classList.remove('fa-circle-stop')
+        btnRun.classList.add('fa-circle-play')
         isInRunMode = false
         term.write('\r\n>>> ')
     }

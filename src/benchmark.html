@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ViperIDE Benchmark</title>
-
     <link rel="icon" type="image/png" href="assets/favicon.png"/>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
-
-    <link rel="stylesheet" href="./common.css">
+    <link rel="stylesheet" href="./viper_lib.css">
     <style>
     body {
         padding: 20px;
@@ -19,24 +16,17 @@
 </head>
 <body>
     <h2>ViperIDE Benchmark</h2>
-
     <div>
         <span>Connect your device:</span>
         <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
         <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
         <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
     </div>
-
     <pre class="monospace" id="log"></pre>
 
-    <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
 
     <script src="./viper_lib.js"></script>
     <script>
-
     Object.assign(window, viper)
 
 let port = null;

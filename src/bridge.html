@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ViperIDE P2P Bridge</title>
-
     <link rel="icon" type="image/png" href="assets/favicon.png"/>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
-
-    <link rel="stylesheet" href="./common.css">
+    <link rel="stylesheet" href="./viper_lib.css">
     <style>
     body {
         padding: 20px;
@@ -46,14 +43,9 @@
         </li>
     </ol>
 
-    <script src="https://kit.fontawesome.com/7e93d1a6ca.js" crossorigin="anonymous"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/toastr.min.js"></script>
 
     <script src="./viper_lib.js"></script>
     <script>
-
     Object.assign(window, viper)
 
 const my_p2p_id = ConnectionUID.random().value();

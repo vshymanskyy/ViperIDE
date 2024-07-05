@@ -5,16 +5,14 @@ import postcss from 'rollup-plugin-postcss'
 import terser from '@rollup/plugin-terser'
 //import { eslint } from 'rollup-plugin-eslint'
 
-export default [{
-  input: './src/app.js',
-  output: {
-    name: 'app',
-    dir: 'build',
-    format: 'iife',
+const common = (name) => ({
+  context: 'window',
+  onwarn: (warning, warn) => {
+    throw new Error(warning.message)
   },
   plugins: [
     postcss({
-      extract: 'app.css',
+      extract: `${name}.css`,
       minimize: true,
     }),
     nodeResolve(),
@@ -24,6 +22,16 @@ export default [{
     }),
     terser(),
   ]
+})
+
+export default [{
+  input: './src/app.js',
+  output: {
+    name: 'app',
+    dir: 'build',
+    format: 'iife',
+  },
+  ...common('app')
 },{
   input: './src/viper_lib.js',
   output: {
@@ -31,10 +39,5 @@ export default [{
     dir: 'build',
     format: 'iife',
   },
-  plugins: [
-    nodeResolve(),
-    commonjs(),
-    json(),
-    terser(),
-  ]
+  ...common('viper_lib')
 }]
