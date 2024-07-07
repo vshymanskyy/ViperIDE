@@ -70,7 +70,7 @@ function getBuildDate() {
     if (window.VIPER_IDE_BUILD) {
         return (new Date(window.VIPER_IDE_BUILD)).toISOString().substr(0, 19).replace('T',' ')
     } else {
-        return "unknown"
+        return 'unknown'
     }
 }
 
@@ -81,7 +81,7 @@ const T = i18next.t.bind(i18next)
  */
 
 let editor, term, port
-let editorFn = ""
+let editorFn = ''
 let isInRunMode = false
 
 async function disconnectDevice() {
@@ -94,7 +94,7 @@ async function disconnectDevice() {
         port = null
     }
 
-    for (const t of ["ws", "ble", "usb"]) {
+    for (const t of ['ws', 'ble', 'usb']) {
         QID(`btn-conn-${t}`).classList.remove('connected')
     }
 }
@@ -113,13 +113,13 @@ async function prepareNewPort(type) {
             if (!url) { return }
             defaultWsURL = url
 
-            if (url.startsWith("http://")) { url = url.slice(7) }
-            if (url.startsWith("https://")) { url = url.slice(8) }
-            if (!url.includes("://")) { url = "ws://" + url }
+            if (url.startsWith('http://')) { url = url.slice(7) }
+            if (url.startsWith('https://')) { url = url.slice(8) }
+            if (!url.includes('://')) { url = 'ws://' + url }
 
-            if (window.location.protocol === "https:" && url.startsWith("ws://")) {
+            if (window.location.protocol === 'https:' && url.startsWith('ws://')) {
                 /* Navigate to device, which should automatically reload and ask for WebREPL password */
-                window.location.assign(url.replace("ws://", "http://"))
+                window.location.assign(url.replace('ws://', 'http://'))
                 return
             }
         } else {
@@ -151,7 +151,7 @@ async function prepareNewPort(type) {
             toastr.error('WebBluetooth is not available on iOS')
             return
         }
-        if (window.location.protocol === "http:") {
+        if (window.location.protocol === 'http:') {
             toastr.error('WebBluetooth cannot be accessed with unsecure connection')
             return
         }
@@ -165,7 +165,7 @@ async function prepareNewPort(type) {
             toastr.error('WebSerial is not available on iOS')
             return
         }
-        if (window.location.protocol === "http:") {
+        if (window.location.protocol === 'http:') {
             toastr.error('WebSerial cannot be accessed with unsecure connection')
             return
         }
@@ -270,10 +270,10 @@ export async function connectDevice(type) {
 export async function createNewFile(path) {
     if (!port) return;
     const fn = prompt(`Creating new file inside ${path}\nPlease enter the name:`)
-    if (fn == null || fn == "") return
+    if (fn == null || fn == '') return
     const raw = await MpRawMode.begin(port)
     try {
-        if (fn.endsWith("/")) {
+        if (fn.endsWith('/')) {
             const full = path + fn.slice(0, -1)
             await raw.makePath(full)
         } else {
@@ -342,7 +342,7 @@ async function _raw_updateFileList(raw) {
         }
 
         // Stable-sort folders first
-        content.sort((a,b) => (("content" in a)?0:1) - (("content" in b)?0:1))
+        content.sort((a,b) => (('content' in a)?0:1) - (('content' in b)?0:1))
 
         return content
     }
@@ -355,9 +355,9 @@ async function _raw_updateFileList(raw) {
         <span class="menu-action">${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
     </div>`
     function traverse(node, depth) {
-        const offset = "&emsp;".repeat(depth)
+        const offset = '&emsp;'.repeat(depth)
         for (const n of sorted(node)) {
-            if ("content" in n) {
+            if ('content' in n) {
                 fileTree.insertAdjacentHTML('beforeend', `<div>
                     <span class="folder name">${offset}<i class="fa-solid fa-folder fa-fw"></i> ${n.name}</span>
                     <a href="#" class="menu-action" onclick="app.removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
@@ -396,7 +396,7 @@ export async function fileClick(fn) {
 
     const e = window.event.target || window.event.srcElement;
 
-    for (const el of document.getElementsByClassName("name")){
+    for (const el of document.getElementsByClassName('name')){
         el.classList.remove('selected')
     }
 
@@ -412,7 +412,7 @@ export async function fileClick(fn) {
 
 async function _raw_loadFile(raw, fn) {
     let content
-    if (fn == "~sysinfo.md") {
+    if (fn == '~sysinfo.md') {
         content = await raw.readSysInfoMD()
     } else {
         content = await raw.readFile(fn)
@@ -436,7 +436,7 @@ async function _loadContent(fn, content) {
     } else {
         let mode = []
         if (fn.endsWith('.py')) {
-            mode = [ indentUnit.of("    "), python({ version: 3 }) ]
+            mode = [ indentUnit.of('    '), python({ version: 3 }) ]
         } else if (fn.endsWith('.json')) {
             mode = [ modeJSON() ]
 
@@ -482,8 +482,8 @@ async function _loadContent(fn, content) {
                             }, {
                                 tag: [cmTags.meta, cmTags.comment],
                                 color: '#afac99',
-                                fontStyle: "italic",
-                                //fontWeight: "300",
+                                fontStyle: 'italic',
+                                //fontWeight: '300',
                             }
                         ]
                     }),
@@ -504,7 +504,7 @@ export async function saveCurrentFile() {
     if (!port) return;
 
     let content = editor.state.doc.toString()
-    if (editorFn.endsWith(".json") && QID('expand-minify-json').checked) {
+    if (editorFn.endsWith('.json') && QID('expand-minify-json').checked) {
         try {
             // Minify JSON
             content = JSON.stringify(JSON.parse(content))
@@ -512,11 +512,11 @@ export async function saveCurrentFile() {
             toastr.error('JSON is malformed')
             return
         }
-    } else if (editorFn.endsWith(".py")) {
+    } else if (editorFn.endsWith('.py')) {
         try {
             const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
             const options = undefined
-            const result = await mpyCrossCompileV6("temp.py", content, options, wasmUrlV6)
+            const result = await mpyCrossCompileV6('temp.py', content, options, wasmUrlV6)
             if (result.status !== 0) {
                 toastr.warning(sanitizeHTML(result.err), 'Compilation error')
             }
@@ -541,17 +541,17 @@ export function clearTerminal() {
     term.clear()
 }
 
-export async function reboot(mode = "hard") {
+export async function reboot(mode = 'hard') {
     if (!port) return;
 
     const release = await port.startTransaction()
     try {
-        if (mode === "soft") {
+        if (mode === 'soft') {
             await port.write('\r\x03\x03\x04')
-        } else if (mode === "hard") {
-            await execReplNoFollow("import machine; machine.reset()")
-        } else if (mode === "bootloader") {
-            await execReplNoFollow("import machine; machine.bootloader()")
+        } else if (mode === 'hard') {
+            await execReplNoFollow('import machine; machine.reset()')
+        } else if (mode === 'bootloader') {
+            await execReplNoFollow('import machine; machine.bootloader()')
         }
     } finally {
         release()
@@ -566,7 +566,7 @@ export async function runCurrentFile() {
         return
     }
 
-    if (!editorFn.endsWith(".py")) {
+    if (!editorFn.endsWith('.py')) {
         toastr.error(`${editorFn} file is not executable`)
         return
     }
@@ -577,21 +577,21 @@ export async function runCurrentFile() {
     const timeout = -1
     const raw = await MpRawMode.begin(port, soft_reboot)
     try {
-        QID("btn-run-icon").classList.replace('fa-circle-play', 'fa-circle-stop')
+        QID('btn-run-icon').classList.replace('fa-circle-play', 'fa-circle-stop')
         isInRunMode = true
         const emit = true
         await raw.exec(editor.state.doc.toString(), timeout, emit)
     } catch (err) {
-        if (err.message.includes("KeyboardInterrupt")) {
+        if (err.message.includes('KeyboardInterrupt')) {
             // Interrupted manually
         } else {
-            toastr.error(sanitizeHTML(err.message), "Script Failed")
+            toastr.error(sanitizeHTML(err.message), 'Script Failed')
             return
         }
     } finally {
         port.emit = false
         await raw.end()
-        QID("btn-run-icon").classList.replace('fa-circle-stop', 'fa-circle-play')
+        QID('btn-run-icon').classList.replace('fa-circle-stop', 'fa-circle-play')
         isInRunMode = false
         term.write('\r\n>>> ')
     }
@@ -621,12 +621,12 @@ export async function loadAllPkgIndexes() {
 }
 
 function rewriteUrl(url, branch='HEAD') {
-    if (url.startsWith("github:")) {
-        url = url.slice(7).split("/")
-        url = "https://raw.githubusercontent.com/" + url[0] + "/" + url[1] + "/" + branch + "/" + url.slice(2).join("/")
-    } else if (url.startsWith("gitlab:")) {
-        url = url.slice(7).split("/")
-        url = "https://gitlab.com/" + url[0] + "/" + url[1] + "/-/raw/" + branch + "/" + url.slice(2).join("/")
+    if (url.startsWith('github:')) {
+        url = url.slice(7).split('/')
+        url = 'https://raw.githubusercontent.com/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
+    } else if (url.startsWith('gitlab:')) {
+        url = url.slice(7).split('/')
+        url = 'https://gitlab.com/' + url[0] + '/' + url[1] + '/-/raw/' + branch + '/' + url.slice(2).join('/')
     }
     return url
 }
@@ -636,7 +636,7 @@ async function fetchPkgList(index_url) {
     const mipindex = await index_rsp.json()
 
     const pkgList = QID('menu-pkg-list')
-    pkgList.innerHTML = ""
+    pkgList.innerHTML = ''
 
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div>
@@ -670,7 +670,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
             pkg_info = await pkg_info_rsp.json()
         }
 
-        if ("hashes" in pkg_info) {
+        if ('hashes' in pkg_info) {
             for (const [fn, hash, ..._] of pkg_info.hashes) {
                 const file_rsp = await fetch(rewriteUrl(`${index_url}/file/${hash.slice(0,2)}/${hash}`))
                 const content = await file_rsp.arrayBuffer()
@@ -684,7 +684,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
             }
         }
 
-        if ("urls" in pkg_info) {
+        if ('urls' in pkg_info) {
             for (const [fn, url, ..._] of pkg_info.urls) {
                 const file_rsp = await fetch(rewriteUrl(url))
                 const content = await file_rsp.arrayBuffer()
@@ -698,7 +698,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
             }
         }
 
-        if ("deps" in pkg_info) {
+        if ('deps' in pkg_info) {
             for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
                 await _raw_installPkg(raw, index_url, dep_pkg, dep_ver)
             }
@@ -722,18 +722,18 @@ export async function installPkg(index_url, pkg, version='latest', pkg_info=null
 
 const viper_tools_pkg = {
     v: 1,
-    version: "0.1.1",
+    version: '0.1.1',
     urls: [
-        ["web_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py"],
-        ["ble_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py"],
-        ["ble_nus.py",    "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py"],
-        ["ws_client.py",  "github:vshymanskyy/ViperIDE/packages/viper-tools/ws_client.py"],
-        ["wss_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/wss_repl.py"],
+        ['web_repl.py',   'github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py'],
+        ['ble_repl.py',   'github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py'],
+        ['ble_nus.py',    'github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py'],
+        ['ws_client.py',  'github:vshymanskyy/ViperIDE/packages/viper-tools/ws_client.py'],
+        ['wss_repl.py',   'github:vshymanskyy/ViperIDE/packages/viper-tools/wss_repl.py'],
     ]
 }
 
 export async function installReplTools() {
-    await installPkg(null, "viper-tools", "latest", viper_tools_pkg)
+    await installPkg(null, 'viper-tools', 'latest', viper_tools_pkg)
 }
 
 /*
@@ -891,8 +891,8 @@ export function applyTranslation() {
 
         document.body.dir = i18next.dir()
 
-        QID('btn-save').setAttribute('title',     T('tool.save') + " [Ctrl+S]")
-        QID('btn-run').setAttribute('title',      T('tool.run') + " [F5]")
+        QID('btn-save').setAttribute('title',     T('tool.save') + ' [Ctrl+S]')
+        QID('btn-run').setAttribute('title',      T('tool.run') + ' [F5]')
         QID('btn-conn-ws').setAttribute('title',  T('tool.conn.ws'))
         QID('btn-conn-ble').setAttribute('title', T('tool.conn.ble'))
         QID('btn-conn-usb').setAttribute('title', T('tool.conn.usb'))
@@ -929,27 +929,100 @@ export function applyTranslation() {
         QS('#report-bug').innerHTML = T('about.report-bug')
     } catch (err) {}
 
-    QSA("a[id=gh-star]").forEach(el => {
-        el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE")
-        el.setAttribute("target", "_blank")
-        el.classList.add("link")
+    QSA('a[id=gh-star]').forEach(el => {
+        el.setAttribute('href', 'https://github.com/vshymanskyy/ViperIDE')
+        el.setAttribute('target', '_blank')
+        el.classList.add('link')
     })
 
-    QSA("a[id=gh-issues]").forEach(el => {
-        el.setAttribute("href", "https://github.com/vshymanskyy/ViperIDE/issues")
-        el.setAttribute("target", "_blank")
-        el.classList.add("link")
+    QSA('a[id=gh-issues]').forEach(el => {
+        el.setAttribute('href', 'https://github.com/vshymanskyy/ViperIDE/issues')
+        el.setAttribute('target', '_blank')
+        el.classList.add('link')
     })
 }
 
 (async () => {
+
+    try {
+        if (typeof window.analytics.track === 'undefined') {
+            throw new Error()
+        }
+
+        const ua = new UAParser()
+        const geo = await (await fetch('https://freeipapi.com/api/json', {cache: 'no-store'})).json()
+        const scr = getScreenInfo()
+
+        let tz
+        try {
+            tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        } catch (e) {
+            tz = (new Date()).getTimezoneOffset()
+        }
+
+        //console.log(geo)
+        //console.log(ua.getResult())
+        //console.log(scr)
+
+        const userUID = getUserUID()
+
+        analytics.identify(userUID, {
+            email: userUID.split('-').pop() + '@vip.er',
+            version: VIPER_IDE_VERSION,
+            build: getBuildDate(),
+            browser: ua.getBrowser().name,
+            browser_version: ua.getBrowser().version,
+            os: ua.getOS().name,
+            os_version: ua.getOS().version,
+            cpu: ua.getCPU().architecture,
+            pwa: isRunningStandalone(),
+            screen: scr.width + 'x' + scr.height,
+            orientation: scr.orientation,
+            dpr: scr.dpr,
+            dpi: QID('dpi-ruler').offsetHeight,
+            lang: currentLang,
+            location: geo.latitude + ',' + geo.longitude,
+            continent: geo.continent,
+            country: geo.countryName,
+            region: geo.regionName,
+            city: geo.cityName,
+            tz: tz,
+        })
+
+        analytics.track('Visit', {
+            url: window.location.href,
+            referrer: document.referrer,
+        })
+
+        const idleMonitor = new IdleMonitor(3*60*1000);
+
+        idleMonitor.setIdleCallback(() => {
+            analytics.track('User Idle')
+        })
+
+        idleMonitor.setActiveCallback(() => {
+            analytics.track('User Active')
+        })
+
+    } catch (err) {
+        window.analytics = {
+            track: function() {}
+        }
+    }
+
+    if ('serviceWorker' in navigator) {
+        try {
+            await navigator.serviceWorker.register('./app_worker.js');
+        } catch {}
+    }
+
     await i18next.use(LanguageDetector).init({
         fallbackLng: 'en',
         //debug: true,
         resources: translations,
     })
 
-    const currentLang = i18next.resolvedLanguage || "en";
+    const currentLang = i18next.resolvedLanguage || 'en';
 
     const lang_sel = QID('lang')
     lang_sel.value = currentLang
@@ -959,7 +1032,7 @@ export function applyTranslation() {
     })
 
     const zoom_sel = QID('zoom')
-    zoom_sel.value = "1.00"
+    zoom_sel.value = '1.00'
     zoom_sel.addEventListener('change', async function() {
         const size = (14 * parseFloat(this.value)).toFixed(1)
         document.documentElement.style.setProperty('--font-size', size + 'px')
@@ -974,7 +1047,7 @@ export function applyTranslation() {
 
     toastr.options.preventDuplicates = true;
 
-    await _loadContent("test.py", `
+    await _loadContent('test.py', `
 # ViperIDE - MicroPython Web IDE
 
 import time
@@ -1063,81 +1136,15 @@ print()
     }).observe(QID('xterm'))
 
     window.addEventListener('keydown', (ev) => {
-        if (ev.code == "F5" && !ev.ctrlKey) {
+        if (ev.code == 'F5' && !ev.ctrlKey) {
             runCurrentFile()
-        } else if (ev.code == "KeyS" && ev.ctrlKey) {
+        } else if (ev.code == 'KeyS' && ev.ctrlKey) {
             saveCurrentFile()
         } else {
             return
         }
         ev.preventDefault()
     })
-
-    try {
-        if (typeof window.analytics.track === 'undefined') {
-            throw new Error()
-        }
-
-        const ua = new UAParser()
-        const geo = await (await fetch('https://freeipapi.com/api/json', {cache: "no-store"})).json()
-        const scr = getScreenInfo()
-
-        let tz
-        try {
-            tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-        } catch (e) {
-            tz = (new Date()).getTimezoneOffset()
-        }
-
-        //console.log(geo)
-        //console.log(ua.getResult())
-        //console.log(scr)
-
-        const userUID = getUserUID()
-
-        analytics.identify(userUID, {
-            email: userUID.split('-').pop() + '@vip.er',
-            version: VIPER_IDE_VERSION,
-            build: getBuildDate(),
-            browser: ua.getBrowser().name,
-            browser_version: ua.getBrowser().version,
-            os: ua.getOS().name,
-            os_version: ua.getOS().version,
-            cpu: ua.getCPU().architecture,
-            pwa: isRunningStandalone(),
-            screen: scr.width + 'x' + scr.height,
-            orientation: scr.orientation,
-            dpr: scr.dpr,
-            dpi: QID('dpi-ruler').offsetHeight,
-            lang: currentLang,
-            location: geo.latitude + ',' + geo.longitude,
-            continent: geo.continent,
-            country: geo.countryName,
-            region: geo.regionName,
-            city: geo.cityName,
-            tz: tz,
-        })
-
-        analytics.track('Visit', {
-            url: window.location.href,
-            referrer: document.referrer,
-        })
-
-        const idleMonitor = new IdleMonitor(3*60*1000);
-
-        idleMonitor.setIdleCallback(() => {
-            analytics.track('User Idle')
-        })
-
-        idleMonitor.setActiveCallback(() => {
-            analytics.track('User Active')
-        })
-
-    } catch (err) {
-        window.analytics = {
-            track: function() {}
-        }
-    }
 
     setTimeout(() => {
         document.body.classList.add('loaded')
@@ -1184,9 +1191,9 @@ async function checkForUpdates() {
     lastUpdateCheck = now
 
     QID('viper-ide-version').innerHTML = VIPER_IDE_VERSION
-    QID('viper-ide-build').innerText = "build " + getBuildDate()
+    QID('viper-ide-build').innerText = 'build ' + getBuildDate()
 
-    const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: "no-store"})
+    const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: 'no-store'})
     const manifest = await manifest_rsp.json()
     if (manifest.version !== VIPER_IDE_VERSION) {
         toastr.info(`New ViperIDE version ${manifest.version} is available`)
@@ -1208,9 +1215,9 @@ export function updateApp() {
     window.location.reload()
 }
 
-window.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") {
-        console.log("APP resumed")
+window.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+        console.log('APP resumed')
         checkForUpdates()
     }
 })

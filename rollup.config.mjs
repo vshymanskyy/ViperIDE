@@ -47,4 +47,7 @@ export default [{
 },{
   input: './src/viper_lib.js',
   ...common('viper_lib')
+},{
+  input: './src/app_worker.js',
+  ...common('app_worker')
 }]

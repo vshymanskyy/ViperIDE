@@ -57,9 +57,8 @@ if __name__ == "__main__":
     combine("src/benchmark.html",  "build/benchmark.html")
 
     # Cleanup
-    run("rm build/*.css")
-    run("rm build/*.js")
-    run("rm build/*.json")
+    run("rm build/app.css   build/viper_lib.css")
+    run("rm build/app.js    build/viper_lib.js")
 
     # Add assets, manifest, etc
     copytree("./assets", "./build/assets")
