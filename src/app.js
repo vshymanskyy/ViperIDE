@@ -471,7 +471,7 @@ async function _loadContent(fn, content) {
                     basicSetup,
                     monokaiInit({
                         settings: {
-                            fontFamily: '"Droid Sans Mono", "monospace", monospace',
+                            fontFamily: '"Hack", "Droid Sans Mono", "monospace", monospace',
                             background: 'var(--bg-color-edit)',
                             gutterBackground: 'var(--bg-color-edit)',
                         },
@@ -1036,7 +1036,7 @@ export function applyTranslation() {
     zoom_sel.addEventListener('change', async function() {
         const size = 14 * parseFloat(this.value)
         document.documentElement.style.setProperty('--font-size', (size).toFixed(1) + 'px')
-        term.options.fontSize = (size * 0.93).toFixed(1)
+        term.options.fontSize = (size * 0.9).toFixed(1)
     })
 
     applyTranslation()
@@ -1098,8 +1098,8 @@ print()
     }
 
     term = new Terminal({
-        fontFamily: '"Droid Sans Mono", "monospace", monospace',
-        fontSize: (14 * 0.93).toFixed(1),
+        fontFamily: '"Hack", "Droid Sans Mono", "monospace", monospace',
+        fontSize: (14 * 0.9).toFixed(1),
         theme: xtermTheme,
         cursorBlink: true,
         //convertEol: true,
