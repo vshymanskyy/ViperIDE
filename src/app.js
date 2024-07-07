@@ -1034,9 +1034,9 @@ export function applyTranslation() {
     const zoom_sel = QID('zoom')
     zoom_sel.value = '1.00'
     zoom_sel.addEventListener('change', async function() {
-        const size = (14 * parseFloat(this.value)).toFixed(1)
-        document.documentElement.style.setProperty('--font-size', size + 'px')
-        term.options.fontSize = size
+        const size = 14 * parseFloat(this.value)
+        document.documentElement.style.setProperty('--font-size', (size).toFixed(1) + 'px')
+        term.options.fontSize = (size * 0.93).toFixed(1)
     })
 
     applyTranslation()
@@ -1099,7 +1099,7 @@ print()
 
     term = new Terminal({
         fontFamily: '"Droid Sans Mono", "monospace", monospace',
-        fontSize: 14,
+        fontSize: (14 * 0.93).toFixed(1),
         theme: xtermTheme,
         cursorBlink: true,
         //convertEol: true,
