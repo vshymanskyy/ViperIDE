@@ -3,6 +3,11 @@ import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
 import postcss from 'rollup-plugin-postcss'
 import terser from '@rollup/plugin-terser'
+import fs from 'fs'
+
+fs.copyFileSync('src/ViperIDE.html',  'build/index.html')
+fs.copyFileSync('src/benchmark.html', 'build/benchmark.html')
+fs.copyFileSync('src/bridge.html',    'build/bridge.html')
 
 const common = (args, name) => ({
   output: {

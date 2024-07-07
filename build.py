@@ -21,9 +21,9 @@ def gen_translations(src, dst):
     with open(dst, 'w', encoding='utf-8') as f:
         json.dump(result, f, separators=(',',':'), ensure_ascii=False, sort_keys=True)
 
-def combine(src, dst):
+def combine(dst):
     # Insert CSS and JS into HTML
-    combined = readfile(src).replace(
+    combined = readfile(dst).replace(
         '<link rel="stylesheet" href="./app.css">', '<style>\n' + readfile('build/app.css') + '\n</style>'
     ).replace(
         '<link rel="stylesheet" href="./viper_lib.css">', '<style>\n' + readfile('build/viper_lib.css') + '\n</style>'
@@ -52,9 +52,9 @@ if __name__ == "__main__":
     run("npm run build")
 
     # Combine everything
-    combine("src/ViperIDE.html",   "build/index.html")
-    combine("src/bridge.html",     "build/bridge.html")
-    combine("src/benchmark.html",  "build/benchmark.html")
+    combine("build/index.html")
+    combine("build/bridge.html")
+    combine("build/benchmark.html")
 
     # Cleanup
     run("rm build/app.css   build/viper_lib.css")
