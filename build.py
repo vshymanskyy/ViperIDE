@@ -21,6 +21,13 @@ def gen_translations(src, dst):
     with open(dst, 'w', encoding='utf-8') as f:
         json.dump(result, f, separators=(',',':'), ensure_ascii=False, sort_keys=True)
 
+def gen_manifest(src, dst):
+    pkg = json.loads(readfile('package.json'))
+    result = json.loads(readfile(src))
+    result['version'] = pkg['version']
+    with open(dst, 'w', encoding='utf-8') as f:
+        json.dump(result, f, separators=(',',':'), ensure_ascii=False)
+
 def combine(dst):
     # Insert CSS and JS into HTML
     combined = readfile(dst).replace(
@@ -44,6 +51,7 @@ if __name__ == "__main__":
     rmtree("build", ignore_errors=True)
     makedirs("build")
     gen_translations("./lang/", "build/translations.json")
+    gen_manifest("./src/manifest.json", "build/manifest.json")
 
     # Build
     if not path.isdir("node_modules"):
@@ -62,7 +70,6 @@ if __name__ == "__main__":
 
     # Add assets, manifest, etc
     copytree("./assets", "./build/assets")
-    run("jq -c . < manifest.json > ./build/manifest.json")
     cp("node_modules/@pybricks/mpy-cross-v6/build/mpy-cross-v6.wasm", "./build/assets/mpy-cross-v6.wasm")
     cp("./src/webrepl_content.js", "./build/webrepl_content.js")
 
