@@ -515,7 +515,7 @@ export async function saveCurrentFile() {
         const backtrace = await validatePython(fname, content)
         if (backtrace) {
             console.log(backtrace)
-            toastr.warning(sanitizeHTML(backtrace.summary))
+            toastr.warning(sanitizeHTML(backtrace.summary), backtrace.type)
         }
     }
     const raw = await MpRawMode.begin(port)
@@ -582,7 +582,7 @@ export async function runCurrentFile() {
             if (backtrace) {
                 console.log(backtrace)
             }
-            toastr.error(sanitizeHTML(backtrace.summary))
+            toastr.error(sanitizeHTML(backtrace.summary), backtrace.type)
             return
         }
     } finally {
@@ -1216,7 +1216,7 @@ export function updateApp() {
 
 window.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') {
-        console.log('APP resumed')
+        //console.log('APP resumed')
         checkForUpdates()
     }
 })
