@@ -38,8 +38,6 @@ def combine(dst):
         '<script src="./app.js"></script>', '<script>\n' + readfile('build/app.js') + '\n</script>'
     ).replace(
         '<script src="./viper_lib.js"></script>', '<script>\n' + readfile('build/viper_lib.js') + '\n</script>'
-    ).replace(
-        'window.VIPER_IDE_BUILD', str(int(time.time() * 1000))
     )
 
     # Write the combined content
@@ -65,6 +63,7 @@ if __name__ == "__main__":
     combine("build/benchmark.html")
 
     # Cleanup
+    #run("rm build/translations.json")
     run("rm build/app.css   build/viper_lib.css")
     run("rm build/app.js    build/viper_lib.js")
 

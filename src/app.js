@@ -39,7 +39,6 @@ import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './trans
 import { MpRawMode } from './rawmode.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
-import { version } from '../package.json'
 import { marked } from 'marked'
 import { UAParser } from 'ua-parser-js'
 
@@ -64,14 +63,12 @@ library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, fa
 library.add(faFile, faMessage, faCircleDown)
 dom.watch()
 
-const VIPER_IDE_VERSION = version
-
 function getBuildDate() {
-    if (window.VIPER_IDE_BUILD) {
-        return (new Date(window.VIPER_IDE_BUILD)).toISOString().substr(0, 19).replace('T',' ')
-    } else {
-        return 'unknown'
-    }
+    return (new Date(VIPER_IDE_BUILD)).toISOString().substr(0, 19).replace('T',' ')
+}
+
+async function fetchJSON(url) {
+    return await (await fetch(url, {cache: 'no-store'})).json()
 }
 
 const T = i18next.t.bind(i18next)
@@ -632,8 +629,7 @@ function rewriteUrl(url, branch='HEAD') {
 }
 
 async function fetchPkgList(index_url) {
-    const index_rsp = await fetch(rewriteUrl(`${index_url}/index.json`))
-    const mipindex = await index_rsp.json()
+    const mipindex = await fetchJSON(rewriteUrl(`${index_url}/index.json`))
 
     const pkgList = QID('menu-pkg-list')
     pkgList.innerHTML = ''
@@ -666,8 +662,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
         }
 
         if (!pkg_info) {
-            const pkg_info_rsp = await fetch(rewriteUrl(`${index_url}/package/${mpy_ver}/${pkg}/${version}.json`))
-            pkg_info = await pkg_info_rsp.json()
+            pkg_info = await fetchJSON(rewriteUrl(`${index_url}/package/${mpy_ver}/${pkg}/${version}.json`))
         }
 
         if ('hashes' in pkg_info) {
@@ -950,7 +945,7 @@ export function applyTranslation() {
         }
 
         const ua = new UAParser()
-        const geo = await (await fetch('https://freeipapi.com/api/json', {cache: 'no-store'})).json()
+        const geo = await fetchJSON('https://freeipapi.com/api/json')
         const scr = getScreenInfo()
 
         let tz
@@ -1193,11 +1188,15 @@ async function checkForUpdates() {
     QID('viper-ide-version').innerHTML = VIPER_IDE_VERSION
     QID('viper-ide-build').innerText = 'build ' + getBuildDate()
 
-    const manifest_rsp = await fetch('https://viper-ide.org/manifest.json', {cache: 'no-store'})
-    const manifest = await manifest_rsp.json()
+    let manifest;
+    try {
+        manifest = await fetchJSON('https://viper-ide.org/manifest.json')
+    } catch {
+        return
+    }
     if (manifest.version !== VIPER_IDE_VERSION) {
         toastr.info(`New ViperIDE version ${manifest.version} is available`)
-        QID('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:updateApp()">update</a>)`
+        QID('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:app.updateApp()">update</a>)`
 
         // Automatically show about page
         QS('a[data-target="menu-about"]').click()

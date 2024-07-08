@@ -2,8 +2,11 @@ import nodeResolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
 import postcss from 'rollup-plugin-postcss'
+import replace from '@rollup/plugin-replace'
 import terser from '@rollup/plugin-terser'
 import fs from 'fs'
+
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 
 fs.copyFileSync('src/ViperIDE.html',  'build/index.html')
 fs.copyFileSync('src/benchmark.html', 'build/benchmark.html')
@@ -16,7 +19,6 @@ const common = (args, name) => ({
     format: 'iife',
     indent: false,
   },
-  treeshake: !args.configDebug,
   context: 'window',
   onwarn: (warning, _warn) => {
     throw new Error(warning.message)
@@ -30,6 +32,13 @@ const common = (args, name) => ({
     commonjs(),
     json({
       compact: true
+    }),
+    replace({
+      preventAssignment: true,
+      values: {
+        VIPER_IDE_VERSION:  '"' + pkg.version + '"',
+        VIPER_IDE_BUILD:    Date.now(),
+      }
     }),
     ...(args.configDebug ? [] : [ terser() ])
   ]

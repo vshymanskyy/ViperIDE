@@ -6,40 +6,51 @@
  * This includes no assurances about being fit for any specific purposevent.
  */
 
-import { version } from '../package.json'
+const cacheName = `viper-${VIPER_IDE_VERSION}`;
 
-const cacheName = `viper-${version}`;
+const log = console.log.bind(console).bind(console, `[Service Worker ${VIPER_IDE_VERSION}]`);
 
 const contentToCache = [
-    '/',
-    '/index.html',
-    '/assets/favicon.png',
-    '/assets/app_1024.png',
-    '/assets/mpy-cross-v6.wasm',
+    './',
+    './index.html',
+    './assets/favicon.png',
+    './assets/app_1024.png',
+    './assets/mpy-cross-v6.wasm',
 ];
 
-self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Install');
+self.addEventListener('install', event => {
+  log('Install');
   event.waitUntil((async () => {
     const cache = await caches.open(cacheName);
-    await cache.addAll(contentToCache);
+    await Promise.all(contentToCache.map(resource => {
+      return cache.add(new Request(resource, { cache: 'no-store' }));
+    }));
+    self.skipWaiting();
   })());
 });
 
-self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activate');
+self.addEventListener('activate', event => {
+  log('Activate');
+  event.waitUntil((async () => {
+    for (const key of await caches.keys()) {
+      if (key !== cacheName) {
+        log(`Deleting ${key}`);
+        await caches.delete(key);
+      }
+    }
+  })());
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   event.respondWith((async () => {
-    const r = await caches.match(event.request);
+    const r = await caches.match(event.request, { cacheName });
     if (r) {
-      console.log(`[Service Worker] Using cached resource: ${event.request.url}`);
+      log(`Using cached resource: ${event.request.url}`);
       return r;
     } else {
       const response = await fetch(event.request);
       //const cache = await caches.open(cacheName);
-      //console.log(`[Service Worker] Caching new resource: ${event.request.url}`);
+      //log(`Caching new resource: ${event.request.url}`);
       //cache.put(event.request, response.clone());
       return response;
     }
