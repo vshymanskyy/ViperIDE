@@ -32,13 +32,13 @@ import { toml as modeTOML } from '@codemirror/legacy-modes/mode/toml'
 import { monokaiInit } from '@uiw/codemirror-theme-monokai'
 import { tags as cmTags } from '@lezer/highlight'
 
-import { compile as mpyCrossCompileV6 } from '@pybricks/mpy-cross-v6'
-
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
 import { MpRawMode } from './rawmode.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
+import { parseStackTrace, validatePython } from './python_utils.js'
+
 import { marked } from 'marked'
 import { UAParser } from 'ua-parser-js'
 
@@ -510,16 +510,12 @@ export async function saveCurrentFile() {
             return
         }
     } else if (editorFn.endsWith('.py')) {
-        try {
-            const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
-            const options = undefined
-            const result = await mpyCrossCompileV6('temp.py', content, options, wasmUrlV6)
-            if (result.status !== 0) {
-                toastr.warning(sanitizeHTML(result.err), 'Compilation error')
-            }
-            console.log(result)
-        } catch (err) {
-            //report('Cannot run mpy-cross')
+        const [_, fname] = splitPath(editorFn)
+        const content = editor.state.doc.toString()
+        const backtrace = await validatePython(fname, content)
+        if (backtrace) {
+            console.log(backtrace)
+            toastr.warning(sanitizeHTML(backtrace.summary))
         }
     }
     const raw = await MpRawMode.begin(port)
@@ -582,7 +578,11 @@ export async function runCurrentFile() {
         if (err.message.includes('KeyboardInterrupt')) {
             // Interrupted manually
         } else {
-            toastr.error(sanitizeHTML(err.message), 'Script Failed')
+            const backtrace = parseStackTrace(err.message)
+            if (backtrace) {
+                console.log(backtrace)
+            }
+            toastr.error(sanitizeHTML(backtrace.summary))
             return
         }
     } finally {
