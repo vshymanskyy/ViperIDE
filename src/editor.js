@@ -126,13 +126,7 @@ export async function createNewEditor(editorElement, fn, content, options) {
                             color: '#afac99',
                             fontStyle: 'italic',
                             //fontWeight: '300',
-                        }, {
-                            tag: tags.lineComment,
-                            color: 'magenta',
-                            filter: (node) => {
-                                return /NOTE|OPTIMIZE|TODO|HACK|XXX|FIXME|BUG/.test(node.nodeText);
-                            },
-                        },
+                        }
                     ]
                 }),
                 keymap.of([indentWithTab]),
