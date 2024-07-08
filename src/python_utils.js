@@ -1,4 +1,5 @@
 import { compile as compile_v6 } from '@pybricks/mpy-cross-v6'
+import { splitPath } from './utils.js'
 
 export function parseStackTrace(stackTrace)
 {
@@ -45,8 +46,9 @@ export function parseStackTrace(stackTrace)
     return result;
 }
 
-export async function validatePython(fname, content) {
+export async function validatePython(filename, content) {
     try {
+        const [_, fname] = splitPath(filename)
         const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
         const options = undefined
         const result = await compile_v6(fname, content, options, wasmUrlV6)

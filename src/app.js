@@ -31,6 +31,7 @@ import { simpleMode } from '@codemirror/legacy-modes/mode/simple-mode'
 import { toml as modeTOML } from '@codemirror/legacy-modes/mode/toml'
 import { monokaiInit } from '@uiw/codemirror-theme-monokai'
 import { tags as cmTags } from '@lezer/highlight'
+import { linter } from '@codemirror/lint'
 
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
@@ -433,7 +434,10 @@ async function _loadContent(fn, content) {
     } else {
         let mode = []
         if (fn.endsWith('.py')) {
-            mode = [ indentUnit.of('    '), python({ version: 3 }) ]
+            mode = [
+                indentUnit.of('    '), python({ version: 3 }),
+                mpyCrossLinter,
+            ]
         } else if (fn.endsWith('.json')) {
             mode = [ modeJSON() ]
 
@@ -510,9 +514,8 @@ export async function saveCurrentFile() {
             return
         }
     } else if (editorFn.endsWith('.py')) {
-        const [_, fname] = splitPath(editorFn)
         const content = editor.state.doc.toString()
-        const backtrace = await validatePython(fname, content)
+        const backtrace = await validatePython(editorFn, content)
         if (backtrace) {
             console.log(backtrace)
             toastr.warning(sanitizeHTML(backtrace.summary), backtrace.type)
@@ -864,6 +867,24 @@ const modeINI = simpleMode({
         {regex: /[-+]?\d+$/,            token: 'number', next: 'start'},
         {regex: /.*/,                   token: 'string', next: 'start'}
     ]
+})
+
+const mpyCrossLinter = linter(async (view) => {
+  const content = view.state.doc.toString()
+  const backtrace = await validatePython('<stdin>', content)
+
+  const diagnostics = []
+  if (backtrace) {
+    const frame = backtrace.frames[0]
+    const line = view.state.doc.line(frame.line)
+    diagnostics.push({
+      from: line.from,
+      to: line.to,
+      severity: 'error',
+      message: backtrace.message,
+    })
+  }
+  return diagnostics
 })
 
 export function toggleFullScreen(elementId) {
