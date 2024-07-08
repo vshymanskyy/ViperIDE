@@ -19,20 +19,7 @@ import { Terminal } from '@xterm/xterm'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { FitAddon } from '@xterm/addon-fit'
 
-import { basicSetup } from 'codemirror'
-import { EditorView, keymap } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
-import { StreamLanguage, indentUnit } from '@codemirror/language'
-import { indentWithTab } from '@codemirror/commands'
-import { python } from '@codemirror/lang-python'
-import { json as modeJSON } from '@codemirror/lang-json'
-import { markdown as modeMD } from '@codemirror/lang-markdown'
-import { simpleMode } from '@codemirror/legacy-modes/mode/simple-mode'
-import { toml as modeTOML } from '@codemirror/legacy-modes/mode/toml'
-import { monokaiInit } from '@uiw/codemirror-theme-monokai'
-import { tags as cmTags } from '@lezer/highlight'
-import { linter } from '@codemirror/lint'
-
+import { createNewEditor } from './editor.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
 import { MpRawMode } from './rawmode.js'
@@ -432,73 +419,23 @@ async function _loadContent(fn, content) {
         editorElement.innerHTML = `<div class="marked-viewer">` + marked(content) + `</div>`
         editor = null
     } else {
-        let mode = []
-        if (fn.endsWith('.py')) {
-            mode = [
-                indentUnit.of('    '), python({ version: 3 }),
-                mpyCrossLinter,
-            ]
-        } else if (fn.endsWith('.json')) {
-            mode = [ modeJSON() ]
-
-            if (QID('expand-minify-json').checked) {
-                try {
-                    // Prettify JSON
-                    content = JSON.stringify(JSON.parse(content), null, 2)
-                } catch (err) {
-                    toastr.warning('JSON is malformed')
-                }
+        if (fn.endsWith('.json') && QID('expand-minify-json').checked) {
+            try {
+                // Prettify JSON
+                content = JSON.stringify(JSON.parse(content), null, 2)
+            } catch (err) {
+                toastr.warning('JSON is malformed')
             }
-        } else if (fn.endsWith('.pem')) {
-            mode = [ StreamLanguage.define(modePEM) ]
-        } else if (fn.endsWith('.ini') || fn.endsWith('.inf') ) {
-            mode = [ StreamLanguage.define(modeINI) ]
-        } else if (fn.endsWith('.toml')) {
-            mode = [ StreamLanguage.define(modeTOML) ]
-        } else if (fn.endsWith('.md')) {
-            mode = [ modeMD() ]
         }
 
         editorElement.innerHTML = '' // Clear existing content
-
-        if (QID('use-word-wrap').checked) {
-            mode.push(EditorView.lineWrapping)
-        }
-
-        editor = new EditorView({
-            state: EditorState.create({
-                doc: content,
-                extensions: [
-                    basicSetup,
-                    monokaiInit({
-                        settings: {
-                            fontFamily: '"Hack", "Droid Sans Mono", "monospace", monospace',
-                            background: 'var(--bg-color-edit)',
-                            gutterBackground: 'var(--bg-color-edit)',
-                        },
-                        styles: [
-                            {
-                                tag: [cmTags.name, cmTags.deleted, cmTags.character, cmTags.macroName],
-                                color: 'white'
-                            }, {
-                                tag: [cmTags.meta, cmTags.comment],
-                                color: '#afac99',
-                                fontStyle: 'italic',
-                                //fontWeight: '300',
-                            }
-                        ]
-                    }),
-                    keymap.of([indentWithTab]),
-                    ...mode
-                ],
-            }),
-            parent: editorElement
+        editor = createNewEditor(editorElement, fn, content, {
+            wordWrap: QID('use-word-wrap').checked
         })
 
         editorFn = fn
     }
     autoHideSideMenu()
-    editorElement.scrollTop = 0
 }
 
 export async function saveCurrentFile() {
@@ -829,63 +766,6 @@ if (!document.fullscreenEnabled) {
     QID('app-expand').style.display = 'none'
     QID('term-expand').style.display = 'none'
 }
-
-const modePEM = simpleMode({
-    start: [
-        {regex: /-----BEGIN CERTIFICATE-----/, token: 'keyword', next: 'middle'},
-        {regex: /[^-]+/, token: 'comment'}
-    ],
-    middle: [
-        {regex: /[A-Za-z0-9+/=]+/, token: 'variable'},
-        {regex: /-----END CERTIFICATE-----/, token: 'keyword', next: 'start'},
-        {regex: /[^-]+/, token: 'comment'}
-    ],
-    end: [
-        {regex: /.+/, token: 'comment'}
-    ],
-    // The meta property contains global information about the mode
-    meta: {
-        lineComment: '#'
-    }
-})
-
-const modeINI = simpleMode({
-    start: [
-        {regex: /\/\/.*/,       token: 'comment'},
-        {regex: /#.*/,         token: 'comment'},
-        {regex: /;.*/,         token: 'comment'},
-        {regex: /\[[^\]]+\]/,   token: 'keyword'},
-        {regex: /[^\s=,]+/,   token: 'variable', next: 'property'}
-    ],
-    property: [
-        {regex: /\s*=\s*/,   token: 'def', next: 'value'},
-        {regex: /.*/,   token: null,  next: 'start'}
-    ],
-    value: [
-        {regex: /true|false/i,          token: 'atom',   next: 'start'},
-        {regex: /[-+]?0x[a-fA-F0-9]+$/, token: 'number', next: 'start'},
-        {regex: /[-+]?\d+$/,            token: 'number', next: 'start'},
-        {regex: /.*/,                   token: 'string', next: 'start'}
-    ]
-})
-
-const mpyCrossLinter = linter(async (view) => {
-  const content = view.state.doc.toString()
-  const backtrace = await validatePython('<stdin>', content)
-
-  const diagnostics = []
-  if (backtrace) {
-    const frame = backtrace.frames[0]
-    const line = view.state.doc.line(frame.line)
-    diagnostics.push({
-      from: line.from,
-      to: line.to,
-      severity: 'error',
-      message: backtrace.message,
-    })
-  }
-  return diagnostics
-})
 
 export function toggleFullScreen(elementId) {
     const element = QID(elementId)

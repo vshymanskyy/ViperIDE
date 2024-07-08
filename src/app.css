@@ -131,8 +131,8 @@ body.loaded {
     font-size: 0.9rem;
 }
 
-.cm-foldGutter {
-    border-right: 1px solid var(--bg-color);
+.cm-content {
+    border-left: 1px solid var(--bg-color);
 }
 
 .cm-lineNumbers {
