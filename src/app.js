@@ -1002,7 +1002,7 @@ print()
         fontSize: (14 * 0.9).toFixed(1),
         theme: xtermTheme,
         cursorBlink: true,
-        //convertEol: true,
+        convertEol: true,
         allowProposedApi: true,
     })
     term.open(QID('xterm'))

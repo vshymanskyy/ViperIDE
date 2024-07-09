@@ -22,7 +22,7 @@ export class MicroPythonWASM extends Transport {
         }
 
         this.mp = await loadMicroPython({
-            url: './assets/micropython.wasm',
+            url: 'https://viper-ide.org/assets/micropython.wasm',
             stdout: stdoutWriter,
             linebuffer: false,
         });
