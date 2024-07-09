@@ -135,6 +135,10 @@ body.loaded {
     border-left: 1px solid var(--bg-color);
 }
 
+.cm-scroller {
+    line-height: 1.5 !important;
+}
+
 .cm-lineNumbers {
     font-weight: 300;
 }

@@ -429,7 +429,7 @@ async function _loadContent(fn, content) {
         }
 
         editorElement.innerHTML = '' // Clear existing content
-        editor = createNewEditor(editorElement, fn, content, {
+        editor = await createNewEditor(editorElement, fn, content, {
             wordWrap: QID('use-word-wrap').checked
         })
 
