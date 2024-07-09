@@ -44,7 +44,7 @@ const linkDecorator = ViewPlugin.fromClass(class {
     for (let {from, to} of view.visibleRanges) {
       let text = view.state.sliceDoc(from, to);
       let match;
-      while (match = urlRegex.exec(text)) {
+      while ((match = urlRegex.exec(text))) {
         let start = from + match.index;
         let end = start + match[0].length;
         if (this.isInComment(view, start)) {
