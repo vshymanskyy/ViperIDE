@@ -16,10 +16,11 @@
 - Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
 - **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **iOS**, **Chromebook**
   - [`Direct USB / Serial`](docs/USB-Serial-REPL.md)
-  - [`🚧 WebREPL over internet 🌎`](docs/Web-REPL-Relay.md)
+  - [`WebREPL over internet 🌎`](docs/Web-REPL-Relay.md) - 🚧 *experimental*
   - [`WebREPL in local network`](docs/Web-REPL-Server.md)
   - [`Bluetooth LE`](docs/Bluetooth-REPL.md)
-  - [`🚧 P2P/WebRTC Bridge`](https://viper-ide.org/bridge.html)
+  - [`P2P/WebRTC Bridge`](https://viper-ide.org/bridge.html) - 🚧 *experimental*
+  - [`Device Emulator`](https://viper-ide.org/?emulator=1) - 🚧 *experimental*
 - **File Editor**
   - Syntax highlighting for `.py`, `.json`, `.inf`, `.toml`, `.pem`
   - Auto expand/minify of `.json` files
@@ -31,16 +32,16 @@
   - Add, remove files and directories
   - Create multiple levels of directories at once (use multiple "/" in the name)
   - Root FS stats display
-  - File upload / download - ***planned***
+  - File upload / download - ⌛ *planned*
 - **Package Manager**
   - Official `micropython-lib` index
 - **MicroPython compiler**
   - Runs in-browser using WebAssembly
   - Instant syntax check in the editor
-  - Saving compiled `.mpy` files - ***planned***
+  - Saving compiled `.mpy` files - ⌛ *planned*
 - **Terminal / REPL**
   - VT100 (ANSI escape sequences) support
-  - Snippet support - ***planned***
+  - Snippet support - ⌛ *planned*
 - Improved UX
   - Progressive Web App
   - Device and system info display
