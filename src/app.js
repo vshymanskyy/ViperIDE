@@ -1051,23 +1051,23 @@ print()
     }, 100)
 
     const urlParams = new URLSearchParams(window.location.search)
-    const wssID = urlParams.get('wss')
-    if (wssID) {
+    let urlID = null
+    if ((urlID = urlParams.get('wss'))) {
         try {
-            const connID = ConnectionUID.parse(wssID).value()
+            const connID = ConnectionUID.parse(urlID).value()
             window.webrepl_url = 'wss://hub.viper-ide.org/relay/' + connID
         } catch (err) {
             report('Cannot connect', err)
         }
-    }
-    const rtcID = urlParams.get('rtc')
-    if (rtcID) {
+    } else if ((urlID = urlParams.get('rtc'))) {
         try {
-            const connID = ConnectionUID.parse(rtcID).value()
+            const connID = ConnectionUID.parse(urlID).value()
             window.webrepl_url = 'rtc://' + connID
         } catch (err) {
             report('Cannot connect', err)
         }
+    } else if ((urlID = urlParams.get('emulator'))) {
+        window.webrepl_url = 'emulator://demo'
     }
 
     if (typeof webrepl_url !== 'undefined') {
