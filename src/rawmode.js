@@ -239,7 +239,7 @@ def walk(p):
  for n in os.listdir(p if p else '/'):
   fn=p+'/'+n
   try: s=os.stat(fn)
-  except s=(0,)*7
+  except: s=(0,)*7
   if s[0] & 0x4000 == 0:
    print('f|'+fn+'|'+str(s[6]))
   elif n not in ('.','..'):
