@@ -16,6 +16,7 @@ export default [
     languageOptions: {
       globals: {
         analytics:          "readonly",
+        loadMicroPython:    "readonly",
         VIPER_IDE_VERSION:  "readonly",
         VIPER_IDE_BUILD:    "readonly",
       }

@@ -8,7 +8,7 @@
 
 import { sleep, Mutex, report } from './utils.js'
 
-class Transport {
+export class Transport {
     constructor() {
         if (this.constructor === Transport) {
             throw new Error("Cannot instantiate abstract class Transport")

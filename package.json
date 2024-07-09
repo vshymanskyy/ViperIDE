@@ -14,6 +14,7 @@
     "@fortawesome/free-brands-svg-icons": "^6.5.2",
     "@fortawesome/free-regular-svg-icons": "^6.5.2",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@micropython/micropython-webassembly-pyscript": "^1.24.0-preview-47",
     "@pybricks/mpy-cross-v6": "github:code4fukui/mpy-cross-v6",
     "@uiw/codemirror-theme-material": "^4.22.2",
     "@uiw/codemirror-theme-monokai": "^4.22.2",

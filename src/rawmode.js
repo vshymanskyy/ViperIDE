@@ -163,12 +163,13 @@ os.rename('${dest}','${fn}')
 
     async getDeviceInfo() {
         const rsp = await this.exec(`
-u=os.uname()
+try: u=os.uname()
+except: u=('','','','',sys.platform)
 try: v=sys.version.split(';')[1].strip()
-except: v='MicroPython '+u.release
+except: v='MicroPython '+u[2]
 mpy=str(getattr(sys.implementation, '_mpy', 0) & 0xFF)
 sp=':'.join(sys.path)
-print('|'.join([u.machine,u.release,u.sysname,v,mpy,sp]))
+print('|'.join([u[4],u[2],u[0],v,mpy,sp]))
 `)
         let [machine, release, sysname, version, mpy_ver, sys_path] = rsp.trim().split('|')
         sys_path = sys_path.split(':')
@@ -237,7 +238,8 @@ print('%s|%s|%s'%(fu,ff,fs))
 def walk(p):
  for n in os.listdir(p if p else '/'):
   fn=p+'/'+n
-  s=os.stat(fn)
+  try: s=os.stat(fn)
+  except s=(0,)*7
   if s[0] & 0x4000 == 0:
    print('f|'+fn+'|'+str(s[6]))
   elif n not in ('.','..'):

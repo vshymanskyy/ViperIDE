@@ -26,6 +26,7 @@ import { MpRawMode } from './rawmode.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
 import { parseStackTrace, validatePython } from './python_utils.js'
+import { MicroPythonWASM } from './emulator.js'
 
 import { marked } from 'marked'
 import { UAParser } from 'ua-parser-js'
@@ -128,6 +129,8 @@ async function prepareNewPort(type) {
         } else if (url.startsWith('rtc://')) {
             const id = ConnectionUID.parse(url.replace('rtc://', ''))
             new_port = new WebRTCTransport(id.value())
+        } else if (url.startsWith('emulator://')) {
+            new_port = new MicroPythonWASM()
         } else {
             toastr.error('Unknown link type')
         }
@@ -171,7 +174,7 @@ async function prepareNewPort(type) {
 
     try {
         await new_port.requestAccess()
-    } catch {
+    } catch (err) {
         return
     }
     return new_port

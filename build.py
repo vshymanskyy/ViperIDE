@@ -69,6 +69,8 @@ if __name__ == "__main__":
 
     # Add assets, manifest, etc
     copytree("./assets", "./build/assets")
+    cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.wasm", "./build/assets/micropython.wasm")
+    cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.mjs", "./build/micropython.mjs")
     cp("node_modules/@pybricks/mpy-cross-v6/build/mpy-cross-v6.wasm", "./build/assets/mpy-cross-v6.wasm")
     cp("./src/webrepl_content.js", "./build/webrepl_content.js")
 
