@@ -34,6 +34,10 @@
   - File upload / download - ***planned***
 - **Package Manager**
   - Official `micropython-lib` index
+- **MicroPython compiler**
+  - Runs in-browser using WebAssembly
+  - Instant syntax check in the editor
+  - Saving compiled `.mpy` files - ***planned***
 - **Terminal / REPL**
   - VT100 (ANSI escape sequences) support
   - Snippet support - ***planned***
