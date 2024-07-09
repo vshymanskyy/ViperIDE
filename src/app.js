@@ -945,6 +945,7 @@ export function applyTranslation() {
 
     await _loadContent('test.py', `
 # ViperIDE - MicroPython Web IDE
+# Read more: https://github.com/vshymanskyy/ViperIDE
 
 import time
 

@@ -7,9 +7,9 @@
  */
 
 import { basicSetup } from 'codemirror'
-import { EditorView, keymap } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
-import { StreamLanguage, indentUnit } from '@codemirror/language'
+import { EditorView, ViewPlugin, keymap, Decoration, MatchDecorator } from '@codemirror/view'
+import { EditorState, RangeSetBuilder, Prec } from '@codemirror/state'
+import { StreamLanguage, indentUnit, syntaxTree } from '@codemirror/language'
 import { indentWithTab } from '@codemirror/commands'
 import { python } from '@codemirror/lang-python'
 import { json as modeJSON } from '@codemirror/lang-json'
@@ -21,6 +21,111 @@ import { tags } from '@lezer/highlight'
 import { linter } from '@codemirror/lint'
 
 import { validatePython } from './python_utils.js'
+
+/*
+ * Highlight links in comments
+ */
+
+const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+const linkDecorator = ViewPlugin.fromClass(class {
+  constructor(view) {
+    this.decorations = this.buildDecorations(view);
+  }
+
+  update(update) {
+    if (update.docChanged || update.viewportChanged) {
+      this.decorations = this.buildDecorations(update.view);
+    }
+  }
+
+  buildDecorations(view) {
+    const builder = new RangeSetBuilder();
+    for (let {from, to} of view.visibleRanges) {
+      let text = view.state.sliceDoc(from, to);
+      let match;
+      while (match = urlRegex.exec(text)) {
+        let start = from + match.index;
+        let end = start + match[0].length;
+        if (this.isInComment(view, start)) {
+          builder.add(start, end, Decoration.mark({class: "cm-link"}));
+        }
+      }
+    }
+    return builder.finish();
+  }
+
+  isInComment(view, pos) {
+    let tree = syntaxTree(view.state);
+    let node = tree.resolveInner(pos);
+    while (node) {
+      if (node.type.name.toLowerCase().includes("comment")) {
+        return true;
+      }
+      node = node.parent;
+    }
+    return false;
+  }
+}, {
+  decorations: v => v.decorations
+});
+
+const linkClickPlugin = EditorView.domEventHandlers({
+  click(event, view) {
+    const target = event.target;
+    if (target.classList.contains("cm-link")) {
+      const url = target.textContent;
+      window.open(url, "_blank");
+      event.preventDefault();
+    }
+  }
+});
+
+const linkCommnetExtensions = [
+  Prec.highest(linkDecorator),
+  linkClickPlugin,
+  EditorView.theme({
+    ".cm-link": {
+      textDecoration: "underline solid",
+      cursor: "pointer"
+    }
+  })
+];
+
+
+/*
+ * Highlight special comments
+ * TODO: only highlight in comments
+ */
+
+const specialCommentDecorator = new MatchDecorator({
+  regexp: /(NOTE|OPTIMIZE|TODO|HACK|XXX|FIXME|BUG):?/g,
+  decorate: (add, from, to, match) => add(from, to, Decoration.mark({ class: "special-comment" })),
+});
+
+const specialCommentView = ViewPlugin.fromClass(class {
+  constructor(view) {
+    this.decorations = specialCommentDecorator.createDeco(view);
+  }
+  update(update) {
+    this.decorations = specialCommentDecorator.updateDeco(update, this.decorations);
+  }
+}, {
+  decorations: v => v.decorations
+});
+
+const specialCommentExtensions = [
+  specialCommentView.extension,
+  EditorView.theme({
+    ".special-comment": {
+      backgroundColor: "brown",
+    },
+  }),
+];
+
+/*
+ * Syntax highlight modes
+ */
 
 const modePEM = StreamLanguage.define(simpleMode({
     start: [
@@ -63,6 +168,10 @@ const modeINI = StreamLanguage.define(simpleMode({
 
 const modeTOML = StreamLanguage.define(toml)
 
+/*
+ * MicroPython linter
+ */
+
 const mpyCrossLinter = linter(async (view) => {
   const content = view.state.doc.toString()
   const backtrace = await validatePython('<stdin>', content)
@@ -80,6 +189,10 @@ const mpyCrossLinter = linter(async (view) => {
   }
   return diagnostics
 })
+
+/*
+ * Finally, the editor initialization
+ */
 
 export async function createNewEditor(editorElement, fn, content, options) {
     let mode = []
@@ -105,7 +218,7 @@ export async function createNewEditor(editorElement, fn, content, options) {
         mode.push(EditorView.lineWrapping)
     }
 
-    return new EditorView({
+    const view = new EditorView({
         parent: editorElement,
         state: EditorState.create({
             doc: content,
@@ -130,8 +243,12 @@ export async function createNewEditor(editorElement, fn, content, options) {
                     ]
                 }),
                 keymap.of([indentWithTab]),
-                ...mode
+                mode,
+                linkCommnetExtensions,
+                specialCommentExtensions,
             ],
         })
     })
+
+    return view
 }
