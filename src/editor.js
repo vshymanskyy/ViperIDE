@@ -244,8 +244,8 @@ export async function createNewEditor(editorElement, fn, content, options) {
                 }),
                 keymap.of([indentWithTab]),
                 mode,
-                //linkCommnetExtensions,
-                //specialCommentExtensions,
+                linkCommnetExtensions,
+                specialCommentExtensions,
             ],
         })
     })
