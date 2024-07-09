@@ -361,11 +361,18 @@ async function _raw_updateFileList(raw) {
                     icon = '<i class="fa-regular fa-file fa-fw"></i>'
                 }
                 let sel = (n.path === editorFn) ? 'selected' : ''
-                fileTree.insertAdjacentHTML('beforeend', `<div>
-                    <a href="#" class="name ${sel}" onclick="app.fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
-                    <a href="#" class="menu-action" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
-                    <span class="menu-action">${sizeFmt(n.size)}</span>
-                </div>`)
+                if (n.path.startsWith("/proc/") || n.path.startsWith("/dev/")) {
+                    icon = '<i class="fa-solid fa-gear fa-fw"></i>'
+                    fileTree.insertAdjacentHTML('beforeend', `<div>
+                        <span>${offset}${icon} ${n.name}</span>
+                    </div>`)
+                } else {
+                    fileTree.insertAdjacentHTML('beforeend', `<div>
+                        <a href="#" class="name ${sel}" onclick="app.fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
+                        <a href="#" class="menu-action" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
+                        <span class="menu-action">${sizeFmt(n.size)}</span>
+                    </div>`)
+                }
             }
         }
     }

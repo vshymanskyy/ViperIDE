@@ -12,22 +12,32 @@ export class MicroPythonWASM extends Transport {
     constructor() {
         super()
         this.mpy = null
+        this.decoderStream = new TextDecoderStream()
+        this.reader = this.decoderStream.readable.getReader()
+        this.writer = this.decoderStream.writable.getWriter()
+        this.isConnected = false
     }
 
     async requestAccess() {
-        const stdoutWriter = (data) => {
-            const decoder = new TextDecoder()
-            this.receiveCallback(decoder.decode(data))
-            this.activityCallback()
+        const processStream = async (reader) => {
+            while (this.isConnected) {
+                const { value, done } = await this.reader.read()
+                if (done) break
+                this.receiveCallback(value)
+                this.activityCallback()
+            }
         }
 
         this.mp = await loadMicroPython({
             url: 'https://viper-ide.org/assets/micropython.wasm',
-            stdout: stdoutWriter,
+            stdout: (data) => {
+                this.writer.write(data)
+            },
             linebuffer: false,
         });
 
-        this.mp.runPython("print('hello world')");
+        this.isConnected = true
+        processStream()
     }
 
     async connect() {
@@ -35,7 +45,15 @@ export class MicroPythonWASM extends Transport {
     }
 
     async disconnect() {
-
+        this.isConnected = false
+        if (this.reader) {
+            await this.reader.cancel()
+            this.reader.releaseLock()
+        }
+        if (this.decoderStream) {
+            await this.decoderStream.writable.abort()
+        }
+        // TODO: deinit emulator
     }
 
     async writeBytes(data) {
