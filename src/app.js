@@ -958,29 +958,10 @@ export function applyTranslation() {
 # ViperIDE - MicroPython Web IDE
 # Read more: https://github.com/vshymanskyy/ViperIDE
 
-import time
+# Connect your device and start creating! 🤖👨‍💻🕹️
 
-colors = [
-    "\\033[31m", "\\033[32m", "\\033[33m", "\\033[34m",
-    "\\033[35m", "\\033[36m", "\\033[37m",
-]
-reset = "\\033[0m"
-
-text = "  ${T('example.hello', 'Привіт')} MicroPython! 𓆙"
-
-# ${T('example.comment-colors', 'Print each letter with a different color')}
-print("=" * 32)
-for i, char in enumerate(text):
-    color = colors[i % len(colors)]
-    print(color + char, end="")
-print(reset)
-print("=" * 32)
-
-# ${T('example.comment-count', 'Count 1 to 10')}
-for i in range(10):
-    time.sleep(1)
-    print(i + 1, "", end="")
-print()
+# You can also open an emulated device and explore some examples:
+# https://viper-ide.org/?emulator=1
 `)
 
     const xtermTheme = {
