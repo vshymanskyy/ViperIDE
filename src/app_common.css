@@ -90,6 +90,7 @@ input[type="checkbox" i] {
 
 div[contenteditable="true"] {
     overscroll-behavior: none;
+    touch-action: none;
 }
 
 button {
