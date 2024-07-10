@@ -16,6 +16,7 @@ const contentToCache = [
     './assets/favicon.png',
     './assets/app_1024.png',
     './assets/mpy-cross-v6.wasm',
+    './assets/micropython.wasm',
 ];
 
 self.addEventListener('install', event => {
