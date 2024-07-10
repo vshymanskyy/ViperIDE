@@ -87,7 +87,10 @@ const linkCommnetExtensions = [
   EditorView.theme({
     ".cm-link": {
       textDecoration: "underline solid",
-      cursor: "pointer"
+      "-webkit-text-decoration-line": "underline",
+      "-webkit-text-decoration-style": "solid",
+      "-webkit-text-decoration-thickness": "1px",
+      cursor: "pointer",
     }
   })
 ];
