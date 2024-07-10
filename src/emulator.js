@@ -7,6 +7,9 @@
  */
 
 import { Transport } from './transports.js'
+import i18next from 'i18next'
+
+const T = i18next.t.bind(i18next)
 
 function populateFS(fs) {
     fs.writeFile('/main.py', `
@@ -26,9 +29,9 @@ colors = [
 ]
 reset = "\\033[0m"
 
-text = "  Hello MicroPython! 𓆙"
+text = "  ${T('example.hello', 'Привіт')} MicroPython! 𓆙"
 
-# Print each letter with a different color
+# ${T('example.comment-colors', 'Print each letter with a different color')}
 print("=" * 32)
 for i, char in enumerate(text):
     color = colors[i % len(colors)]
