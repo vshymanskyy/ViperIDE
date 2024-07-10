@@ -13,7 +13,7 @@ function populateFS(fs) {
 # ViperIDE - MicroPython Web IDE
 # Read more: https://github.com/vshymanskyy/ViperIDE
 
-# 🚧 This is an experimental device emulation 🚧
+# 🚧 This is an experimental device emulator 🚧
 # It runs the official MicroPython WASM port directly in your browser
 # Most things work: you can edit and run files, use the Terminal, install packages, etc.
 # WARNING: if your script takes a long time to run, the browser will busy-wait
