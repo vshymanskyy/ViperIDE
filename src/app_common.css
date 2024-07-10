@@ -89,8 +89,8 @@ input[type="checkbox" i] {
 }
 
 div[contenteditable="true"] {
-    overscroll-behavior: none;
-    touch-action: none;
+    /*overscroll-behavior: none;*/
+    touch-action: pan-x pan-y;
 }
 
 button {
