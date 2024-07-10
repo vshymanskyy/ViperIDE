@@ -45,6 +45,13 @@ html, body {
     box-sizing: inherit;
 }
 
+* {
+    margin: 0;
+}
+
+p, hr {
+    margin: revert;
+}
 
 ::-webkit-scrollbar {
     height: .5rem;
@@ -86,11 +93,6 @@ label {
 
 input[type="checkbox" i] {
     margin: 3px 3px 3px 0px;
-}
-
-/* Fix touch interaction on iOS */
-div[contenteditable="true"] {
-    touch-action: pan-x pan-y;
 }
 
 button {

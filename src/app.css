@@ -138,7 +138,10 @@ body.loaded {
 
 .cm-scroller {
     line-height: 1.5 !important;
-    overscroll-behavior: none !important;
+
+    /* Fix touch interaction on iOS */
+    touch-action: pan-x pan-y;
+    overscroll-behavior: none;
 }
 
 .cm-lineNumbers {
