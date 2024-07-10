@@ -8,6 +8,36 @@
 
 import { Transport } from './transports.js'
 
+function populateFS(fs) {
+    fs.writeFile('/main.py', `
+# ViperIDE - MicroPython Web IDE
+# Read more: https://github.com/vshymanskyy/ViperIDE
+
+# 🚧 This is an experimental device emulation 🚧
+# It runs the official MicroPython WASM port directly in your browser
+# Most things work: you can edit and run files, use the Terminal, install packages, etc.
+# WARNING: if your script takes a long time to run, the browser will busy-wait
+
+import time
+
+colors = [
+    "\\033[31m", "\\033[32m", "\\033[33m", "\\033[34m",
+    "\\033[35m", "\\033[36m", "\\033[37m",
+]
+reset = "\\033[0m"
+
+text = "  Hello MicroPython! 𓆙"
+
+# Print each letter with a different color
+print("=" * 32)
+for i, char in enumerate(text):
+    color = colors[i % len(colors)]
+    print(color + char, end="")
+print(reset)
+print("=" * 32)
+`)
+}
+
 export class MicroPythonWASM extends Transport {
     constructor() {
         super()
@@ -35,6 +65,8 @@ export class MicroPythonWASM extends Transport {
             },
             linebuffer: false,
         });
+
+        populateFS(this.mp.FS)
 
         this.isConnected = true
         processStream()

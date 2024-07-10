@@ -99,7 +99,7 @@ const linkCommnetExtensions = [
  */
 
 const specialCommentDecorator = new MatchDecorator({
-  regexp: /(NOTE|OPTIMIZE|TODO|HACK|XXX|FIXME|BUG):?/g,
+  regexp: /(NOTE|OPTIMIZE|TODO|WARNING|WARN|HACK|XXX|FIXME|BUG):?/g,
   decorate: (add, from, to, match) => add(from, to, Decoration.mark({ class: "special-comment" })),
 });
 
