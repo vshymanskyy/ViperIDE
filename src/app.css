@@ -138,6 +138,7 @@ body.loaded {
 
 .cm-scroller {
     line-height: 1.5 !important;
+    overscroll-behavior: none !important;
 }
 
 .cm-lineNumbers {
