@@ -88,8 +88,9 @@ input[type="checkbox" i] {
     margin: 3px 3px 3px 0px;
 }
 
+/* Fix touch interaction on iOS */
 div[contenteditable="true"] {
-    /*overscroll-behavior: none;*/
+    overscroll-behavior: none;
     touch-action: pan-x pan-y;
 }
 

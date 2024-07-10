@@ -778,6 +778,7 @@ if (!document.fullscreenEnabled) {
     QID('term-expand').style.display = 'none'
 }
 
+/* iOS: Disable auto-zoom on contenteditable */
 if (navigator.userAgent.indexOf('iPhone') >= 0) {
     document
       .querySelector("[name=viewport]")
