@@ -35,7 +35,16 @@ for i, char in enumerate(text):
     print(color + char, end="")
 print(reset)
 print("=" * 32)
-`)
+`);
+    fs.writeFile('/demo_01.py', `
+# TODO: Demo 1
+`);
+    fs.writeFile('/demo_02.py', `
+# TODO: Demo 2
+`);
+    fs.writeFile('/demo_03.py', `
+# TODO: Demo 3
+`);
 }
 
 export class MicroPythonWASM extends Transport {

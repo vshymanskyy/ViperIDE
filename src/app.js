@@ -8,6 +8,7 @@
 
 import '@xterm/xterm/css/xterm.css'
 import 'toastr/build/toastr.css'
+import 'github-fork-ribbon-css/gh-fork-ribbon.css'
 import './app_common.css'
 import './app.css'
 
