@@ -45,13 +45,10 @@ html, body {
     box-sizing: inherit;
 }
 
-* {
-    margin: 0;
-}
-
-p, hr {
-    margin: revert;
-}
+/*
+*     { margin: 0; }
+p, hr { margin: revert; }
+*/
 
 ::-webkit-scrollbar {
     height: .5rem;

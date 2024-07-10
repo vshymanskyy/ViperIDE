@@ -138,14 +138,16 @@ body.loaded {
 
 .cm-scroller {
     line-height: 1.5 !important;
-
-    /* Fix touch interaction on iOS */
-    touch-action: pan-x pan-y;
-    overscroll-behavior: none;
 }
 
 .cm-lineNumbers {
     font-weight: 300;
+}
+
+/* Fix touch interaction on iOS */
+.cm-scroller, #side-menu {
+    touch-action: pan-x pan-y;
+    overscroll-behavior: none;
 }
 
 #menu-file-title, #menu-pkg-title, #menu-settings-title, #menu-tools-title {
