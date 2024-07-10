@@ -778,6 +778,12 @@ if (!document.fullscreenEnabled) {
     QID('term-expand').style.display = 'none'
 }
 
+if (navigator.userAgent.indexOf('iPhone') >= 0) {
+    document
+      .querySelector("[name=viewport]")
+      .setAttribute("content","width=device-width, initial-scale=1, maximum-scale=1");
+}
+
 export function toggleFullScreen(elementId) {
     const element = QID(elementId)
     if (!document.fullscreenElement) {
