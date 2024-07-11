@@ -143,6 +143,12 @@ body.loaded {
     font-weight: 300;
 }
 
+/* Fix touch interaction on iOS */
+.cm-scroller, .tab-content, #side-menu {
+    touch-action: pan-x pan-y;
+    overscroll-behavior: none;
+}
+
 #menu-file-title, #menu-pkg-title, #menu-settings-title, #menu-tools-title {
     font-weight: bold;
 }

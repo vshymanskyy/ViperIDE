@@ -48,12 +48,6 @@ html, body {
 *     { margin: 0; }
 p, hr { margin: revert; }
 
-/* Fix touch interaction on iOS */
-* {
-    touch-action: pan-x pan-y !important;
-    overscroll-behavior: none !important;
-}
-
 ::-webkit-scrollbar {
     height: .5rem;
     width:  .5rem;

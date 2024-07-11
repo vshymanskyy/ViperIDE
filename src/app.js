@@ -562,9 +562,11 @@ export async function loadAllPkgIndexes() {
         for (const index of MIP_INDEXES) {
             try {
                 await fetchPkgList(index)
-            } catch {}
+                loadedPackages = true
+            } catch (err) {
+                console.error(err.name, err.message, err.stack)
+            }
         }
-        loadedPackages = true
     }
 }
 
