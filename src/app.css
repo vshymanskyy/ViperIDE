@@ -36,6 +36,7 @@ body.loaded {
     display: flex;
     flex: 1;
     overflow: hidden;
+    position: relative;
 }
 
 #side-menu {
@@ -181,7 +182,8 @@ body.loaded {
         position: absolute;
         left: -100%;
         width: 75%;
-        height: calc(100% - 40px);
+        top: 0;
+        bottom: 0;
         z-index: 1000;
     }
 
