@@ -129,7 +129,6 @@ body.loaded {
     height: 100%;
     width: 100%;
     font-size: 0.9rem;
-    overscroll-behavior: none;
 }
 
 .cm-content {
@@ -145,7 +144,7 @@ body.loaded {
 }
 
 /* Fix touch interaction on iOS */
-.cm-scroller, #side-menu {
+.cm-scroller, .tab-content {
     touch-action: pan-x pan-y;
     overscroll-behavior: none;
 }
