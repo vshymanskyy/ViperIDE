@@ -207,15 +207,18 @@ body.loaded {
         visibility: visible;
         background-color: #00000088;
         backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
         transition: visibility 0s,
                     background-color var(--animation),
-                    backdrop-filter var(--animation);
+                    backdrop-filter var(--animation),
+                    -webkit-backdrop-filter var(--animation);
     }
 
     #overlay:not(.show) {
         transition: visibility var(--animation), 
                     background-color var(--animation), 
-                    backdrop-filter var(--animation);
+                    backdrop-filter var(--animation),
+                    -webkit-backdrop-filter var(--animation);
     }
 }
 
