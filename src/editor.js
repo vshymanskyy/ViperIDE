@@ -87,9 +87,9 @@ const linkCommentExtensions = [
   linkClickPlugin,
   EditorView.theme({
     ".cm-link": {
-      textDecoration: "underline solid",
+      textDecoration: "underline dotted 1px",
       "-webkit-text-decoration-line": "underline",
-      "-webkit-text-decoration-style": "solid",
+      "-webkit-text-decoration-style": "dotted",
       "-webkit-text-decoration-thickness": "1px",
       cursor: "pointer",
     }
