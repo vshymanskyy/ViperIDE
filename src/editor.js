@@ -21,6 +21,7 @@ import { tags } from '@lezer/highlight'
 import { linter } from '@codemirror/lint'
 
 import { validatePython } from './python_utils.js'
+import ruffInit, { Workspace as RuffWorkspace } from 'ruff_wasm'
 
 /*
  * Highlight links in comments
@@ -81,7 +82,7 @@ const linkClickPlugin = EditorView.domEventHandlers({
   }
 });
 
-const linkCommnetExtensions = [
+const linkCommentExtensions = [
   Prec.highest(linkDecorator),
   linkClickPlugin,
   EditorView.theme({
@@ -172,7 +173,7 @@ const modeINI = StreamLanguage.define(simpleMode({
 const modeTOML = StreamLanguage.define(toml)
 
 /*
- * MicroPython linter
+ * mpy-cross linter
  */
 
 const mpyCrossLinter = linter(async (view) => {
@@ -187,7 +188,33 @@ const mpyCrossLinter = linter(async (view) => {
       from: line.from,
       to: line.to,
       severity: 'error',
-      message: backtrace.message,
+      message: 'MicroPython: ' + backtrace.message,
+    })
+  }
+  return diagnostics
+})
+
+/*
+ * Ruff linter
+ */
+
+let ruffWorkspace = null
+
+const ruffLinter = linter(async (view) => {
+  const doc = view.state.doc
+  const content = doc.toString()
+
+  const res = ruffWorkspace.check(content);
+
+  console.log(res)
+
+  const diagnostics = []
+  for (let d of res) {
+    diagnostics.push({
+      from: doc.line(d.location.row).from + d.location.column - 1,
+      to:   doc.line(d.end_location.row).from + d.end_location.column,
+      severity: (d.message.indexOf('Error:') >= 0) ? 'error' : 'warning',
+      message: d.code ? d.code + ': ' + d.message : d.message,
     })
   }
   return diagnostics
@@ -200,9 +227,17 @@ const mpyCrossLinter = linter(async (view) => {
 export async function createNewEditor(editorElement, fn, content, options) {
     let mode = []
     if (fn.endsWith('.py')) {
+        if (!ruffWorkspace) {
+            try {
+                await ruffInit('https://viper-ide.org/assets/ruff_wasm_bg.wasm')
+                console.log('Ruff', RuffWorkspace.version())
+                ruffWorkspace = new RuffWorkspace(RuffWorkspace.defaultSettings());
+            } catch (err) {}
+        }
         mode = [
             // TODO: detect indent of existing content
             indentUnit.of('    '), python(),
+            ...(ruffWorkspace ? [ruffLinter] : []),
             mpyCrossLinter,
         ]
     } else if (fn.endsWith('.json')) {
@@ -247,7 +282,7 @@ export async function createNewEditor(editorElement, fn, content, options) {
                 }),
                 keymap.of([indentWithTab]),
                 mode,
-                linkCommnetExtensions,
+                linkCommentExtensions,
                 specialCommentExtensions,
             ],
         })
