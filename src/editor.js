@@ -212,7 +212,7 @@ const ruffLinter = linter(async (view) => {
   for (let d of res) {
     diagnostics.push({
       from: doc.line(d.location.row).from + d.location.column - 1,
-      to:   doc.line(d.end_location.row).from + d.end_location.column,
+      to:   doc.line(d.end_location.row).from + d.end_location.column - 1,
       severity: (d.message.indexOf('Error:') >= 0) ? 'error' : 'warning',
       message: d.code ? d.code + ': ' + d.message : d.message,
     })
