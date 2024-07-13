@@ -200,13 +200,9 @@ const mpyCrossLinter = linter(async (view) => {
 
 let ruffWorkspace = null
 
-const ruffLinter = linter(async (view) => {
+const ruffLinter = linter((view) => {
   const doc = view.state.doc
-  const content = doc.toString()
-
-  const res = ruffWorkspace.check(content);
-
-  console.log(res)
+  const res = ruffWorkspace.check(doc.toString())
 
   const diagnostics = []
   for (let d of res) {
