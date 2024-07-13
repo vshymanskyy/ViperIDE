@@ -970,7 +970,7 @@ export function applyTranslation() {
 # Connect your device and start creating! 🤖👨‍💻🕹️
 
 # You can also open an emulated device and explore some examples:
-# https://viper-ide.org/?emulator=1
+# https://viper-ide.org?emulator=1
 `)
 
     const xtermTheme = {

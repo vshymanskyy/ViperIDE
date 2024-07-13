@@ -21,8 +21,6 @@ function populateFS(fs) {
 # Most things work: you can edit and run files, use the Terminal, install packages, etc.
 # WARNING: if your script takes a long time to run, the browser will busy-wait
 
-import time
-
 colors = [
     "\\033[31m", "\\033[32m", "\\033[33m", "\\033[34m",
     "\\033[35m", "\\033[36m", "\\033[37m",
