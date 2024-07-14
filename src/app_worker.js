@@ -50,11 +50,13 @@ self.addEventListener('fetch', event => {
       log(`Using cached resource: ${event.request.url}`);
       return r;
     } else {
-      const response = await fetch(event.request);
-      //const cache = await caches.open(cacheName);
-      //log(`Caching new resource: ${event.request.url}`);
-      //cache.put(event.request, response.clone());
-      return response;
+      log(`Loading: ${event.request.url}`);
+      try {
+          return await fetch(event.request);
+      } catch (err) {
+          log(err.message)
+          throw err
+      }
     }
   })());
 });
