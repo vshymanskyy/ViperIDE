@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "scripts": {
     "build": "rollup --config",
     "watch": "rollup --config --configDebug --watch"
