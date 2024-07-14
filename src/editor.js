@@ -245,10 +245,10 @@ const extraTheme = EditorView.theme({
     paddingBottom: "2px",
   },
 
-  ".cm-diagnostic-error": { borderLeft: "5px solid #f11" },
+  ".cm-diagnostic-error":   { borderLeft: "5px solid #f11" },
   ".cm-diagnostic-warning": { borderLeft: "5px solid gold" },
-  ".cm-diagnostic-info": { borderLeft: "5px solid #999" },
-  ".cm-diagnostic-hint": { borderLeft: "5px solid #66d" },
+  ".cm-diagnostic-info":    { borderLeft: "5px solid #999" },
+  ".cm-diagnostic-hint":    { borderLeft: "5px solid #66d" },
 
   ".cm-lintRange-error":    { backgroundImage: underline("#f11") },
   ".cm-lintRange-warning":  { backgroundImage: underline("gold") },

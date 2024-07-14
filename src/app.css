@@ -133,7 +133,7 @@ body.loaded {
 }
 
 /* Fix touch interaction on iOS */
-.cm-editor, .cm-scroller, .cm-content,.tab-content, #side-menu {
+.cm-editor, .cm-scroller, .cm-content, .tab-content, #side-menu {
     touch-action: pan-x pan-y !important;
     overscroll-behavior: none !important;
 }

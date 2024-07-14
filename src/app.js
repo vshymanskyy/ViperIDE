@@ -780,11 +780,15 @@ if (!document.fullscreenEnabled) {
     QID('term-expand').style.display = 'none'
 }
 
-/* iOS: Disable auto-zoom on contenteditable */
-if (navigator.userAgent.indexOf('iPhone') >= 0) {
+/* iOS: Disable auto-zoom on contenteditable, pull-to-refresh gesture */
+if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
     document
       .querySelector("[name=viewport]")
       .setAttribute("content","width=device-width, initial-scale=1, maximum-scale=1");
+
+    document.addEventListener('touchmove', function(event) {
+        event.preventDefault();
+    }, { passive: false });
 }
 
 export function toggleFullScreen(elementId) {
