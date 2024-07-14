@@ -65,8 +65,6 @@ body.loaded {
     background: var(--bg-color-edit);
     flex: 1;
     overflow: auto;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
 }
 
 #terminal-container {
@@ -101,7 +99,6 @@ body.loaded {
 #xterm {
     height: 0px;
     background: var(--bg-color-edit);
-    border-top-left-radius: 5px;
 }
 
 .marked-viewer {
