@@ -217,6 +217,63 @@ const ruffLinter = linter((view) => {
 })
 
 /*
+ * Theme helpers
+ */
+
+
+function svg(content, attrs = `viewBox="0 0 40 40"`) {
+  return `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" ${attrs}>${encodeURIComponent(content)}</svg>')`
+}
+
+function underline(color) {
+  return svg(`<path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="${color}" fill="none" stroke-width=".85"/>`,
+             `width="6" height="3"`)
+}
+
+const extraTheme = EditorView.theme({
+  ".cm-content": {
+    borderLeft: "1px solid var(--bg-color)",
+  },
+  ".cm-scroller": {
+    lineHeight: "1.5em",
+  },
+  ".cm-lineNumbers": {
+    fontWeight: "300",
+  },
+
+  ".cm-lintRange": {
+    paddingBottom: "2px",
+  },
+
+  ".cm-diagnostic-error": { borderLeft: "5px solid #f11" },
+  ".cm-diagnostic-warning": { borderLeft: "5px solid gold" },
+  ".cm-diagnostic-info": { borderLeft: "5px solid #999" },
+  ".cm-diagnostic-hint": { borderLeft: "5px solid #66d" },
+
+  ".cm-lintRange-error":    { backgroundImage: underline("#f11") },
+  ".cm-lintRange-warning":  { backgroundImage: underline("gold") },
+  ".cm-lintRange-info":     { backgroundImage: underline("#999") },
+  ".cm-lintRange-hint":     { backgroundImage: underline("#66d") },
+  ".cm-lintRange-active":   { backgroundColor: "#ffdd9980" },
+
+  ".cm-lintPoint-warning": {
+    "&:after": { borderBottomColor: "gold" }
+  },
+
+  ".cm-panel.cm-panel-lint": {
+    "& ul": {
+      "& [aria-selected]": {
+        backgroundColor: "#666",
+      },
+      "&:focus [aria-selected]": {
+        backgroundColor: "#666",
+        color: "white"
+      },
+    }
+  }
+})
+
+/*
  * Finally, the editor initialization
  */
 
@@ -280,6 +337,7 @@ export async function createNewEditor(editorElement, fn, content, options) {
                 mode,
                 linkCommentExtensions,
                 specialCommentExtensions,
+                extraTheme,
             ],
         })
     })

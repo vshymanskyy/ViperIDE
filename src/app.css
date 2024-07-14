@@ -132,22 +132,10 @@ body.loaded {
     font-size: 0.9rem;
 }
 
-.cm-content {
-    border-left: 1px solid var(--bg-color);
-}
-
-.cm-scroller {
-    line-height: 1.5 !important;
-}
-
-.cm-lineNumbers {
-    font-weight: 300;
-}
-
 /* Fix touch interaction on iOS */
-.cm-scroller, .tab-content, #side-menu {
-    touch-action: pan-x pan-y;
-    overscroll-behavior: none;
+.cm-editor, .cm-scroller, .cm-content,.tab-content, #side-menu {
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior: none !important;
 }
 
 #menu-file-title, #menu-pkg-title, #menu-settings-title, #menu-tools-title {
