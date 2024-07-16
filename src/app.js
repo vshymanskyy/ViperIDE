@@ -130,7 +130,7 @@ async function prepareNewPort(type) {
         } else if (url.startsWith('rtc://')) {
             const id = ConnectionUID.parse(url.replace('rtc://', ''))
             new_port = new WebRTCTransport(id.value())
-        } else if (url.startsWith('emulator://')) {
+        } else if (url.startsWith('vm://')) {
             new_port = new MicroPythonWASM()
         } else {
             toastr.error('Unknown link type')
@@ -970,7 +970,7 @@ export function applyTranslation() {
 # Connect your device and start creating! 🤖👨‍💻🕹️
 
 # You can also open an emulated device and explore some examples:
-# https://viper-ide.org?emulator=1
+# https://viper-ide.org?vm=1
 `)
 
     const xtermTheme = {
@@ -1064,8 +1064,10 @@ export function applyTranslation() {
         } catch (err) {
             report('Cannot connect', err)
         }
-    } else if ((urlID = urlParams.get('emulator'))) {
-        window.webrepl_url = 'emulator://demo'
+    } else if ((urlID = urlParams.get('emulator'))) {   // TODO: remove, back-compat
+        window.webrepl_url = 'vm://' + urlID
+    } else if ((urlID = urlParams.get('vm'))) {
+        window.webrepl_url = 'vm://' + urlID
     }
 
     if (typeof webrepl_url !== 'undefined') {
