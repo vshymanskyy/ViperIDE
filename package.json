@@ -1,23 +1,24 @@
 {
   "name": "ViperIDE",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "scripts": {
     "build": "rollup --config",
     "watch": "rollup --config --configDebug --watch"
   },
   "dependencies": {
+    "@astral-sh/ruff-wasm-web": "^0.5.3",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-markdown": "^6.2.5",
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/legacy-modes": "^6.4.0",
-    "@fortawesome/fontawesome-svg-core": "^6.5.2",
-    "@fortawesome/free-brands-svg-icons": "^6.5.2",
-    "@fortawesome/free-regular-svg-icons": "^6.5.2",
-    "@fortawesome/free-solid-svg-icons": "^6.5.2",
-    "@micropython/micropython-webassembly-pyscript": "^1.24.0-preview-47",
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/free-brands-svg-icons": "^6.6.0",
+    "@fortawesome/free-regular-svg-icons": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@micropython/micropython-webassembly-pyscript": "^1.24.0-preview-114",
     "@pybricks/mpy-cross-v6": "github:code4fukui/mpy-cross-v6",
-    "@uiw/codemirror-theme-material": "^4.22.2",
-    "@uiw/codemirror-theme-monokai": "^4.22.2",
+    "@uiw/codemirror-theme-material": "^4.23.0",
+    "@uiw/codemirror-theme-monokai": "^4.23.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-web-links": "^0.11.0",
     "@xterm/xterm": "^5.5.0",
@@ -27,22 +28,21 @@
     "i18next-browser-languagedetector": "^8.0.0",
     "marked": "^13.0.1",
     "peerjs": "^1.5.4",
-    "ruff_wasm": "https://vsh.pp.ua/ViperIDE/ruff_wasm-0.5.1.tgz",
     "toastr": "^2.1.4",
     "ua-parser-js": "^1.0.38",
     "web-serial-polyfill": "^1.0.15"
   },
   "devDependencies": {
-    "@eslint/js": "^9.6.0",
+    "@eslint/js": "^9.7.0",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.7",
     "@rollup/plugin-terser": "^0.4.4",
-    "eslint": "^9.6.0",
+    "eslint": "^9.7.0",
     "globals": "^15.8.0",
     "postcss": "^8.4.39",
-    "rollup": "^4.18.0",
+    "rollup": "^4.18.1",
     "rollup-plugin-postcss": "^4.0.2"
   }
 }

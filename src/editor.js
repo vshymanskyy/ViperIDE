@@ -21,7 +21,7 @@ import { tags } from '@lezer/highlight'
 import { linter } from '@codemirror/lint'
 
 import { validatePython } from './python_utils.js'
-import ruffInit, { Workspace as RuffWorkspace } from 'ruff_wasm'
+import ruffInit, { Workspace as RuffWorkspace } from '@astral-sh/ruff-wasm-web'
 
 /*
  * Highlight links in comments
@@ -315,6 +315,8 @@ export async function createNewEditor(editorElement, fn, content, options) {
             doc: content,
             extensions: [
                 basicSetup,
+                //closedText: '▶',
+                //openText: '▼',
                 monokaiInit({
                     settings: {
                         fontFamily: '"Hack", "Droid Sans Mono", "monospace", monospace',
