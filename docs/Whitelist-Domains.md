@@ -5,6 +5,8 @@ To ensure the correct functionality of the ViperIDE web app, IT departments are 
 
 - `viper-ide.org` - the main IDE server (currently hosted on GitHub Pages)
 - `hub.viper-ide.org` - the collaborative features and remote device connection services
+- `micropython.org` - MicroPython package index / library manager
+- `raw.githubusercontent.com`, `gitlab.com` - additional MicroPython packages
 
 These domains must be allowed at least on the following levels (the list is not exhaustive):
 
