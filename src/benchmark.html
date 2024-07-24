@@ -267,19 +267,24 @@ async function test_CPU(raw) {
     let success = true;
 
     const rsp = await raw.exec(`
-import time
+try:
+    from time import ticks_ms as t
+    tms = 1
+except:
+    from time import monotonic_ns as t
+    tms = 1000000
 def fib(n: int) -> int:
    if n <= 1:
        return n
    else:
        return fib(n-1) + fib(n-2)
-beg = time.ticks_ms()
-res = fib(26)
-end = time.ticks_ms()
-print(time.ticks_diff(end,beg))
+beg = t()
+res = fib(24)
+end = t()
+print((end-beg)//tms)
 `)
 
-    log(`fib(26) recursive: ${rsp.trim()}ms\n`)
+    log(`fib(24) recursive: ${rsp.trim()}ms\n`)
 
     return success
 }
