@@ -16,17 +16,20 @@
 </head>
 <body>
     <h2>ViperIDE Benchmark</h2>
+    <p>
     <div>
-        <span>Connect your device:</span>
+        1. Select benchmarks:
+        <span><input type="checkbox" id="test-fs"  checked/><label for="test-fs">File System</label></span>
+        <span><input type="checkbox" id="test-cpu" checked/><label for="test-cpu">CPU</label></span>
+    </div>
+
+    <div>
+        2. Connect your device:
         <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
         <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
         <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
     </div>
-
-    <div>Run benchmarks:
-        <span><input type="checkbox" id="test-fs" checked/><label for="test-fs">File System</label></span>
-        <span><input type="checkbox" id="test-cpu" checked/><label for="test-cpu">CPU</label></span>
-    </div>
+    </p>
 
     <pre class="monospace" id="log"></pre>
 
