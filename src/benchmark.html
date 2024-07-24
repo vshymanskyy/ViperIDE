@@ -275,25 +275,43 @@ async function test_FS(raw, devinfo) {
 async function test_CPU(raw) {
     let success = true;
 
-    const rsp = await raw.exec(`
+    const modes = [
+        { name: 'bytecode', decorator: '', cast: '' },
+        { name: 'native',   decorator: '@micropython.native', cast: '' },
+        { name: 'viper',    decorator: '@micropython.viper',  cast: 'int' },
+    ];
+
+    await raw.exec(`
 try:
     from time import ticks_ms as t
     tms = 1
 except:
     from time import monotonic_ns as t
     tms = 1000000
+`)
+
+    for (const i of modes) {
+        log(`fib(24) ${i.name}... `)
+        try {
+            const rsp = await raw.exec(`
+${i.decorator}
 def fib(n: int) -> int:
    if n <= 1:
        return n
    else:
-       return fib(n-1) + fib(n-2)
+       return ${i.cast}(fib(n-1)) + ${i.cast}(fib(n-2))
 beg = t()
 res = fib(24)
 end = t()
 print((end-beg)//tms)
 `, 15000)
 
-    log(`fib(24) recursive: ${rsp.trim()}ms\n`)
+            log(rsp.trim() + 'ms\n')
+        } catch (err) {
+            console.log(err)
+            log('---\n')
+        }
+    }
 
     return success
 }
