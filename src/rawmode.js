@@ -187,13 +187,14 @@ f.close()
     }
 
     async makePath(path) {
+        // TODO: remove error code 20 once it is fixed in wasm port
         await this.exec(`
 p=''
 for d in filter(len,'${path}'.split('/')):
  p += '/'+d
  try: os.mkdir(p)
  except OSError as e:
-  if e.args[0] != 17: raise
+  if e.args[0] not in (17, 20): raise
 `)
     }
 
