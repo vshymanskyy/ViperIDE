@@ -22,6 +22,12 @@
         <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
         <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
     </div>
+
+    <div>Run benchmarks:
+        <span><input type="checkbox" id="test-fs" checked/><label for="test-fs">File System</label></span>
+        <span><input type="checkbox" id="test-cpu" checked/><label for="test-cpu">CPU</label></span>
+    </div>
+
     <pre class="monospace" id="log"></pre>
 
     <script src="https://viper-ide.org/micropython.mjs" type="module" crossorigin="anonymous"></script>
@@ -324,8 +330,12 @@ async function connectDevice(type) {
         Object.assign(devinfo, { connection: type })
         log(JSON.stringify(devinfo) + '\n')
 
-        success &&= await test_FS(raw, devinfo)
-        success &&= await test_CPU(raw)
+        if (QID('test-fs').checked) {
+            success &&= await test_FS(raw, devinfo)
+        }
+        if (QID('test-cpu').checked) {
+            success &&= await test_CPU(raw)
+        }
 
         if (success) {
             log("\n === OK ===\n")
