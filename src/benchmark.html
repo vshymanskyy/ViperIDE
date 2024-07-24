@@ -166,7 +166,7 @@ async function prepareNewPort(type) {
     return new_port
 }
 
-async function test_FS(raw) {
+async function test_FS(raw, devinfo) {
     let success = true;
     const test_size = 10*1024;
     let startTime, endTime;
@@ -309,7 +309,7 @@ async function connectDevice(type) {
         Object.assign(devinfo, { connection: type })
         log(JSON.stringify(devinfo) + '\n')
 
-        success &&= await test_FS(raw)
+        success &&= await test_FS(raw, devinfo)
         success &&= await test_CPU(raw)
 
         if (success) {
