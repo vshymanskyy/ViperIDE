@@ -341,13 +341,13 @@ async function connectDevice(type) {
         }
 
         if (success) {
-            log("\n === OK ===\n")
+            log("\n === OK ===\n\n")
         } else {
-            log("\n === FAILED ===\n")
+            log("\n === FAILED ===\n\n")
         }
     } catch(err) {
         log(err.stack + "\n")
-        log("\n === FAILED ===\n")
+        log("\n === FAILED ===\n\n")
     } finally {
         await raw.end()
         await disconnectDevice()
