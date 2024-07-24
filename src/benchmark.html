@@ -346,8 +346,8 @@ async function connectDevice(type) {
             log("\n === FAILED ===\n")
         }
     } catch(err) {
-        log("\n === FAILED ===\n")
         log(err.stack + "\n")
+        log("\n === FAILED ===\n")
     } finally {
         await raw.end()
         await disconnectDevice()
