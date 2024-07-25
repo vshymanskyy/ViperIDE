@@ -37,14 +37,23 @@ for i, char in enumerate(text):
 print(reset)
 print("=" * 32)
 `);
-    fs.writeFile('/demo_01.py', `
-# TODO: Demo 1
+    fs.writeFile('/01_fetch.py', `
+import js
+import asyncio
+
+async def task():
+    url = "https://api.github.com/users/micropython"
+    print(f"Fetching {url}...")
+    res = await js.fetch(url)
+    data = await res.json()
+    for i in dir(data):
+        print(f"{i}: {data[i]}")
+
+asyncio.create_task(task())
 `);
-    fs.writeFile('/demo_02.py', `
-# TODO: Demo 2
-`);
-    fs.writeFile('/demo_03.py', `
-# TODO: Demo 3
+    fs.writeFile('/02_js_eval.py', `
+import js
+js.eval("alert('Hello from JavaScript')")
 `);
 }
 
