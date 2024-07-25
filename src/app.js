@@ -524,6 +524,7 @@ export async function runCurrentFile() {
         QID('btn-run-icon').classList.replace('fa-circle-play', 'fa-circle-stop')
         isInRunMode = true
         const emit = true
+        await sleep(10)
         await raw.exec(editor.state.doc.toString(), timeout, emit)
     } catch (err) {
         if (err.message.includes('KeyboardInterrupt')) {

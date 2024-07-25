@@ -12,11 +12,13 @@ import i18next from 'i18next'
 const T = i18next.t.bind(i18next)
 
 function populateFS(fs) {
+
+    // ----------------------------------------------------------------------
     fs.writeFile('/main.py', `
 # ViperIDE - MicroPython Web IDE
 # Read more: https://github.com/vshymanskyy/ViperIDE
 
-# 🚧 This is an experimental device emulator 🚧
+# 🚧 This is an experimental virtual device 🚧
 # It runs the official MicroPython WASM port directly in your browser
 # Most things work: you can edit and run files, use the Terminal, install packages, etc.
 # WARNING: if your script takes a long time to run, the browser will busy-wait
@@ -37,6 +39,8 @@ for i, char in enumerate(text):
 print(reset)
 print("=" * 32)
 `);
+
+    // ----------------------------------------------------------------------
     fs.writeFile('/01_fetch.py', `
 import js
 import asyncio
@@ -51,6 +55,8 @@ async def task():
 
 asyncio.create_task(task())
 `);
+
+    // ----------------------------------------------------------------------
     fs.writeFile('/02_js_eval.py', `
 import js
 js.eval("alert('Hello from JavaScript')")
