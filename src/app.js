@@ -969,7 +969,7 @@ export function applyTranslation() {
 
 # Connect your device and start creating! 🤖👨‍💻🕹️
 
-# You can also open an emulated device and explore some examples:
+# You can also open a virtual device and explore some examples:
 # https://viper-ide.org?vm=1
 `)
 

@@ -1,7 +1,7 @@
 # ViperIDE
 
-<!-- [![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md) -->
-![GitHub Repo stars](https://img.shields.io/github/stars/vshymanskyy/ViperIDE?style=flat-square&color=green) 
+[![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md) 
+[![GitHub Repo stars](https://img.shields.io/github/stars/vshymanskyy/ViperIDE?style=flat-square&color=green)](https://github.com/vshymanskyy/ViperIDE/stargazers) 
 [![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=green)](https://github.com/vshymanskyy/ViperIDE/issues) 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/vshymanskyy/ViperIDE) 
 [![Support vshymanskyy](https://img.shields.io/static/v1?label=support&message=%E2%9D%A4&color=%23fe8e86)](https://quicknote.io/da0a7d50-bb49-11ec-936a-6d7fd5a2de08) 
@@ -15,7 +15,7 @@
 ## Features
 
 - No software installation required, works out of the box
-- Covers most of the functionality of tools like `mpremote`, `ampy`, `rshell`
+- Covers most of the functionality of tools like `Thonny`, `mpremote`, `ampy`, `rshell`
 - **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **iOS**, **Chromebook**
   - [`Direct USB / Serial`](docs/USB-Serial-REPL.md)
   - [`WebREPL over internet 🌎`](docs/Web-REPL-Relay.md) - 🚧 *experimental*
