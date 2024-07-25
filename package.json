@@ -1,12 +1,12 @@
 {
   "name": "ViperIDE",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "scripts": {
     "build": "rollup --config",
     "watch": "rollup --config --configDebug --watch"
   },
   "dependencies": {
-    "@astral-sh/ruff-wasm-web": "^0.5.3",
+    "@astral-sh/ruff-wasm-web": "^0.5.5",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-markdown": "^6.2.5",
     "@codemirror/lang-python": "^6.1.6",
@@ -41,8 +41,8 @@
     "@rollup/plugin-terser": "^0.4.4",
     "eslint": "^9.7.0",
     "globals": "^15.8.0",
-    "postcss": "^8.4.39",
-    "rollup": "^4.18.1",
+    "postcss": "^8.4.40",
+    "rollup": "^4.19.0",
     "rollup-plugin-postcss": "^4.0.2"
   }
 }
