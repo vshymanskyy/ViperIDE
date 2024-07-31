@@ -167,15 +167,23 @@ try: u=os.uname()
 except: u=('','','','',sys.platform)
 try: v=sys.version.split(';')[1].strip()
 except: v='MicroPython '+u[2]
-mpy=str(getattr(sys.implementation, '_mpy', 0) & 0xFF)
+mpy=getattr(sys.implementation, '_mpy', 0)
 sp=':'.join(sys.path)
-print('|'.join([u[4],u[2],u[0],v,mpy,sp]))
+d=[u[4],u[2],u[0],v,mpy>>10,mpy&0xFF,(mpy>>8)&3,sp]
+print('|'.join(str(x) for x in d))
 `)
-        let [machine, release, sysname, version, mpy_ver, sys_path] = rsp.trim().split('|')
+        let [machine, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path] = rsp.trim().split('|')
         sys_path = sys_path.split(':')
+        // See https://docs.micropython.org/en/latest/reference/mpyfiles.html
+        try {
+            mpy_arch = [null, 'x86', 'x64', 'armv6', 'armv6m', 'armv7m', 'armv7em', 'armv7emsp', 'armv7emdp', 'xtensa', 'xtensawin', 'rv32imc'][mpy_arch]
+        } catch (err) {
+            mpy_arch = null
+        }
         mpy_ver = parseInt(mpy_ver, 10)
+        mpy_sub = parseInt(mpy_sub, 10)
         if (!mpy_ver) { mpy_ver = 'py' }
-        return { machine, release, sysname, version, mpy_ver, sys_path }
+        return { machine, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path }
     }
 
 
