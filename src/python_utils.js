@@ -41,22 +41,32 @@ export function parseStackTrace(stackTrace)
     }
 
     const f = result.frames.at(-1)
-    result.summary = `${result.message} at ${f.file}:${f.line}`
-
-    return result;
+    if (f) {
+        result.summary = `${result.message} at ${f.file}:${f.line}`
+        return result;
+    }
 }
 
 export async function validatePython(filename, content) {
     try {
         const [_, fname] = splitPath(filename)
         const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
-        const options = undefined
+        // TODO: detect the actual arch when possible
+        // Waiting for: https://github.com/micropython/micropython/pull/15268
+        const options = ["-march=armv7m"]
         const result = await compile_v6(fname, content, options, wasmUrlV6)
         if (result.status !== 0) {
-            return parseStackTrace(result.err.join('\n'))
+            const stderr = result.err.join('\n')
+            const stdout = result.out.join('\n')
+            const bt = parseStackTrace(stderr)
+            if (bt) {
+                return bt
+            } else {
+                console.error("mpy-cross failed:", stdout, stderr)
+            }
         }
     } catch (err) {
-        //report('Cannot run mpy-cross')
+        console.error("Cannot run mpy-cross", err)
     }
 }
 
