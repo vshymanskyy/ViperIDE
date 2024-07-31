@@ -47,13 +47,15 @@ export function parseStackTrace(stackTrace)
     }
 }
 
-export async function validatePython(filename, content) {
+export async function validatePython(filename, content, devInfo) {
     try {
         const [_, fname] = splitPath(filename)
         const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
         // TODO: detect the actual arch when possible
-        // Waiting for: https://github.com/micropython/micropython/pull/15268
-        const options = ["-march=armv7m"]
+        let options = null
+        if (devInfo && devInfo.mpy_arch) {
+            options = [ "-march="+devInfo.mpy_arch ]
+        }
         const result = await compile_v6(fname, content, options, wasmUrlV6)
         if (result.status !== 0) {
             const stderr = result.err.join('\n')

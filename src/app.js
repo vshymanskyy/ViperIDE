@@ -70,6 +70,7 @@ const T = i18next.t.bind(i18next)
 let editor, term, port
 let editorFn = ''
 let isInRunMode = false
+let devInfo = null
 
 async function disconnectDevice() {
     if (port) {
@@ -222,12 +223,12 @@ export async function connectDevice(type) {
 
         const raw = await MpRawMode.begin(port)
         try {
-            const devinfo = await raw.getDeviceInfo()
-            Object.assign(devinfo, { connection: type })
+            devInfo = await raw.getDeviceInfo()
+            Object.assign(devInfo, { connection: type })
 
-            toastr.success(sanitizeHTML(devinfo.machine + '\n' + devinfo.version), 'Device connected')
-            analytics.track('Device Connected', devinfo)
-            console.log('Device info', devinfo)
+            toastr.success(sanitizeHTML(devInfo.machine + '\n' + devInfo.version), 'Device connected')
+            analytics.track('Device Connected', devInfo)
+            console.log('Device info', devInfo)
 
             const files = await _raw_updateFileList(raw)
             if        (files.filter(x => x.name === 'main.py').length) {
@@ -441,7 +442,8 @@ async function _loadContent(fn, content) {
 
         editorElement.innerHTML = '' // Clear existing content
         editor = await createNewEditor(editorElement, fn, content, {
-            wordWrap: QID('use-word-wrap').checked
+            wordWrap: QID('use-word-wrap').checked,
+            devInfo,
         })
 
         editorFn = fn
@@ -606,10 +608,12 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
     analytics.track('Package Install', { name: pkg })
     toastr.info(`Installing ${pkg}...`)
     try {
-        const devinfo = await raw.getDeviceInfo()
-        const mpy_ver = devinfo.mpy_ver
+        if (!devInfo) {
+            devInfo = await raw.getDeviceInfo()
+        }
+        const mpy_ver = devInfo.mpy_ver
         // Find the first `lib` folder in sys.path
-        const lib_path = devinfo.sys_path.find(x => x.endsWith('/lib'))
+        const lib_path = devInfo.sys_path.find(x => x.endsWith('/lib'))
         if (!lib_path) {
             toastr.error(`"lib" folder not found in sys.path`)
             return

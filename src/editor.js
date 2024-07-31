@@ -176,9 +176,11 @@ const modeTOML = StreamLanguage.define(toml)
  * mpy-cross linter
  */
 
+let devInfo
+
 const mpyCrossLinter = linter(async (view) => {
   const content = view.state.doc.toString()
-  const backtrace = await validatePython('<stdin>', content)
+  const backtrace = await validatePython('<stdin>', content, devInfo)
 
   const diagnostics = []
   if (backtrace) {
@@ -308,6 +310,8 @@ export async function createNewEditor(editorElement, fn, content, options) {
     if (options.wordWrap) {
         mode.push(EditorView.lineWrapping)
     }
+
+    devInfo = options.devInfo
 
     const view = new EditorView({
         parent: editorElement,
