@@ -1,7 +1,7 @@
 # Feedback on ViperIDE
 
 Instead of editing on my laptop, downloading, executing..... reset...  
-In my prototyping cycle, I just develop directly on the board using ViperIDE. Out of a click I can soft-reset.
+In my prototyping cycle, I just develop directly on the board using ViperIDE. Out of a click I can soft-reset.  
 I have a small script that via `mpremote` downloads my assets back to my computer for version control and snapshots.
 
 ---
