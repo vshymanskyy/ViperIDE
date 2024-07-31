@@ -32,9 +32,7 @@ This is awesome. New to MicroPython but Thonny was getting difficult to use.
 
 I've just had a play with this and, just like Makecode, this should make it so much simpler for schools to use the Pico as the use of WebUSB(or WebREPL)
 combined with MicroPython means the Pico looks like a serial device, not a USB device, so ignores things like BitLocker 😃
-And no need to install Thonny, Mu, etc, which should keep our IT team happy  😉
-
-...
-
+And no need to install Thonny, Mu, etc, which should keep our IT team happy  😉  
+...  
 I've found that MicroPython on a Pico makes it appear as a serial device (whereas CP makes it appear as a USB device),
 which means, just like WebUSB on the Microbit, it bypasses BitLocker 😃
