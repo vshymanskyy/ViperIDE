@@ -36,3 +36,9 @@ And no need to install Thonny, Mu, etc, which should keep our IT team happy  �
 ...  
 I've found that MicroPython on a Pico makes it appear as a serial device (whereas CP makes it appear as a USB device),
 which means, just like WebUSB on the Microbit, it bypasses BitLocker 😃
+
+---
+
+For me, it’s an opportunity to program from any device without worrying about installing software. Plus, instant updates mean there's no need to download anything.
+
+---
