@@ -48,10 +48,11 @@ export function parseStackTrace(stackTrace)
 }
 
 export async function validatePython(filename, content, devInfo) {
+    // TODO: looks like it fetches the (cached) wasm file on every run
+    // Ideally we want ti init the wasm file once and then reuse the instance multiple times
     try {
         const [_, fname] = splitPath(filename)
         const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
-        // TODO: detect the actual arch when possible
         let options = null
         if (devInfo && devInfo.mpy_arch) {
             options = [ "-march="+devInfo.mpy_arch ]
