@@ -170,6 +170,31 @@ const modeINI = StreamLanguage.define(simpleMode({
     ]
 }))
 
+const modeMPY_DIS = StreamLanguage.define(simpleMode({
+  start: [
+    // Keywords
+    {regex: /(?:mpy_source_file|source_file|header|qstr_table|obj_table|simple_name|raw bytecode|raw data|prelude|args|line info|children|hex dump|disasm)/, token: "keyword"},
+
+    // Opcode names
+    {regex: /\b(?:[A-Z][A-Z_]*[A-Z])\b/, token: "def"},
+
+    // Hex bytes
+    {regex: /\b(?:[0-9a-fA-F]{2}(?:\s[0-9a-fA-F]{2})*)\b/, token: "number"},
+
+    // Arguments
+    {regex: /\b0x[0-9a-fA-F]+\b|\b\d+\b/, token: "number"},
+
+    // String literals
+    {regex: /b?'[^']*'|b?"[^"]*"/, token: "string"},
+
+    // Comments
+    {regex: /;.*$/, token: "comment"},
+
+    // Anything else
+    //{regex: /\s+/, token: "whitespace"},
+  ]
+}))
+
 const modeTOML = StreamLanguage.define(toml)
 
 /*
@@ -295,6 +320,8 @@ export async function createNewEditor(editorElement, fn, content, options) {
             ...(ruffWorkspace ? [ruffLinter] : []),
             mpyCrossLinter,
         ]
+    } else if (fn.endsWith('.mpy.dis')) {
+        mode = [ modeMPY_DIS ]
     } else if (fn.endsWith('.json')) {
         mode = [ modeJSON() ]
     } else if (fn.endsWith('.pem')) {
