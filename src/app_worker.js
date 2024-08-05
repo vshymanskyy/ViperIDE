@@ -10,21 +10,20 @@ const cacheName = `viper-${VIPER_IDE_VERSION}`;
 
 const log = console.log.bind(console).bind(console, `[Service Worker ${VIPER_IDE_VERSION}]`);
 
-const contentToCache = [
-    './',
-    './index.html',
-    './assets/favicon.png',
-    './assets/app_1024.png',
-    './assets/mpy-cross-v6.wasm',
-    './assets/micropython.wasm',
-    './assets/ruff_wasm_bg.wasm',
-];
+const contentToCache = new Set([
+    '/index.html',
+    '/assets/favicon.png',
+    '/assets/app_1024.png',
+    '/assets/mpy-cross-v6.wasm',
+    '/assets/micropython.wasm',
+    '/assets/ruff_wasm_bg.wasm',
+]);
 
 self.addEventListener('install', event => {
   log('Install');
   event.waitUntil((async () => {
     const cache = await caches.open(cacheName);
-    await Promise.all(contentToCache.map(resource => {
+    await Promise.all(contentToCache.values().map(resource => {
       return cache.add(new Request(resource, { cache: 'no-store' }));
     }));
     self.skipWaiting();
@@ -43,19 +42,36 @@ self.addEventListener('activate', event => {
   })());
 });
 
+function normalizeUrl(s) {
+  const url = new URL(s);
+  if (url.pathname === '/') {
+    return new URL('/index.html', url.origin);
+  }
+  return url;
+}
+
 self.addEventListener('fetch', event => {
   event.respondWith((async () => {
-    const r = await caches.match(event.request, { cacheName });
+    const cache = await caches.open(cacheName);
+    const url = normalizeUrl(event.request.url);
+    const r = await cache.match(url);
     if (r) {
-      log(`Using cached resource: ${event.request.url}`);
+      log(`Using cached: ${url}`);
       return r;
     } else {
-      log(`Loading: ${event.request.url}`);
+      //log(`Loading: ${url}`);
       try {
-          return await fetch(event.request);
+        const rsp = await fetch(event.request);
+
+        if (contentToCache.has(url.pathname)) {
+          log(`Caching: ${url}`);
+          cache.put(event.request, rsp.clone());
+        }
+
+        return rsp;
       } catch (err) {
-          log(err.message)
-          throw err
+        log(err.message);
+        throw err;
       }
     }
   })());
