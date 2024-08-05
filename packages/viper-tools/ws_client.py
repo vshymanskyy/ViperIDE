@@ -10,6 +10,7 @@ import random
 import re
 import struct
 import socket
+from micropython import const
 from collections import namedtuple
 
 # Opcodes
@@ -184,7 +185,6 @@ class WebSocket(io.IOBase):
         elif isinstance(buf, (bytes, bytearray)):
             opcode = OP_BYTES
         else:
-            print(repr(buf))
             raise TypeError()
 
         self.write_frame(opcode, buf)
