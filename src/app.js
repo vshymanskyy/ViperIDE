@@ -865,6 +865,27 @@ export function applyTranslation() {
 
 (async () => {
 
+    if ('serviceWorker' in navigator) {
+        try {
+            await navigator.serviceWorker.register('./app_worker.js');
+        } catch {}
+    }
+
+    await i18next.use(LanguageDetector).init({
+        fallbackLng: 'en',
+        //debug: true,
+        resources: translations,
+    })
+
+    const currentLang = i18next.resolvedLanguage || 'en';
+
+    const lang_sel = QID('lang')
+    lang_sel.value = currentLang
+    lang_sel.addEventListener('change', async function() {
+        await i18next.changeLanguage(this.value)
+        applyTranslation()
+    })
+
     try {
         if (typeof window.analytics.track === 'undefined') {
             throw new Error()
@@ -930,27 +951,6 @@ export function applyTranslation() {
             track: function() {}
         }
     }
-
-    if ('serviceWorker' in navigator) {
-        try {
-            await navigator.serviceWorker.register('./app_worker.js');
-        } catch {}
-    }
-
-    await i18next.use(LanguageDetector).init({
-        fallbackLng: 'en',
-        //debug: true,
-        resources: translations,
-    })
-
-    const currentLang = i18next.resolvedLanguage || 'en';
-
-    const lang_sel = QID('lang')
-    lang_sel.value = currentLang
-    lang_sel.addEventListener('change', async function() {
-        await i18next.changeLanguage(this.value)
-        applyTranslation()
-    })
 
     const zoom_sel = QID('zoom')
     zoom_sel.value = '1.00'
