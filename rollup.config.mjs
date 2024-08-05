@@ -1,9 +1,10 @@
-import nodeResolve from '@rollup/plugin-node-resolve'
+import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
-import postcss from 'rollup-plugin-postcss'
 import replace from '@rollup/plugin-replace'
 import terser from '@rollup/plugin-terser'
+import css from 'rollup-plugin-import-css'
+import serve from 'rollup-plugin-serve'
 import fs from 'fs'
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
@@ -24,11 +25,11 @@ const common = (args, name) => ({
     throw new Error(warning.message)
   },
   plugins: [
-    postcss({
-      extract: `${name}.css`,
-      minimize: true,
+    css({
+      output: `${name}.css`,
+      minify: !args.configDebug,
     }),
-    nodeResolve(),
+    resolve(),
     commonjs(),
     json({
       compact: true
@@ -40,7 +41,8 @@ const common = (args, name) => ({
         VIPER_IDE_BUILD:    Date.now(),
       }
     }),
-    ...(args.configDebug ? [] : [ terser() ])
+    !args.configDebug && terser(),
+    args.configDebug && serve("build"),
   ]
 })
 
