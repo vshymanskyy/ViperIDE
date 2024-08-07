@@ -38,12 +38,3 @@
 [Discussion](https://github.com/orgs/micropython/discussions/15219)   
 [CodeMirror](https://codemirror.net), [Ruff](https://docs.astral.sh/ruff), [Xterm.js](https://xtermjs.org), [PeerJS](https://peerjs.com)
 
-## Limitations
-
-- `WebUSB` and `WebBluetooth` require a Chrome-based browser like Edge, Opera, Chromium, Brave, etc.
-- Older MicroPython versions may or may not work. Keep your MicroPython up to date.
-  *That said, ViperIDE has been reported to work with MicroPython v1.13 back from Sep 2020* 🤠
-- Some USB devices require drivers installation.
-- Some boards are not detected by Android via USB OTG. In such cases, only `BLE`, `WebREPL`, `P2P` connection is possible.
-- On iOS, `WebUSB` and `WebBluetooth` are not available. Only `WebREPL` and `P2P` works.
-
