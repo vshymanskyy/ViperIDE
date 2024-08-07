@@ -3,10 +3,10 @@
 - No software installation required, works out of the box
 - Covers most of the functionality of tools like `Thonny`, `mpremote`, `ampy`, `rshell`
 - **Multiple ways to connect** on **Windows**, **MacOS**, **Linux**, **Android**, **iOS**, **Chromebook**
-  - [`Direct USB / Serial`](docs/USB-Serial-REPL.md)
-  - [`WebREPL over internet 🌎`](docs/Web-REPL-Relay.md) - 🚧 *experimental*
-  - [`WebREPL in local network`](docs/Web-REPL-Server.md)
-  - [`Bluetooth LE`](docs/Bluetooth-REPL.md)
+  - [`Direct USB / Serial`](USB-Serial-REPL.md)
+  - [`WebREPL over internet 🌎`](Web-REPL-Relay.md) - 🚧 *experimental*
+  - [`WebREPL in local network`](Web-REPL-Server.md)
+  - [`Bluetooth LE`](Bluetooth-REPL.md)
   - [`P2P/WebRTC Bridge`](https://viper-ide.org/bridge.html)
   - [`Virtual Device`](https://viper-ide.org/?vm=1)
 - **File Editor**
