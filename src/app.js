@@ -1042,10 +1042,13 @@ export function applyTranslation() {
     }).observe(QID('xterm'))
 
     window.addEventListener('keydown', (ev) => {
-        if (ev.code == 'F5' && !ev.ctrlKey) {
+        // ctrlKey for Windows/Linux, metaKey for Mac
+        if (ev.ctrlKey || ev.metaKey) {
+            if (ev.code == 'KeyS') {
+                saveCurrentFile()
+            }
+        } else if (ev.code == 'F5') {
             runCurrentFile()
-        } else if (ev.code == 'KeyS' && ev.ctrlKey) {
-            saveCurrentFile()
         } else {
             return
         }
