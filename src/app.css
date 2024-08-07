@@ -72,6 +72,7 @@ body.loaded {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-sizing: content-box;
 }
 
 #terminal-tabs {
