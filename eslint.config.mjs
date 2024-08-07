@@ -7,9 +7,13 @@ export default [
   pluginJs.configs.recommended,
   {
     rules: {
-      "no-unused-vars": [ "warn",
-          { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-      ],
+      "no-unused-vars": [ "warn", {
+          argsIgnorePattern: "^_", varsIgnorePattern: "^_",
+      }],
+      "no-use-before-define": [ "error", {
+          functions: false,
+          variables: false,
+      }],
       "no-undef": "error",
       "no-empty": "warn",
     },

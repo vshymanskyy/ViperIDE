@@ -21,6 +21,12 @@ Congrats and thank you!
 
 ---
 
+I mainly use Thonny on PiPico and ESP32 and I am still just starting to Test ViperIDE. So far it seems a worthy competitor to Thonny.
+It is lightweight with nothing to install and runs in the browser.
+I has a very nice option to use bluetooth as your serial interface which is what attracted me to it.
+
+---
+
 Congratulations (again:-)). And thanks.
 This is a very simple way to try out MP for WebAssembly.
 
