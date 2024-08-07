@@ -39,7 +39,7 @@ import { splitPath, sleep, getUserUID, getScreenInfo, IdleMonitor,
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
 import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faCubes,
-         faCube, faTools, faGear, faCircleInfo, faStar, faExpand,
+         faCube, faTools, faGear, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark
        } from '@fortawesome/free-solid-svg-icons'
@@ -47,7 +47,7 @@ import { faFile, faMessage, faCircleDown } from '@fortawesome/free-regular-svg-i
 
 library.add(faUsb, faBluetoothB)
 library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faCubes,
-         faCube, faTools, faGear, faCircleInfo, faStar, faExpand,
+         faCube, faTools, faGear, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
 library.add(faFile, faMessage, faCircleDown)
@@ -357,8 +357,11 @@ async function _raw_updateFileList(raw) {
             } else {
                 /* TODO ••• */
                 let icon;
-                if (n.name.endsWith('.mpy')) {
+                const fnuc = n.name.toUpperCase();
+                if (fnuc.endsWith('.MPY')) {
                     icon = '<i class="fa-solid fa-cube fa-fw"></i>'
+                } else if (['.CRT', '.PEM', '.DER', '.CER', '.PFX', '.P12'].some(x => fnuc.endsWith(x))) {
+                    icon = '<i class="fa-solid fa-certificate fa-fw"></i>'
                 } else {
                     icon = '<i class="fa-regular fa-file fa-fw"></i>'
                 }
