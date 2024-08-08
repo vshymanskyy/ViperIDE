@@ -815,7 +815,11 @@ export function applyTranslation() {
 
         document.body.dir = i18next.dir()
 
-        QID('btn-save').setAttribute('title',     T('tool.save') + ' [Ctrl+S]')
+        let metaKey = "Ctrl"
+        if (navigator.platform.indexOf("Mac") == 0) {
+            metaKey = "Cmd"
+        }
+        QID('btn-save').setAttribute('title',     T('tool.save') + ` [${metaKey}+S]`)
         QID('btn-run').setAttribute('title',      T('tool.run') + ' [F5]')
         QID('btn-conn-ws').setAttribute('title',  T('tool.conn.ws'))
         QID('btn-conn-ble').setAttribute('title', T('tool.conn.ble'))
