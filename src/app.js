@@ -815,7 +815,11 @@ export function applyTranslation() {
 
         document.body.dir = i18next.dir()
 
-        QID('btn-save').setAttribute('title',     T('tool.save') + ' [Ctrl+S]')
+        let metaKey = "Ctrl"
+        if (navigator.platform.indexOf("Mac") == 0) {
+            metaKey = "Cmd"
+        }
+        QID('btn-save').setAttribute('title',     T('tool.save') + ` [${metaKey}+S]`)
         QID('btn-run').setAttribute('title',      T('tool.run') + ' [F5]')
         QID('btn-conn-ws').setAttribute('title',  T('tool.conn.ws'))
         QID('btn-conn-ble').setAttribute('title', T('tool.conn.ble'))
@@ -1042,10 +1046,13 @@ export function applyTranslation() {
     }).observe(QID('xterm'))
 
     window.addEventListener('keydown', (ev) => {
-        if (ev.code == 'F5' && !ev.ctrlKey) {
+        // ctrlKey for Windows/Linux, metaKey for Mac
+        if (ev.ctrlKey || ev.metaKey) {
+            if (ev.code == 'KeyS') {
+                saveCurrentFile()
+            }
+        } else if (ev.code == 'F5') {
             runCurrentFile()
-        } else if (ev.code == 'KeyS' && ev.ctrlKey) {
-            saveCurrentFile()
         } else {
             return
         }
