@@ -1050,6 +1050,8 @@ export function applyTranslation() {
         if (ev.ctrlKey || ev.metaKey) {
             if (ev.code == 'KeyS') {
                 saveCurrentFile()
+            } else {
+                return
             }
         } else if (ev.code == 'F5') {
             runCurrentFile()
