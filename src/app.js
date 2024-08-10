@@ -349,7 +349,7 @@ async function _raw_updateFileList(raw) {
         for (const n of sorted(node)) {
             if ('content' in n) {
                 fileTree.insertAdjacentHTML('beforeend', `<div>
-                    <span class="folder name">${offset}<i class="fa-solid fa-folder fa-fw"></i> ${n.name}</span>
+                    ${offset}<span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> ${n.name}</span>
                     <a href="#" class="menu-action" onclick="app.removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
                     <a href="#" class="menu-action" onclick="app.createNewFile('${n.path}/');return false;"><i class="fa-solid fa-plus"></i></a>
                 </div>`)
@@ -369,11 +369,11 @@ async function _raw_updateFileList(raw) {
                 if (n.path.startsWith("/proc/") || n.path.startsWith("/dev/")) {
                     icon = '<i class="fa-solid fa-gear fa-fw"></i>'
                     fileTree.insertAdjacentHTML('beforeend', `<div>
-                        <span>${offset}${icon} ${n.name}</span>
+                        ${offset}<span>${icon} ${n.name}&nbsp;</span>
                     </div>`)
                 } else {
                     fileTree.insertAdjacentHTML('beforeend', `<div>
-                        <a href="#" class="name ${sel}" onclick="app.fileClick('${n.path}');return false;">${offset}${icon} ${n.name}</a>
+                        ${offset}<a href="#" class="name ${sel}" onclick="app.fileClick('${n.path}');return false;">${icon} ${n.name}&nbsp;</a>
                         <a href="#" class="menu-action" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
                         <span class="menu-action">${sizeFmt(n.size)}</span>
                     </div>`)
@@ -384,7 +384,7 @@ async function _raw_updateFileList(raw) {
     traverse(result, 1)
 
     fileTree.insertAdjacentHTML('beforeend', `<div>
-        <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md</a>
+        <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
         <span class="menu-action">virtual</span>
     </div>`)
 
@@ -396,7 +396,7 @@ export async function fileClick(fn) {
 
     const e = window.event.target || window.event.srcElement;
 
-    for (const el of document.getElementsByClassName('name')){
+    for (const el of document.getElementsByClassName('name')) {
         el.classList.remove('selected')
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "start": "rollup --config --configDebug --watch"
   },
   "dependencies": {
-    "@astral-sh/ruff-wasm-web": "^0.5.6",
+    "@astral-sh/ruff-wasm-web": "^0.5.7",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-markdown": "^6.2.5",
     "@codemirror/lang-python": "^6.1.6",
@@ -28,20 +28,20 @@
     "github-fork-ribbon-css": "^0.2.3",
     "i18next": "^23.11.5",
     "i18next-browser-languagedetector": "^8.0.0",
-    "marked": "^13.0.3",
+    "marked": "^14.0.0",
     "peerjs": "^1.5.4",
     "toastr": "^2.1.4",
     "ua-parser-js": "^1.0.38",
     "web-serial-polyfill": "^1.0.15"
   },
   "devDependencies": {
-    "@eslint/js": "^9.8.0",
+    "@eslint/js": "^9.9.0",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.7",
     "@rollup/plugin-terser": "^0.4.4",
-    "eslint": "^9.8.0",
+    "eslint": "^9.9.0",
     "globals": "^15.9.0",
     "rollup": "^4.20.0",
     "rollup-plugin-import-css": "^3.5.0",

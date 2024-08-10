@@ -156,6 +156,10 @@ body.loaded {
 
 #menu-file-tree div .selected {
     font-weight: bold;
+    color: var(--bg-color);
+    background: var(--fg-color);
+    border-radius: 1px;
+    outline: 2px solid var(--fg-color);
 }
 
 .menu-action {
