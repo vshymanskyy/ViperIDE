@@ -230,12 +230,23 @@ export async function connectDevice(type) {
             analytics.track('Device Connected', devInfo)
             console.log('Device info', devInfo)
 
-            const files = await _raw_updateFileList(raw)
-            if        (files.filter(x => x.name === 'main.py').length) {
+            let fs_stats = [null, null, null];
+            try {
+                fs_stats = await raw.getFsStats()
+            } catch (err) {
+                console.log(err)
+            }
+
+            const fs_tree = await raw.walkFs()
+
+            if        (fs_tree.filter(x => x.name === 'main.py').length) {
                 await _raw_loadFile(raw, 'main.py')
-            } else if (files.filter(x => x.name === 'code.py').length) {
+            } else if (fs_tree.filter(x => x.name === 'code.py').length) {
                 await _raw_loadFile(raw, 'code.py')
             }
+
+            _updateFileTree(fs_tree, fs_stats);
+
         } catch (err) {
             if (err.message.includes('Timeout')) {
                 report('Device is not responding', new Error(`Ensure that:\n- You're using a recent version of MicroPython\n- The correct device is selected`))
@@ -276,7 +287,7 @@ export async function createNewFile(path) {
             await raw.touchFile(full)
             await _raw_loadFile(raw, full)
         }
-        await _raw_updateFileList(raw)
+        await _raw_updateFileTree(raw)
     } finally {
         await raw.end()
     }
@@ -288,7 +299,7 @@ export async function removeFile(path) {
     const raw = await MpRawMode.begin(port)
     try {
         await raw.removeFile(path)
-        await _raw_updateFileList(raw)
+        await _raw_updateFileTree(raw)
     } finally {
         await raw.end()
     }
@@ -300,7 +311,7 @@ export async function removeDir(path) {
     const raw = await MpRawMode.begin(port)
     try {
         await raw.removeDir(path)
-        await _raw_updateFileList(raw)
+        await _raw_updateFileTree(raw)
     } finally {
         await raw.end()
     }
@@ -314,15 +325,9 @@ async function execReplNoFollow(cmd) {
     //await port.write('\x04')            // Ctrl-D: execute
 }
 
-async function _raw_updateFileList(raw) {
-    let [fs_used, fs_free, fs_size] = [null, null, null];
-    try {
-        [fs_used, fs_free, fs_size] = await raw.getFsStats()
-    } catch (err) {
-        console.log(err)
-    }
-
-    const result = await raw.walkFs()
+function _updateFileTree(fs_tree, fs_stats)
+{
+    let [fs_used, fs_free, fs_size] = fs_stats;
 
     function sorted(content) {
         // Natural sort by name
@@ -365,7 +370,7 @@ async function _raw_updateFileList(raw) {
                 } else {
                     icon = '<i class="fa-regular fa-file fa-fw"></i>'
                 }
-                let sel = (n.path === editorFn) ? 'selected' : ''
+                let sel = ([editorFn, `/${editorFn}`, `/flash/${editorFn}`].includes(n.path)) ? 'selected' : ''
                 if (n.path.startsWith("/proc/") || n.path.startsWith("/dev/")) {
                     icon = '<i class="fa-solid fa-gear fa-fw"></i>'
                     fileTree.insertAdjacentHTML('beforeend', `<div>
@@ -381,14 +386,25 @@ async function _raw_updateFileList(raw) {
             }
         }
     }
-    traverse(result, 1)
+    traverse(fs_tree, 1)
 
     fileTree.insertAdjacentHTML('beforeend', `<div>
         <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
         <span class="menu-action">virtual</span>
     </div>`)
+}
 
-    return result
+async function _raw_updateFileTree(raw) {
+    let fs_stats = [null, null, null];
+    try {
+        fs_stats = await raw.getFsStats()
+    } catch (err) {
+        console.log(err)
+    }
+
+    const fs_tree = await raw.walkFs()
+
+    _updateFileTree(fs_tree, fs_stats);
 }
 
 export async function fileClick(fn) {
@@ -477,7 +493,7 @@ export async function saveCurrentFile() {
     const raw = await MpRawMode.begin(port)
     try {
         await raw.writeFile(editorFn, content)
-        await _raw_updateFileList(raw)
+        await _raw_updateFileTree(raw)
     } finally {
         await raw.end()
     }
@@ -670,7 +686,7 @@ export async function installPkg(index_url, pkg, version='latest', pkg_info=null
     const raw = await MpRawMode.begin(port)
     try {
         await _raw_installPkg(raw, index_url, pkg, version, pkg_info)
-        await _raw_updateFileList(raw)
+        await _raw_updateFileTree(raw)
     } finally {
         await raw.end()
     }
