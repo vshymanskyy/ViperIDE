@@ -1,5 +1,6 @@
 import { compile as compile_v6 } from '@pybricks/mpy-cross-v6'
 import { splitPath } from './utils.js'
+import { TarReader } from '@gera2ld/tarjs'
 
 export function parseStackTrace(stackTrace)
 {
@@ -113,4 +114,64 @@ export function detectIndentStyle(content) {
     }
 
     return mostCommonIndent[0];
+}
+
+let _tools_vm;
+
+export async function getToolsVM() {
+    if (_tools_vm) { return _tools_vm }
+
+    _tools_vm = await loadMicroPython({
+        url: 'https://viper-ide.org/assets/micropython.wasm',
+        //stdout: (data) => { console.log(data) },
+    })
+
+    // Fetch the tar.gz file from the URL
+    const response = await fetch('https://viper-ide.org/tools_vfs.tar.gz');
+    if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+    }
+    const decompressedStream = response.body.pipeThrough(new DecompressionStream('gzip'));
+    const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
+
+    const tar = await TarReader.load(decompressedBuffer)
+
+    // Unpack VFS
+    for (const entry of tar.fileInfos) {
+        if (entry.type == 53) {
+            _tools_vm.FS.mkdir("/" + entry.name)
+        } else if (entry.type == 48) {
+            let data = await tar.getFileBlob(entry.name)
+            data = await data.arrayBuffer()
+            _tools_vm.FS.writeFile("/" + entry.name, new Uint8Array(data))
+        }
+    }
+
+    return _tools_vm
+}
+
+export async function disassembleMPY(buffer) {
+    const vm = await getToolsVM()
+    vm.FS.writeFile("/tmp/file.mpy", buffer)
+
+    vm.runPython(`
+import builtins
+mpytool = __import__('mpy-tool')
+
+# Redirect output to a file
+f = open('/tmp/file.mpy.dis', 'w')
+pp = builtins.print
+def new_print(*a, **kw):
+    pp(*a, file=f)
+
+# Run disassembler
+builtins.print = new_print
+mpytool.main(['-d', '/tmp/file.mpy'])
+
+# Cleanup
+builtins.print = pp
+f.close()
+`)
+
+    return vm.FS.readFile("/tmp/file.mpy.dis", { encoding: 'utf8' })
 }

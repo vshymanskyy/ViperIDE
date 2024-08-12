@@ -338,6 +338,10 @@ export async function createNewEditor(editorElement, fn, content, options) {
         mode.push(EditorView.lineWrapping)
     }
 
+    if (options.readOnly) {
+        mode.push(EditorState.readOnly.of(true))
+    }
+
     devInfo = options.devInfo
 
     const view = new EditorView({

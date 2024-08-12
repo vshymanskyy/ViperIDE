@@ -26,7 +26,7 @@ import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './trans
 import { MpRawMode } from './rawmode.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
-import { parseStackTrace, validatePython } from './python_utils.js'
+import { parseStackTrace, validatePython, disassembleMPY } from './python_utils.js'
 import { MicroPythonWASM } from './emulator.js'
 
 import { marked } from 'marked'
@@ -443,13 +443,16 @@ async function _raw_loadFile(raw, fn) {
 async function _loadContent(fn, content) {
     const editorElement = QID('editor')
 
-    if (content instanceof Uint8Array) {
+    const willDisasm = fn.endsWith('.mpy') && QID('disasm-mpy').checked
+
+    if (content instanceof Uint8Array && !willDisasm) {
         hexViewer(content.buffer, editorElement)
         editor = null
     } else if (fn.endsWith('.md') && QID('render-markdown').checked) {
         editorElement.innerHTML = `<div class="marked-viewer">` + marked(content) + `</div>`
         editor = null
     } else {
+        let readOnly = false
         if (fn.endsWith('.json') && QID('expand-minify-json').checked) {
             try {
                 // Prettify JSON
@@ -457,12 +460,17 @@ async function _loadContent(fn, content) {
             } catch (err) {
                 toastr.warning('JSON is malformed')
             }
+        } else if (willDisasm) {
+            content = await disassembleMPY(content)
+            fn = fn + '.dis'
+            readOnly = true
         }
 
         editorElement.innerHTML = '' // Clear existing content
         editor = await createNewEditor(editorElement, fn, content, {
             wordWrap: QID('use-word-wrap').checked,
             devInfo,
+            readOnly,
         })
 
         editorFn = fn

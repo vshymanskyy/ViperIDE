@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-regular-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@gera2ld/tarjs": "^0.3.1",
     "@micropython/micropython-webassembly-pyscript": "^1.24.0-preview-114",
     "@pybricks/mpy-cross-v6": "github:code4fukui/mpy-cross-v6",
     "@uiw/codemirror-theme-material": "^4.23.0",
