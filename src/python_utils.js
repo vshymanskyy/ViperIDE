@@ -129,7 +129,7 @@ export async function getToolsVM() {
     // Fetch the tar.gz file from the URL
     const response = await fetch('https://viper-ide.org/tools_vfs.tar.gz');
     if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+        throw new Error('Failed to fetch tools');
     }
     const decompressedStream = response.body.pipeThrough(new DecompressionStream('gzip'));
     const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
