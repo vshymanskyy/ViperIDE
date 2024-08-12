@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import time
-import json, glob
+import os, time
+import json, glob, tarfile
 from os import remove as rm, system, path, makedirs
 from shutil import copyfile as cp, copytree, rmtree
 
@@ -28,6 +28,19 @@ def gen_manifest(src, dst):
     with open(dst, 'w', encoding='utf-8') as f:
         json.dump(result, f, separators=(',',':'), ensure_ascii=False)
 
+def gen_tar(src, dst):
+    def reset_tarinfo(tarinfo):
+        tarinfo.uid = 0
+        tarinfo.gid = 0
+        tarinfo.uname = ""
+        tarinfo.gname = ""
+        tarinfo.mtime = 0
+        return tarinfo
+    with tarfile.open(dst, "w:gz") as tar:
+        for item in os.listdir(src):
+            item_path = os.path.join(src, item)
+            tar.add(item_path, arcname=item, filter=reset_tarinfo)
+
 def combine(dst):
     # Insert CSS and JS into HTML
     combined = readfile(dst).replace(
@@ -48,8 +61,9 @@ if __name__ == "__main__":
     # Prepare
     rmtree("build", ignore_errors=True)
     makedirs("build")
-    gen_translations("./lang/", "build/translations.json")
+    gen_translations("./src/lang/", "build/translations.json")
     gen_manifest("./src/manifest.json", "build/manifest.json")
+    gen_tar("src/tools_vfs", "build/tools_vfs.tar.gz")
 
     # Build
     if not path.isdir("node_modules"):
