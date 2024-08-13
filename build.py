@@ -60,10 +60,13 @@ def combine(dst):
 if __name__ == "__main__":
     # Prepare
     rmtree("build", ignore_errors=True)
-    makedirs("build")
+    makedirs("build/assets")
+    cp("./src/webrepl_content.js", "./build/webrepl_content.js")
+    copytree("./assets", "./build/assets", dirs_exist_ok=True)
     gen_translations("./src/lang/", "build/translations.json")
     gen_manifest("./src/manifest.json", "build/manifest.json")
-    gen_tar("src/tools_vfs", "build/tools_vfs.tar.gz")
+    gen_tar("src/tools_vfs", "build/assets/tools_vfs.tar.gz")
+    gen_tar("src/vm_vfs", "build/assets/vm_vfs.tar.gz")
 
     # Build
     if not path.isdir("node_modules"):
@@ -81,13 +84,11 @@ if __name__ == "__main__":
     run("rm build/app.css   build/viper_lib.css")
     run("rm build/app.js    build/viper_lib.js")
 
-    # Add assets, manifest, etc
-    copytree("./assets", "./build/assets")
+    # Add assets from packages
     cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.wasm", "./build/assets/micropython.wasm")
     cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.mjs", "./build/micropython.mjs")
     cp("node_modules/@pybricks/mpy-cross-v6/build/mpy-cross-v6.wasm", "./build/assets/mpy-cross-v6.wasm")
     cp("node_modules/@astral-sh/ruff-wasm-web/ruff_wasm_bg.wasm", "./build/assets/ruff_wasm_bg.wasm")
-    cp("./src/webrepl_content.js", "./build/webrepl_content.js")
 
     print()
     print("Build complete.")

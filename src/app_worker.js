@@ -17,6 +17,8 @@ const contentToCache = new Set([
     '/assets/mpy-cross-v6.wasm',
     '/assets/micropython.wasm',
     '/assets/ruff_wasm_bg.wasm',
+    '/assets/tools_vfs.tar.gz',
+    '/assets/vm_vfs.tar.gz',
 ]);
 
 self.addEventListener('install', event => {

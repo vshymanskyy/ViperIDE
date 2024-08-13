@@ -7,14 +7,14 @@
  */
 
 import { Transport } from './transports.js'
+import { loadVFS } from './python_utils.js'
 import i18next from 'i18next'
 
 const T = i18next.t.bind(i18next)
 
-function populateFS(fs) {
-
-    // ----------------------------------------------------------------------
-    fs.writeFile('/main.py', `
+async function populateFS(vm)
+{
+    vm.FS.writeFile('/main.py', `
 # ViperIDE - MicroPython Web IDE
 # Read more: https://github.com/vshymanskyy/ViperIDE
 
@@ -41,26 +41,8 @@ print("=" * 32)
 `);
 
     // ----------------------------------------------------------------------
-    fs.writeFile('/01_fetch.py', `
-import js
-import asyncio
+    await loadVFS(vm, 'https://viper-ide.org/assets/vm_vfs.tar.gz')
 
-async def task():
-    url = "https://api.github.com/users/micropython"
-    print(f"Fetching {url}...")
-    res = await js.fetch(url)
-    data = await res.json()
-    for i in dir(data):
-        print(f"{i}: {data[i]}")
-
-asyncio.create_task(task())
-`);
-
-    // ----------------------------------------------------------------------
-    fs.writeFile('/02_js_eval.py', `
-import js
-js.eval("alert('Hello from JavaScript')")
-`);
 }
 
 export class MicroPythonWASM extends Transport {
@@ -91,7 +73,7 @@ export class MicroPythonWASM extends Transport {
             linebuffer: false,
         });
 
-        populateFS(this.mp.FS)
+        await populateFS(this.mp)
 
         this.isConnected = true
         processStream()
