@@ -624,8 +624,16 @@ async function fetchPkgList(index_url) {
     </div>`)
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
     for (const pkg of mipindex.packages) {
+        let offset = ''
+        if (pkg.name.includes('-')) {
+            const parent = pkg.name.split('-').slice(0, -1).join('-')
+            const exists = mipindex.packages.some(pkg => (pkg.name === parent))
+            if (exists) {
+                offset = '&emsp;'
+            }
+        }
         pkgList.insertAdjacentHTML('beforeend', `<div>
-            <span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
+            ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
             <a href="#" class="menu-action" onclick="app.installPkg('${index_url}','${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
         </div>`)
     }
