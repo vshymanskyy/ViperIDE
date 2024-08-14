@@ -249,11 +249,14 @@ def walk(p):
   fn=p+'/'+n
   try: s=os.stat(fn)
   except: s=(0,)*7
-  if s[0] & 0x4000 == 0:
-   print('f|'+fn+'|'+str(s[6]))
-  elif n not in ('.','..'):
-   print('d|'+fn+'|'+str(s[6]))
-   walk(fn)
+  try:
+   if s[0] & 0x4000 == 0:
+      print('f|'+fn+'|'+str(s[6]))
+   elif n not in ('.','..'):
+      print('d|'+fn+'|'+str(s[6]))
+      walk(fn)
+  except: pass
+  
 walk('')
 `)
 
