@@ -155,7 +155,7 @@ async function prepareNewPort(type) {
             toastr.error('WebSerial is not available on iOS')
             return
         }
-        if (window.location.protocol === 'http:') {
+        if (window.location.protocol === 'http:' && !window.location.hostname.includes('localhost')) {
             toastr.error('WebSerial cannot be accessed with unsecure connection')
             return
         }
