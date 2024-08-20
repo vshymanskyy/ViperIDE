@@ -141,12 +141,12 @@ async function prepareNewPort(type) {
             toastr.error('WebBluetooth is not available on iOS')
             return
         }
-        if (window.location.protocol === 'http:') {
+        if (!window.isSecureContext) {
             toastr.error('WebBluetooth cannot be accessed with unsecure connection')
             return
         }
         if (typeof navigator.bluetooth === 'undefined') {
-            toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+            toastr.error('Try Chrome, Edge, Opera, Brave', 'WebBluetooth is not supported')
             return
         }
         new_port = new WebBluetooth()
@@ -155,12 +155,12 @@ async function prepareNewPort(type) {
             toastr.error('WebSerial is not available on iOS')
             return
         }
-        if (window.location.protocol === 'http:') {
+        if (!window.isSecureContext) {
             toastr.error('WebSerial cannot be accessed with unsecure connection')
             return
         }
         if (typeof navigator.serial === 'undefined' && typeof navigator.usb === 'undefined') {
-            toastr.error('Chrome browser is needed (or Edge, Opera, Chromium, etc.)')
+            toastr.error('Try Chrome, Edge, Opera, Brave', 'WebSerial and WebUSB are not supported')
             return
         }
         if (typeof navigator.serial === 'undefined' || QID('force-serial-poly').checked) {
