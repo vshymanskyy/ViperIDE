@@ -29,7 +29,7 @@ export class MpRawMode {
             await this.port.write('\x03')   // Ctrl-C: interrupt any running program
             try {
                 let banner = await this.port.readUntil('>>> ', 500)
-                if (this.port.prevRecvCbk) {
+                if (this.port.prevRecvCbk && banner != '\r\n>>> ') {
                     this.port.prevRecvCbk(banner)
                 }
                 await this.port.flushInput()
