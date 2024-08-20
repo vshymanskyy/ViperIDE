@@ -26,7 +26,7 @@ import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './trans
 import { MpRawMode } from './rawmode.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
-import { parseStackTrace, validatePython, disassembleMPY } from './python_utils.js'
+import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettifyPython } from './python_utils.js'
 import { MicroPythonWASM } from './emulator.js'
 
 import { marked } from 'marked'
@@ -426,6 +426,32 @@ export async function fileClick(fn) {
     }
 
     e.classList.add('selected')
+}
+
+export async function pyMinify() {
+    if (!editorFn.endsWith('.py')) {
+        toastr.info(`Please open a Python file`)
+        return
+    }
+
+    const res = await minifyPython(editor.state.doc.toString())
+
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: res }
+    })
+}
+
+export async function pyPrettify() {
+    if (!editorFn.endsWith('.py')) {
+        toastr.info(`Please open a Python file`)
+        return
+    }
+
+    const res = await prettifyPython(editor.state.doc.toString())
+
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: res }
+    })
 }
 
 async function _raw_loadFile(raw, fn) {

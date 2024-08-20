@@ -20,8 +20,7 @@ import { monokaiInit } from '@uiw/codemirror-theme-monokai'
 import { tags } from '@lezer/highlight'
 import { linter } from '@codemirror/lint'
 
-import { validatePython } from './python_utils.js'
-import ruffInit, { Workspace as RuffWorkspace } from '@astral-sh/ruff-wasm-web'
+import { validatePython, getRuffWorkspace } from './python_utils.js'
 
 /*
  * Highlight links in comments
@@ -225,23 +224,23 @@ const mpyCrossLinter = linter(async (view) => {
  * Ruff linter
  */
 
-let ruffWorkspace = null
+function ruffLinter(ruff) {
+  return linter((view) => {
+    const doc = view.state.doc
+    const res = ruff.check(doc.toString())
 
-const ruffLinter = linter((view) => {
-  const doc = view.state.doc
-  const res = ruffWorkspace.check(doc.toString())
-
-  const diagnostics = []
-  for (let d of res) {
-    diagnostics.push({
-      from: doc.line(d.location.row).from + d.location.column - 1,
-      to:   doc.line(d.end_location.row).from + d.end_location.column - 1,
-      severity: (d.message.indexOf('Error:') >= 0) ? 'error' : 'warning',
-      message: d.code ? d.code + ': ' + d.message : d.message,
-    })
-  }
-  return diagnostics
-})
+    const diagnostics = []
+    for (let d of res) {
+      diagnostics.push({
+        from: doc.line(d.location.row).from + d.location.column - 1,
+        to:   doc.line(d.end_location.row).from + d.end_location.column - 1,
+        severity: (d.message.indexOf('Error:') >= 0) ? 'error' : 'warning',
+        message: d.code ? d.code + ': ' + d.message : d.message,
+      })
+    }
+    return diagnostics
+  })
+}
 
 /*
  * Theme helpers
@@ -307,17 +306,11 @@ const extraTheme = EditorView.theme({
 export async function createNewEditor(editorElement, fn, content, options) {
     let mode = []
     if (fn.endsWith('.py')) {
-        if (!ruffWorkspace) {
-            try {
-                await ruffInit('https://viper-ide.org/assets/ruff_wasm_bg.wasm')
-                console.log('Ruff', RuffWorkspace.version())
-                ruffWorkspace = new RuffWorkspace(RuffWorkspace.defaultSettings());
-            } catch (err) {}
-        }
+        const ruff = await getRuffWorkspace()
         mode = [
             // TODO: detect indent of existing content
             indentUnit.of('    '), python(),
-            ...(ruffWorkspace ? [ruffLinter] : []),
+            ruff && ruffLinter(ruff),
             mpyCrossLinter,
         ]
     } else if (fn.endsWith('.mpy.dis')) {

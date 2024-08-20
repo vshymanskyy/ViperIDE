@@ -1,6 +1,7 @@
 import { compile as compile_v6 } from '@pybricks/mpy-cross-v6'
 import { splitPath } from './utils.js'
 import { TarReader } from '@gera2ld/tarjs'
+import ruffInit, { Workspace as RuffWorkspace } from '@astral-sh/ruff-wasm-web'
 
 export function parseStackTrace(stackTrace)
 {
@@ -117,6 +118,7 @@ export function detectIndentStyle(content) {
 }
 
 let _tools_vm;
+let _ruff_wspace;
 
 export async function loadVFS(vm, url) {
     // Fetch the tar.gz file from the URL
@@ -145,6 +147,8 @@ export async function getToolsVM() {
     if (_tools_vm) { return _tools_vm }
 
     _tools_vm = await loadMicroPython({
+        pystack: 64 * 1024,
+        heapsize: 32 * 1024 * 1024,
         url: 'https://viper-ide.org/assets/micropython.wasm',
         //stdout: (data) => { console.log(data) },
     })
@@ -152,6 +156,51 @@ export async function getToolsVM() {
     await loadVFS(_tools_vm, 'https://viper-ide.org/assets/tools_vfs.tar.gz')
 
     return _tools_vm
+}
+
+export async function getRuffWorkspace() {
+    if (_ruff_wspace) { return _ruff_wspace }
+    try {
+        await ruffInit('https://viper-ide.org/assets/ruff_wasm_bg.wasm')
+        console.log('Ruff', RuffWorkspace.version())
+        _ruff_wspace = new RuffWorkspace(RuffWorkspace.defaultSettings());
+    } catch (err) {}
+    return _ruff_wspace
+}
+
+export async function minifyPython(buffer) {
+    const vm = await getToolsVM()
+    vm.FS.writeFile("/tmp/file.py", buffer)
+
+    vm.runPython(`
+import python_minifier
+with open('/tmp/file.py') as f:
+    d = f.read()
+d = python_minifier.minify(
+    d,
+    remove_annotations=True,
+    remove_pass=True,
+    remove_literal_statements=True,
+    combine_imports=True,
+    hoist_literals=False,
+    remove_object_base=False,
+    remove_debug=True,
+    remove_asserts=False,
+    rename_locals=True, preserve_locals=None,
+    rename_globals=False, preserve_globals=None,
+    convert_posargs_to_args=True,
+    preserve_shebang=False,
+)
+with open('/tmp/file.min.py', 'w') as f:
+    f.write(d)
+`)
+
+    return vm.FS.readFile("/tmp/file.min.py", { encoding: 'utf8' })
+}
+
+export async function prettifyPython(buffer) {
+    const ruff = await getRuffWorkspace()
+    return ruff.format(buffer)
 }
 
 export async function disassembleMPY(buffer) {

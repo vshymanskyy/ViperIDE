@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import os, time
-import json, glob, tarfile
+import json, glob, tarfile, requests
+from io import BytesIO
+from zipfile import ZipFile
 from os import remove as rm, system, path, makedirs
 from shutil import copyfile as cp, copytree, rmtree
 
@@ -41,6 +43,26 @@ def gen_tar(src, dst):
             item_path = os.path.join(src, item)
             tar.add(item_path, arcname=item, filter=reset_tarinfo)
 
+def download_and_extract(url, subfolder, dest):
+    response = requests.get(url)
+    response.raise_for_status()
+    with ZipFile(BytesIO(response.content)) as zip_file:
+        # Filter for files within the specific subfolder
+        subfolder_files = [f for f in zip_file.namelist() if f.startswith(subfolder)]
+
+        # Extract each file, adjusting the path
+        for file_path in subfolder_files:
+            # Extract only if it's a file (not an empty directory)
+            if not file_path.endswith('/'):
+                new_path = file_path[len(subfolder):]  # Remove the subfolder part of the path
+                with zip_file.open(file_path) as source:
+                    data = source.read()
+                target_path = f'{dest}/{new_path}'  # Define new extraction path
+                # Create target directory if not exists
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                with open(target_path, 'wb') as target_file:
+                    target_file.write(data)
+
 def combine(dst):
     # Insert CSS and JS into HTML
     combined = readfile(dst).replace(
@@ -65,6 +87,10 @@ if __name__ == "__main__":
     copytree("./assets", "./build/assets", dirs_exist_ok=True)
     gen_translations("./src/lang/", "build/translations.json")
     gen_manifest("./src/manifest.json", "build/manifest.json")
+
+    download_and_extract("https://github.com/dflook/python-minifier/archive/eb46ee627bcbecbe9ccaf03992ea21d94447db5f.zip",
+                         "python-minifier-eb46ee627bcbecbe9ccaf03992ea21d94447db5f/src/python_minifier/",
+                         "src/tools_vfs/lib/python_minifier")
     gen_tar("src/tools_vfs", "build/assets/tools_vfs.tar.gz")
     gen_tar("src/vm_vfs", "build/assets/vm_vfs.tar.gz")
 
