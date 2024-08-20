@@ -38,19 +38,19 @@ import { splitPath, sleep, getUserUID, getScreenInfo, IdleMonitor,
 
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
-import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faCubes,
+import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes,
          faCube, faTools, faGear, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark
        } from '@fortawesome/free-solid-svg-icons'
-import { faFile, faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
+import { faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
 
 library.add(faUsb, faBluetoothB)
-library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faCubes,
+library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes,
          faCube, faTools, faGear, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
-library.add(faFile, faMessage, faCircleDown)
+library.add(faMessage, faCircleDown)
 dom.watch()
 
 function getBuildDate() {
@@ -367,8 +367,10 @@ function _updateFileTree(fs_tree, fs_stats)
                     icon = '<i class="fa-solid fa-cube fa-fw"></i>'
                 } else if (['.CRT', '.PEM', '.DER', '.CER', '.PFX', '.P12'].some(x => fnuc.endsWith(x))) {
                     icon = '<i class="fa-solid fa-certificate fa-fw"></i>'
+                } else if (fnuc === '???') {
+                    icon = '<i class="fa-solid fa-file-circle-exclamation fa-fw"></i>'
                 } else {
-                    icon = '<i class="fa-regular fa-file fa-fw"></i>'
+                    icon = '<i class="fa-solid fa-file fa-fw"></i>'
                 }
                 let sel = ([editorFn, `/${editorFn}`, `/flash/${editorFn}`].includes(n.path)) ? 'selected' : ''
                 if (n.path.startsWith("/proc/") || n.path.startsWith("/dev/")) {
