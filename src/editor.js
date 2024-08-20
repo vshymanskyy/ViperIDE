@@ -12,7 +12,7 @@ import { EditorState, RangeSetBuilder, Prec } from '@codemirror/state'
 import { StreamLanguage, indentUnit, syntaxTree } from '@codemirror/language'
 import { indentWithTab } from '@codemirror/commands'
 import { python } from '@codemirror/lang-python'
-import { json as modeJSON } from '@codemirror/lang-json'
+import { json as modeJSON, jsonParseLinter } from '@codemirror/lang-json'
 import { markdown as modeMD } from '@codemirror/lang-markdown'
 import { simpleMode } from '@codemirror/legacy-modes/mode/simple-mode'
 import { toml } from '@codemirror/legacy-modes/mode/toml'
@@ -323,7 +323,10 @@ export async function createNewEditor(editorElement, fn, content, options) {
     } else if (fn.endsWith('.mpy.dis')) {
         mode = [ modeMPY_DIS ]
     } else if (fn.endsWith('.json')) {
-        mode = [ modeJSON() ]
+        mode = [
+            modeJSON(),
+            linter(jsonParseLinter()),
+        ]
     } else if (fn.endsWith('.pem')) {
         mode = [ modePEM ]
     } else if (fn.endsWith('.ini') || fn.endsWith('.inf') ) {
