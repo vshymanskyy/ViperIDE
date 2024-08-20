@@ -23,11 +23,28 @@ export class MpRawMode {
         return res
     }
 
+    async interruptProgram(timeout=20000) {
+        const endTime = Date.now() + timeout
+        while (timeout <= 0 || (Date.now() < endTime)) {
+            await this.port.write('\x03')   // Ctrl-C: interrupt any running program
+            try {
+                let banner = await this.port.readUntil('>>> ', 500)
+                if (this.port.prevRecvCbk) {
+                    this.port.prevRecvCbk(banner)
+                }
+                await this.port.flushInput()
+                return
+            } catch (err) {
+            }
+        }
+        throw new Error('Board is not responding')
+    }
+
     async enterRawRepl(soft_reboot=false) {
         const release = await this.port.startTransaction()
         try {
-            await this.port.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
-            await this.port.flushInput()
+            await this.interruptProgram()
+
             await this.port.write('\r\x01')       // Ctrl-A: enter raw REPL
             await this.port.readUntil('raw REPL; CTRL-B to exit\r\n')
 
@@ -40,9 +57,7 @@ export class MpRawMode {
                 try {
                     await this.port.write('\x02')     // Ctrl-B: exit raw REPL
                     await this.port.readUntil('>\r\n')
-                    const banner = await this.port.readUntil('>>> ')
-                    //term.clear()
-                    //term.write(banner)
+                    await this.port.readUntil('>>> ')
                 } finally {
                     release()
                 }
