@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.4.15",
+  "version": "0.4.16",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
   "main": "index.js",
   "scripts": {
