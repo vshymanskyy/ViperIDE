@@ -434,11 +434,14 @@ export async function pyMinify() {
         return
     }
 
-    const res = await minifyPython(editor.state.doc.toString())
+    const input = editor.state.doc.toString()
+    const res = await minifyPython(input)
 
     editor.dispatch({
       changes: { from: 0, to: editor.state.doc.length, insert: res }
     })
+
+    toastr.info(`Minified ${input.length} to ${res.length}`)
 }
 
 export async function pyPrettify() {

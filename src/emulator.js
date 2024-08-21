@@ -23,21 +23,25 @@ async function populateFS(vm)
 # Most things work: you can edit and run files, use the Terminal, install packages, etc.
 # WARNING: if your script takes a long time to run, the browser will busy-wait
 
-colors = [
-    "\\033[31m", "\\033[32m", "\\033[33m", "\\033[34m",
-    "\\033[35m", "\\033[36m", "\\033[37m",
-]
-reset = "\\033[0m"
+def main():
+    colors = [
+        "\\033[31m", "\\033[32m", "\\033[33m", "\\033[34m",
+        "\\033[35m", "\\033[36m", "\\033[37m",
+    ]
+    reset = "\\033[0m"
 
-text = "  ${T('example.hello', 'Привіт')} MicroPython! 𓆙"
+    text = "  ${T('example.hello', 'Привіт')} MicroPython! 𓆙"
 
-# ${T('example.comment-colors', 'Print each letter with a different color')}
-print("=" * 32)
-for i, char in enumerate(text):
-    color = colors[i % len(colors)]
-    print(color + char, end="")
-print(reset)
-print("=" * 32)
+    # ${T('example.comment-colors', 'Print each letter with a different color')}
+    print("=" * 32)
+    for i, char in enumerate(text):
+        color = colors[i % len(colors)]
+        print(color + char, end="")
+    print(reset)
+    print("=" * 32)
+
+if __name__ == "__main__":
+    main()
 `);
 
     // ----------------------------------------------------------------------
