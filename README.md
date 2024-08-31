@@ -8,9 +8,7 @@
 
 **An innovative [MicroPython](https://micropython.org) / [CircuitPython](https://circuitpython.org) IDE for Web and Mobile**
 
-👉 [Open ViperIDE Online](https://viper-ide.org)
-
-[![image](docs/images/screenshot-desktop-chrome.png)](docs/images)
+[![image](docs/images/visual-main.png)](https://viper-ide.org)
 
 ## Features
 
