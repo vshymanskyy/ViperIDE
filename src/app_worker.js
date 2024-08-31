@@ -14,6 +14,7 @@ const contentToCache = new Set([
     '/index.html',
     '/assets/favicon.png',
     '/assets/app_1024.png',
+    '/assets/logo_1024.png',
     '/assets/mpy-cross-v6.wasm',
     '/assets/micropython.wasm',
     '/assets/ruff_wasm_bg.wasm',
