@@ -39,7 +39,7 @@ import { splitPath, sleep, getUserUID, getScreenInfo, IdleMonitor,
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
 import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes,
-         faCube, faTools, faGear, faCircleInfo, faStar, faExpand, faCertificate,
+         faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark
        } from '@fortawesome/free-solid-svg-icons'
@@ -47,7 +47,7 @@ import { faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
 
 library.add(faUsb, faBluetoothB)
 library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes,
-         faCube, faTools, faGear, faCircleInfo, faStar, faExpand, faCertificate,
+         faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
 library.add(faMessage, faCircleDown)
