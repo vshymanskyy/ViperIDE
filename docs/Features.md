@@ -70,9 +70,6 @@
 | <kbd>F5</kbd>         | run file without saving     |
 | <kbd>F11</kbd>        | toggle full screen          |
 | <kbd>Ctrl-/</kbd>     | toggle line comment         |
-| <kbd>Ctrl-Alt-/</kbd> | comment line                |
-| <kbd>Ctrl-Alt-Shift-/</kbd> | uncomment line        |
-| <kbd>Ctrl-*</kbd>     | toggle block comment        |
 
 ## Limitations
 
