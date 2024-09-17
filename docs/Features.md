@@ -61,6 +61,18 @@
 - Realtek RTL8721 with [`ambiot` port](https://github.com/ambiot/micropython/releases)
 
 
+## Key bindings
+
+| Key                   | Action                      |
+|---                    |---                          |
+| <kbd>Ctrl-/</kbd>     | toggle line comment         |
+| <kbd>Ctrl-Alt-/</kbd> | comment line                |
+| <kbd>Ctrl-Alt-Shift-/</kbd> | uncomment line        |
+| <kbd>Ctrl-*</kbd>     | toggle block comment        |
+| <kbd>Ctrl-S</kbd>     | save file without running   |
+| <kbd>F5</kbd>         | run file without saving     |
+| <kbd>F11</kbd>        | toggle full screen          |
+
 ## Limitations
 
 - `WebUSB` and `WebBluetooth` require a Chrome-based browser like Edge, Opera, Chromium, Brave, etc.
