@@ -57,6 +57,7 @@
 - Portenta C33 (Renesas R7FA6M4)
 - Micro:bit (nRF51822)
 - Micro:bit v2 (nRF52833) with [`CircuitPython`](https://circuitpython.org/board/microbit_v2)
+- PCA10056 (nRF52840)
 - Air602 (WM W600) with [`robert-hh` port](https://github.com/robert-hh/Shared-Stuff/tree/master/w600_firmware)
 - Realtek RTL8721 with [`ambiot` port](https://github.com/ambiot/micropython/releases)
 
