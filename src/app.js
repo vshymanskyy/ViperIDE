@@ -268,6 +268,16 @@ export async function connectDevice(type) {
  * File Management
  */
 
+export async function refreshFileTree() {
+    if (!port) return;
+    const raw = await MpRawMode.begin(port)
+    try {
+        await _raw_updateFileTree(raw)
+    } finally {
+        await raw.end()
+    }
+}
+
 export async function createNewFile(path) {
     if (!port) return;
     const fn = prompt(`Creating new file inside ${path}\nPlease enter the name:`)
@@ -346,7 +356,8 @@ function _updateFileTree(fs_tree, fs_stats)
     const fileTree = QID('menu-file-tree')
     fileTree.innerHTML = `<div>
         <span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span>
-        <a href="#" class="menu-action" onclick="app.createNewFile('/');return false;"><i class="fa-solid fa-plus"></i></a>
+        <a href="#" class="menu-action" title="Refresh" onclick="app.refreshFileTree();return false;"><i class="fa-solid fa-arrows-rotate fa-fw"></i></a>
+        <a href="#" class="menu-action" title="Create" onclick="app.createNewFile('/');return false;"><i class="fa-solid fa-plus fa-fw"></i></a>
         <span class="menu-action">${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
     </div>`
     function traverse(node, depth) {
@@ -355,8 +366,8 @@ function _updateFileTree(fs_tree, fs_stats)
             if ('content' in n) {
                 fileTree.insertAdjacentHTML('beforeend', `<div>
                     ${offset}<span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> ${n.name}</span>
-                    <a href="#" class="menu-action" onclick="app.removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
-                    <a href="#" class="menu-action" onclick="app.createNewFile('${n.path}/');return false;"><i class="fa-solid fa-plus"></i></a>
+                    <a href="#" class="menu-action" title="Remove" onclick="app.removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark fa-fw"></i></a>
+                    <a href="#" class="menu-action" title="Create" onclick="app.createNewFile('${n.path}/');return false;"><i class="fa-solid fa-plus fa-fw"></i></a>
                 </div>`)
                 traverse(n.content, depth+1)
             } else {
@@ -381,7 +392,7 @@ function _updateFileTree(fs_tree, fs_stats)
                 } else {
                     fileTree.insertAdjacentHTML('beforeend', `<div>
                         ${offset}<a href="#" class="name ${sel}" onclick="app.fileClick('${n.path}');return false;">${icon} ${n.name}&nbsp;</a>
-                        <a href="#" class="menu-action" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark"></i></a>
+                        <a href="#" class="menu-action" title="Remove" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark fa-fw"></i></a>
                         <span class="menu-action">${sizeFmt(n.size)}</span>
                     </div>`)
                 }
