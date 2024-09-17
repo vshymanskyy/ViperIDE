@@ -64,12 +64,14 @@
 
 ## Key bindings
 
-| Key                   | Action                      |
-|---                    |---                          |
-| <kbd>Ctrl-S</kbd>     | save file without running   |
-| <kbd>F5</kbd>         | run file without saving     |
-| <kbd>F11</kbd>        | toggle full screen          |
-| <kbd>Ctrl-/</kbd>     | toggle line comment         |
+| Key                     | Action                      |
+|---                      |---                          |
+| <kbd>Ctrl-S</kbd>       | save file without running   |
+| <kbd>F5</kbd>           | run file without saving     |
+| <kbd>F11</kbd>          | toggle full screen          |
+| <kbd>Ctrl-/</kbd>       | toggle line comment         |
+| <kbd>Ctrl-F</kbd>       | find and replace            |
+| <kbd>Ctrl-Shift-M</kbd> | display warnings and errors |
 
 ## Limitations
 
