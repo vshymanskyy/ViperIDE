@@ -161,11 +161,13 @@ export async function getToolsVM() {
 export async function getRuffWorkspace() {
     if (_ruff_wspace) { return _ruff_wspace }
     try {
-        await ruffInit('https://viper-ide.org/assets/ruff_wasm_bg.wasm')
+        await ruffInit({
+            module_or_path: 'https://viper-ide.org/assets/ruff_wasm_bg.wasm',
+        })
         console.log('Ruff', RuffWorkspace.version())
         const settings = RuffWorkspace.defaultSettings()
         settings.set('line-length', 120)
-        console.log(settings)
+        //console.log(settings)
         _ruff_wspace = new RuffWorkspace(settings);
     } catch (err) {}
     return _ruff_wspace
