@@ -213,7 +213,8 @@ f.close()
         // TODO: remove error code 20 once it is fixed in wasm port
         await this.exec(`
 p=''
-for d in filter(len,'${path}'.split('/')):
+for d in '${path}'.split('/'):
+ if not d: continue
  p += '/'+d
  try: os.mkdir(p)
  except OSError as e:

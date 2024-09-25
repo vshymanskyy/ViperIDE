@@ -181,7 +181,7 @@ async function test_FS(raw, devinfo) {
     let startTime, endTime;
 
     let root = ""
-    if (devinfo.sys_path.indexOf("/flash") >= 0) {
+    if (devinfo.sys_path.indexOf("/flash") >= 0 || devinfo.sys_path.indexOf("/flash/lib") >= 0) {
         root = "/flash"
     }
 
