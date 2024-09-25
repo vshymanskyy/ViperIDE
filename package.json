@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.4.21",
+  "version": "0.4.22",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
   "main": "index.js",
   "scripts": {
@@ -45,7 +45,7 @@
     "eslint": "^9.11.1",
     "globals": "^15.9.0",
     "rollup": "^4.22.4",
-    "rollup-plugin-import-css": "^3.5.2",
+    "rollup-plugin-import-css": "3.5.1",
     "rollup-plugin-serve": "^1.1.1"
   }
 }
