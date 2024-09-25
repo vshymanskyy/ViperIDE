@@ -688,7 +688,7 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
         if (!devInfo) {
             devInfo = await raw.getDeviceInfo()
         }
-        const mpy_ver = devInfo.mpy_ver
+        const mpy_ver = QID('force-install-package-source').checked ? 'py' : devInfo.mpy_ver
         // Find the first `lib` folder in sys.path
         const lib_path = devInfo.sys_path.find(x => x.endsWith('/lib'))
         if (!lib_path) {
