@@ -281,31 +281,59 @@ async function test_CPU(raw) {
         { name: 'viper',    decorator: '@micropython.viper',  cast: 'int' },
     ];
 
-    await raw.exec(`
+    for (const i of modes) {
+        try {
+            await raw.exec(`
 try:
     from time import ticks_ms as t
     tms = 1
 except:
     from time import monotonic_ns as t
     tms = 1000000
-`)
 
-    for (const i of modes) {
-        log(`fib(24) ${i.name}... `)
-        try {
-            const rsp = await raw.exec(`
 ${i.decorator}
 def fib(n: int) -> int:
    if n <= 1:
        return n
    else:
        return ${i.cast}(fib(n-1)) + ${i.cast}(fib(n-2))
+
+${i.decorator}
+def prime(n: int) -> bool:
+    if n == 1:
+        return False
+    for i in range(2, n):
+        if (n % i) == 0:
+            return False
+    return True
+`)
+        } catch (err) {
+            console.log(err)
+            log(`Warning: ${i.decorator} not supported\n`)
+        }
+
+        try {
+            log(`fib(24) ${i.name}... `)
+            const rsp = await raw.exec(`
 beg = t()
-res = fib(24)
+assert fib(24) == 46368
 end = t()
 print((end-beg)//tms)
 `, 15000)
+            log(rsp.trim() + 'ms\n')
+        } catch (err) {
+            console.log(err)
+            log('---\n')
+        }
 
+        try {
+            log(`prime(99929) ${i.name}... `)
+            rsp = await raw.exec(`
+beg = t()
+assert prime(99929)
+end = t()
+print((end-beg)//tms)
+`, 10000)
             log(rsp.trim() + 'ms\n')
         } catch (err) {
             console.log(err)
