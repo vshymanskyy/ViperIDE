@@ -34,6 +34,12 @@
 [ViperIDE Online ](https://viper-ide.org)  
 [Feedback](./docs/Feedback.md)  
 [Documentation](./docs/)  
-[Discussion](https://github.com/orgs/micropython/discussions/15219)   
-[CodeMirror](https://codemirror.net), [Ruff](https://docs.astral.sh/ruff), [Xterm.js](https://xtermjs.org), [PeerJS](https://peerjs.com)
-
+[Discussion](https://github.com/orgs/micropython/discussions/15219)  
+Used software:
+- [CodeMirror](https://codemirror.net)
+- [Ruff](https://docs.astral.sh/ruff)
+- [Xterm.js](https://xtermjs.org)
+- [PeerJS](https://peerjs.com)
+- [mpy-cross](https://github.com/micropython/micropython/tree/master/mpy-cross)
+- [python-minifier](https://github.com/dflook/python-minifier)
+- [mpy-tool](https://github.com/micropython/micropython/blob/master/tools/mpy-tool.py)
