@@ -74,7 +74,7 @@ def parse_tokens(token_stream, filename="<unknown>", mode="exec"):
 def parse_stream(stream, filename="<unknown>", mode="exec"):
     import utokenize as tokenize
     tstream = tokenize.generate_tokens(stream.readline)
-    return parse_tokens(tstream)
+    return parse_tokens(tstream, filename, mode)
 
 
 def parse(source, filename="<unknown>", mode="exec"):
