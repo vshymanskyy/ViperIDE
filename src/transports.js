@@ -250,7 +250,7 @@ export class WebBluetooth extends Transport {
                 { namePrefix: 'mpy-' },
                 { services: [ 0xfebb ] },
                 { namePrefix: 'CIRCUITPY' },
-                { services: [ 0xfff0 ] },   // CH9143
+                { namePrefix: 'CH9143' },       // Service: 0xfff0
             ],
             //acceptAllDevices: true,
             optionalServices: [NUS_SERVICE, ADA_NUS_SERVICE, 0xfebb, 0xfff0],
