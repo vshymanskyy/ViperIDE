@@ -38,7 +38,7 @@ import { splitPath, sleep, getUserUID, getScreenInfo, IdleMonitor,
 
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
-import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes,
+import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark
@@ -46,7 +46,7 @@ import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFil
 import { faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
 
 library.add(faUsb, faBluetoothB)
-library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes,
+library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
@@ -401,10 +401,12 @@ function _updateFileTree(fs_tree, fs_stats)
     }
     traverse(fs_tree, 1)
 
-    fileTree.insertAdjacentHTML('beforeend', `<div>
-        <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
-        <span class="menu-action">virtual</span>
-    </div>`)
+    if (QID('advanced-mode').checked) {
+        fileTree.insertAdjacentHTML('beforeend', `<div>
+            <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
+            <span class="menu-action">virtual</span>
+        </div>`)
+    }
 }
 
 async function _raw_updateFileTree(raw) {
@@ -485,7 +487,7 @@ async function _raw_loadFile(raw, fn) {
 async function _loadContent(fn, content) {
     const editorElement = QID('editor')
 
-    const willDisasm = fn.endsWith('.mpy') && QID('disasm-mpy').checked
+    const willDisasm = fn.endsWith('.mpy') && QID('advanced-mode').checked
 
     if (content instanceof Uint8Array && !willDisasm) {
         hexViewer(content.buffer, editorElement)
