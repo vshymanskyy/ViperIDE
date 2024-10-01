@@ -8,9 +8,9 @@
     "start": "rollup --config --configDebug --watch"
   },
   "dependencies": {
-    "@astral-sh/ruff-wasm-web": "0.6.7",
+    "@astral-sh/ruff-wasm-web": "0.6.8",
     "@codemirror/lang-json": "^6.0.1",
-    "@codemirror/lang-markdown": "^6.2.5",
+    "@codemirror/lang-markdown": "^6.3.0",
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/legacy-modes": "^6.4.1",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
@@ -44,8 +44,8 @@
     "@rollup/plugin-terser": "^0.4.4",
     "eslint": "^9.11.1",
     "globals": "^15.9.0",
-    "rollup": "^4.22.4",
-    "rollup-plugin-import-css": "3.5.1",
+    "rollup": "^4.22.5",
+    "rollup-plugin-import-css": "3.5.4",
     "rollup-plugin-serve": "^1.1.1",
     "rollup-plugin-sourcemaps2": "^0.4.1"
   }

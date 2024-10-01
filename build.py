@@ -88,8 +88,8 @@ if __name__ == "__main__":
     gen_translations("./src/lang/", "build/translations.json")
     gen_manifest("./src/manifest.json", "build/manifest.json")
 
-    download_and_extract("https://github.com/dflook/python-minifier/archive/eb46ee627bcbecbe9ccaf03992ea21d94447db5f.zip",
-                         "python-minifier-eb46ee627bcbecbe9ccaf03992ea21d94447db5f/src/python_minifier/",
+    download_and_extract("https://github.com/dflook/python-minifier/archive/refs/tags/2.11.0.zip",
+                         "python-minifier-2.11.0/src/python_minifier/",
                          "src/tools_vfs/lib/python_minifier")
     gen_tar("src/tools_vfs", "build/assets/tools_vfs.tar.gz")
     gen_tar("src/vm_vfs", "build/assets/vm_vfs.tar.gz")

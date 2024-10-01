@@ -220,16 +220,20 @@ export class WebSerial extends Transport {
  */
 
 const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
-const NUS_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'
-const NUS_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
+const NUS_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'       // Write or Write Without Response
+const NUS_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'       // Notify
 const NUS_TX_LIMIT = 241
 
 const ADA_NUS_SERVICE = 'adaf0001-4369-7263-7569-74507974686e'
-const ADA_NUS_TX = 'adaf0002-4369-7263-7569-74507974686e'
-const ADA_NUS_RX = 'adaf0003-4369-7263-7569-74507974686e'
+const ADA_NUS_TX = 'adaf0002-4369-7263-7569-74507974686e'   // Write or Write Without Response
+const ADA_NUS_RX = 'adaf0003-4369-7263-7569-74507974686e'   // Notify
 const ADA_VER = 'adaf0100-4669-6c65-5472-616e73666572'
 const ADA_FT = 'adaf0200-4669-6c65-5472-616e73666572'
 const ADA_NUS_TX_LIMIT = 20
+
+const CH9143_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb'
+const CH9143_TX = '0000fff2-0000-1000-8000-00805f9b34fb'       // Write or Write Without Response
+const CH9143_RX = '0000fff1-0000-1000-8000-00805f9b34fb'       // Notify
 
 export class WebBluetooth extends Transport {
     constructor() {
@@ -252,9 +256,10 @@ export class WebBluetooth extends Transport {
                 { namePrefix: 'mpy-' },
                 { services: [ 0xfebb ] },
                 { namePrefix: 'CIRCUITPY' },
+                { namePrefix: 'CH9143' },
             ],
             //acceptAllDevices: true,
-            optionalServices: [NUS_SERVICE, ADA_NUS_SERVICE, 0xfebb],
+            optionalServices: [NUS_SERVICE, ADA_NUS_SERVICE, 0xfebb, CH9143_SERVICE],
         })
 
         this.device.addEventListener("gattserverdisconnected", () => {
@@ -299,6 +304,11 @@ export class WebBluetooth extends Transport {
                 //ft.removeEventListener('characteristicvaluechanged', () => {})
                 ft.addEventListener('characteristicvaluechanged', () => {})
                 await ft.startNotifications()
+            } else if (service.uuid === CH9143_SERVICE) {
+                this.service = service
+                this.rx = await service.getCharacteristic(CH9143_RX)
+                this.tx = await service.getCharacteristic(CH9143_TX)
+                this.tx_limit = NUS_TX_LIMIT
             }
 
             if (this.service) {

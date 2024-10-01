@@ -76,7 +76,7 @@ export class MpRawMode {
         await this.port.readUntil('>')
         await this.port.write(cmd)
         await this.port.write('\x04')         // Ctrl-D: execute
-        const status = await this.port.readExactly(2)
+        const status = await this.port.readExactly(2, timeout)
         if (status != 'OK') {
             throw new Error(status)
         }

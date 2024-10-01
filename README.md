@@ -34,6 +34,15 @@
 [ViperIDE Online ](https://viper-ide.org)  
 [Feedback](./docs/Feedback.md)  
 [Documentation](./docs/)  
-[Discussion](https://github.com/orgs/micropython/discussions/15219)   
-[CodeMirror](https://codemirror.net), [Ruff](https://docs.astral.sh/ruff), [Xterm.js](https://xtermjs.org), [PeerJS](https://peerjs.com)
+[Discussion](https://github.com/orgs/micropython/discussions/15219)  
 
+## Used software
+
+- [CodeMirror](https://codemirror.net) - Main code editor, MIT
+- [Ruff](https://docs.astral.sh/ruff) - Python linter and formatter, MIT
+- [Xterm.js](https://xtermjs.org) - REPL Terminal, MIT
+- [PeerJS](https://peerjs.com) - P2P/WebRTC connections, MIT
+- [MicroPython](https://github.com/micropython/micropython) - Virtual Machine, MIT
+- [mpy-cross](https://github.com/micropython/micropython/tree/master/mpy-cross) - Code validation, MIT
+- [mpy-tool](https://github.com/micropython/micropython/blob/master/tools/mpy-tool.py) - MPY bytecode disassembler - MIT
+- [python-minifier](https://github.com/dflook/python-minifier) - Code minifier, MIT
