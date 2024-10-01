@@ -8,7 +8,7 @@
 
 import { basicSetup } from 'codemirror'
 import { EditorView, ViewPlugin, keymap, Decoration, MatchDecorator } from '@codemirror/view'
-import { EditorState, RangeSetBuilder, Prec } from '@codemirror/state'
+import { EditorState, RangeSetBuilder, Prec, StateEffect } from '@codemirror/state'
 import { StreamLanguage, indentUnit, syntaxTree } from '@codemirror/language'
 import { indentWithTab } from '@codemirror/commands'
 import { python } from '@codemirror/lang-python'
@@ -71,7 +71,7 @@ const linkDecorator = ViewPlugin.fromClass(class {
 });
 
 const linkClickPlugin = EditorView.domEventHandlers({
-  click(event, view) {
+  click(event, _view) {
     const target = event.target;
     if (target.classList.contains("cm-link")) {
       const url = target.textContent;
@@ -103,7 +103,7 @@ const linkCommentExtensions = [
 
 const specialCommentDecorator = new MatchDecorator({
   regexp: /(NOTE|OPTIMIZE|TODO|WARNING|WARN|HACK|XXX|FIXME|BUG):?/g,
-  decorate: (add, from, to, match) => add(from, to, Decoration.mark({ class: "special-comment" })),
+  decorate: (add, from, to, _match) => add(from, to, Decoration.mark({ class: "special-comment" })),
 });
 
 const specialCommentView = ViewPlugin.fromClass(class {
@@ -376,4 +376,24 @@ export async function createNewEditor(editorElement, fn, content, options) {
     })
 
     return view
+}
+
+
+/**
+ *
+ * @param {HTMLElement} element The DOM element to query for an attached CodeMirror editor
+ * @returns {EditorView | null} The editor, if any
+ */
+export function getEditorFromElement(element) {
+  return EditorView.findFromDOM(element)
+}
+
+
+/**
+ *
+ * @param {EditorView} editorView The CodeMirror editor instance to attach an update callback to
+ * @param {function(ViewUpdate):void} callback The function that will be called when the editor is updated
+ */
+export function addUpdateHandler(editorView, callback) {
+  editorView.dispatch({effects: StateEffect.appendConfig.of(EditorView.updateListener.of(callback))})
 }

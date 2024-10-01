@@ -5,6 +5,7 @@ import replace from '@rollup/plugin-replace'
 import terser from '@rollup/plugin-terser'
 import css from 'rollup-plugin-import-css'
 import serve from 'rollup-plugin-serve'
+import sourcemaps from 'rollup-plugin-sourcemaps2';
 import fs from 'fs'
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
@@ -19,6 +20,7 @@ const common = (args, name) => ({
     dir: 'build',
     format: 'iife',
     indent: false,
+    sourcemap: args.configDebug,
   },
   context: 'window',
   onwarn: (warning, _warn) => {
@@ -41,6 +43,7 @@ const common = (args, name) => ({
         VIPER_IDE_BUILD:    Date.now(),
       }
     }),
+    args.configDebug && sourcemaps(),
     !args.configDebug && terser(),
     args.configDebug && serve("build"),
   ]

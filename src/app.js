@@ -20,7 +20,8 @@ import { Terminal } from '@xterm/xterm'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { FitAddon } from '@xterm/addon-fit'
 
-import { createNewEditor } from './editor.js'
+import { addUpdateHandler, createNewEditor, getEditorFromElement } from './editor.js'
+import { displayOpenFile, createTab } from './editor_tabs.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
 import { MpRawMode } from './rawmode.js'
@@ -54,7 +55,7 @@ library.add(faMessage, faCircleDown)
 dom.watch()
 
 function getBuildDate() {
-    return (new Date(VIPER_IDE_BUILD)).toISOString().substr(0, 19).replace('T',' ')
+    return (new Date(VIPER_IDE_BUILD)).toISOString().substring(0, 19).replace('T',' ')
 }
 
 async function fetchJSON(url) {
@@ -176,7 +177,7 @@ async function prepareNewPort(type) {
 
     try {
         await new_port.requestAccess()
-    } catch (err) {
+    } catch (_err) {
         return
     }
     return new_port
@@ -246,6 +247,7 @@ export async function connectDevice(type) {
             }
 
             _updateFileTree(fs_tree, fs_stats);
+            document.dispatchEvent(new CustomEvent("deviceConnected", {detail: {port: port}}))
 
         } catch (err) {
             if (err.message.includes('Timeout')) {
@@ -310,6 +312,7 @@ export async function removeFile(path) {
     try {
         await raw.removeFile(path)
         await _raw_updateFileTree(raw)
+        document.dispatchEvent(new CustomEvent("fileRemoved", {detail: {path: path}}))
     } finally {
         await raw.end()
     }
@@ -322,6 +325,7 @@ export async function removeDir(path) {
     try {
         await raw.removeDir(path)
         await _raw_updateFileTree(raw)
+        document.dispatchEvent(new CustomEvent("dirRemoved", {detail: {path: path}}))
     } finally {
         await raw.end()
     }
@@ -337,7 +341,7 @@ async function execReplNoFollow(cmd) {
 
 function _updateFileTree(fs_tree, fs_stats)
 {
-    let [fs_used, fs_free, fs_size] = fs_stats;
+    let [fs_used, _fs_free, fs_size] = fs_stats;
 
     function sorted(content) {
         // Natural sort by name
@@ -351,6 +355,11 @@ function _updateFileTree(fs_tree, fs_stats)
 
         return content
     }
+
+    const changed_files = []
+    QSA("#menu-file-tree .changed").forEach((file) => {
+        changed_files.push(file.dataset.fn)
+    })
 
     // Traverse file tree
     const fileTree = QID('menu-file-tree')
@@ -391,7 +400,7 @@ function _updateFileTree(fs_tree, fs_stats)
                     </div>`)
                 } else {
                     fileTree.insertAdjacentHTML('beforeend', `<div>
-                        ${offset}<a href="#" class="name ${sel}" onclick="app.fileClick('${n.path}');return false;">${icon} ${n.name}&nbsp;</a>
+                        ${offset}<a href="#" class="name ${sel}" data-fn="${n.path}" onclick="app.fileClick('${n.path}');return false;">${icon} ${n.name}&nbsp;</a>
                         <a href="#" class="menu-action" title="Remove" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark fa-fw"></i></a>
                         <span class="menu-action">${sizeFmt(n.size)}</span>
                     </div>`)
@@ -400,6 +409,10 @@ function _updateFileTree(fs_tree, fs_stats)
         }
     }
     traverse(fs_tree, 1)
+
+    for (let fn of changed_files) {
+        QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("changed")
+    }
 
     fileTree.insertAdjacentHTML('beforeend', `<div>
         <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
@@ -420,14 +433,20 @@ async function _raw_updateFileTree(raw) {
     _updateFileTree(fs_tree, fs_stats);
 }
 
-export async function fileClick(fn) {
-    if (!port) return;
-
-    const e = window.event.target || window.event.srcElement;
-
+export function fileTreeSelect(fn) {
     for (const el of document.getElementsByClassName('name')) {
         el.classList.remove('selected')
     }
+    const fileElement = QS(`#menu-file-tree [data-fn="${fn}"]`)
+    if (!fileElement) {
+        // might be a meta/unsaved file
+        return
+    }
+    fileElement.classList.add('selected')
+}
+
+export async function fileClick(fn) {
+    if (!port) return;
 
     const raw = await MpRawMode.begin(port)
     try {
@@ -436,7 +455,7 @@ export async function fileClick(fn) {
         await raw.end()
     }
 
-    e.classList.add('selected')
+    fileTreeSelect(fn)
 }
 
 export async function pyMinify() {
@@ -472,19 +491,21 @@ async function _raw_loadFile(raw, fn) {
     let content
     if (fn == '~sysinfo.md') {
         content = await raw.readSysInfoMD()
+    } else if (displayOpenFile(fn)) {
+        console.debug(`File ${fn} already opened. Switched to tab`)
+        return
     } else {
         content = await raw.readFile(fn)
         try {
             content = (new TextDecoder('utf-8', { fatal: true })).decode(content)
         } catch (err) {
+            toastr.error(`Unable to load file: ${err}`)
         }
     }
-    await _loadContent(fn, content)
+    await _loadContent(fn, content, createTab(fn))
 }
 
-async function _loadContent(fn, content) {
-    const editorElement = QID('editor')
-
+async function _loadContent(fn, content, editorElement) {
     const willDisasm = fn.endsWith('.mpy') && QID('disasm-mpy').checked
 
     if (content instanceof Uint8Array && !willDisasm) {
@@ -499,7 +520,7 @@ async function _loadContent(fn, content) {
             try {
                 // Prettify JSON
                 content = JSON.stringify(JSON.parse(content), null, 2)
-            } catch (err) {
+            } catch (_err) {
                 toastr.warning('JSON is malformed')
             }
         } else if (willDisasm) {
@@ -514,6 +535,12 @@ async function _loadContent(fn, content) {
             devInfo,
             readOnly,
         })
+        document.dispatchEvent(new CustomEvent("editorLoaded", {detail: {editor: editor, fn: fn}}))
+        addUpdateHandler(editor, (update) => {
+            if (update.docChanged) {
+                QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("changed")
+            }
+        })
 
         editorFn = fn
     }
@@ -522,13 +549,26 @@ async function _loadContent(fn, content) {
 
 export async function saveCurrentFile() {
     if (!port) return;
+    if (!editor) return;
+
+    if (editor.state.readOnly) {
+        toastr.warning("File is read only")
+        return
+    }
+
+    if (editorFn == "Untitled") {
+        const fn = prompt(`Creating new file inside /\nPlease enter the name:`)
+        if (fn == null || fn == '') return
+        editorFn = fn
+        document.dispatchEvent(new CustomEvent("fileRenamed", {detail: {old: "Untitled", new: fn}}))
+    }
 
     let content = editor.state.doc.toString()
     if (editorFn.endsWith('.json') && QID('expand-minify-json').checked) {
         try {
             // Minify JSON
             content = JSON.stringify(JSON.parse(content))
-        } catch (error) {
+        } catch (_error) {
             toastr.error('JSON is malformed')
             return
         }
@@ -550,6 +590,9 @@ export async function saveCurrentFile() {
     // Success
     analytics.track('File Saved')
     toastr.success('File Saved')
+
+    document.dispatchEvent(new CustomEvent("fileSaved", {detail: {fn: editorFn}}))
+    QS(`#menu-file-tree [data-fn="${editorFn}"]`).classList.remove("changed")
 }
 
 export function clearTerminal() {
@@ -911,7 +954,9 @@ export function applyTranslation() {
 
         try {
             QID('no-files').innerText = T('files.no-files')
-        } catch (err) {}
+        } catch (_err) {
+            window.console.warn(`No ${i18next.language} translation for 'files.no-files'`)
+        }
 
         QS('#menu-line-conn').innerText = T('settings.conn')
         QS('#menu-line-editor').innerText = T('settings.editor')
@@ -929,7 +974,9 @@ export function applyTranslation() {
 
         QS('#about-cta').innerHTML = T('about.cta')
         QS('#report-bug').innerHTML = T('about.report-bug')
-    } catch (err) {}
+    } catch (err) {
+        report("Error", err)
+    }
 
     QSA('a[id=gh-star]').forEach(el => {
         el.setAttribute('href', 'https://github.com/vshymanskyy/ViperIDE')
@@ -949,7 +996,9 @@ export function applyTranslation() {
     if ('serviceWorker' in navigator) {
         try {
             await navigator.serviceWorker.register('./app_worker.js');
-        } catch {}
+        } catch (err) {
+            report("Unable to register service worker", err)
+        }
     }
 
     await i18next.use(LanguageDetector).init({
@@ -979,7 +1028,7 @@ export function applyTranslation() {
         let tz
         try {
             tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-        } catch (e) {
+        } catch (_e) {
             tz = (new Date()).getTimezoneOffset()
         }
 
@@ -1027,7 +1076,7 @@ export function applyTranslation() {
             analytics.track('User Active')
         })
 
-    } catch (err) {
+    } catch (_err) {
         window.analytics = {
             track: function() {}
         }
@@ -1049,7 +1098,8 @@ export function applyTranslation() {
 
     toastr.options.preventDuplicates = true;
 
-    await _loadContent('test.py', `
+    const fn = 'test.py'
+    const content = `
 # ViperIDE - MicroPython Web IDE
 # Read more: https://github.com/vshymanskyy/ViperIDE
 
@@ -1057,7 +1107,8 @@ export function applyTranslation() {
 
 # You can also open a virtual device and explore some examples:
 # https://viper-ide.org?vm=1
-`)
+`
+    await _loadContent(fn, content, createTab(fn))
 
     const xtermTheme = {
         foreground: '#F8F8F8',
@@ -1111,7 +1162,7 @@ export function applyTranslation() {
 
     term.loadAddon(new WebLinksAddon())
 
-    addEventListener('resize', (event) => {
+    addEventListener('resize', (_event) => {
         fitAddon.fit()
     })
 
@@ -1133,6 +1184,12 @@ export function applyTranslation() {
             return
         }
         ev.preventDefault()
+    })
+
+    document.addEventListener("tabActivated", (event) => {
+        fileTreeSelect(event.detail.fn)
+        editor = getEditorFromElement(event.detail.editorElement)
+        editorFn = event.detail.fn
     })
 
     setTimeout(() => {
@@ -1181,7 +1238,8 @@ async function checkForUpdates() {
     }
     lastUpdateCheck = now
 
-    QID('viper-ide-version').innerHTML = VIPER_IDE_VERSION
+    const current_version = VIPER_IDE_VERSION
+    QID('viper-ide-version').innerHTML = current_version
     QID('viper-ide-build').innerText = 'build ' + getBuildDate()
 
     let manifest;
@@ -1190,9 +1248,9 @@ async function checkForUpdates() {
     } catch {
         return
     }
-    if (manifest.version !== VIPER_IDE_VERSION) {
+    if (current_version.localeCompare(manifest.version, undefined, {numeric: true, sensitivity: "base"}) < 0) {
         toastr.info(`New ViperIDE version ${manifest.version} is available`)
-        QID('viper-ide-version').innerHTML = `${VIPER_IDE_VERSION} (<a href="javascript:app.updateApp()">update</a>)`
+        QID('viper-ide-version').innerHTML = `${current_version} (<a href="javascript:app.updateApp()">update</a>)`
 
         // Automatically show about page
         QS('a[data-target="menu-about"]').click()

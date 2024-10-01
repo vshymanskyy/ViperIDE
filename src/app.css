@@ -61,9 +61,45 @@ body.loaded {
     width: 0;
 }
 
-#editor {
+.editor {
     background: var(--bg-color-edit);
+    height: 100%;
+}
+
+#editor-tabs {
+    justify-content: left;
+    padding: 1px 5px;
+    overflow-x: auto
+}
+
+#editor-tabs .tab {
+    cursor: pointer;
+    display: flex;
+}
+
+#editor-tabs .tab.changed::after {
+    content: "*";
+}
+
+#editor-tabs .menu-action {
+    font-size: inherit;
+}
+
+#editor-tabs .tab-title {
+    pointer-events: none;
+}
+
+.editor-tab-pane {
+    display: none;
+}
+
+.editor-tab-pane.active {
+    display: block;
     flex: 1;
+    overflow: auto;
+}
+
+.editor-tab-pane.active .editor {
     overflow: auto;
 }
 
@@ -162,6 +198,10 @@ body.loaded {
     outline: 2px solid var(--fg-color);
 }
 
+#menu-file-tree div .changed::after {
+    content: "*";
+}
+
 .menu-action {
     font-weight: normal;
     float: right;
@@ -208,8 +248,8 @@ body.loaded {
     }
 
     #overlay:not(.show) {
-        transition: visibility var(--animation), 
-                    background-color var(--animation), 
+        transition: visibility var(--animation),
+                    background-color var(--animation),
                     backdrop-filter var(--animation),
                     -webkit-backdrop-filter var(--animation);
     }
