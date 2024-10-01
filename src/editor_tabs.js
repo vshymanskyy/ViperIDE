@@ -134,6 +134,8 @@ function _closeTab(index) {
     tabElement.remove()
     editorElement.remove()
 
+    document.dispatchEvent(new CustomEvent("tabClosed", {detail: {fn: fn, editorElement: editorElement}}))
+
     if (!tabSelected) {
         return
     }

@@ -360,6 +360,10 @@ function _updateFileTree(fs_tree, fs_stats)
     QSA("#menu-file-tree .changed").forEach((file) => {
         changed_files.push(file.dataset.fn)
     })
+    const open_files = []
+    QSA("#menu-file-tree .open").forEach((file) => {
+        open_files.push(file.dataset.fn)
+    })
 
     // Traverse file tree
     const fileTree = QID('menu-file-tree')
@@ -412,6 +416,9 @@ function _updateFileTree(fs_tree, fs_stats)
 
     for (let fn of changed_files) {
         QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("changed")
+    }
+    for (let fn of open_files) {
+        QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("open")
     }
 
     if (QID('advanced-mode').checked) {
@@ -506,6 +513,7 @@ async function _raw_loadFile(raw, fn) {
         }
     }
     await _loadContent(fn, content, createTab(fn))
+    QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("open")
 }
 
 async function _loadContent(fn, content, editorElement) {
@@ -1193,6 +1201,9 @@ export function applyTranslation() {
         fileTreeSelect(event.detail.fn)
         editor = getEditorFromElement(event.detail.editorElement)
         editorFn = event.detail.fn
+    })
+    document.addEventListener("tabClosed", (event) => {
+        QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`).classList.remove("open")
     })
 
     setTimeout(() => {

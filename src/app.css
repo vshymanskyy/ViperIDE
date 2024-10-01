@@ -202,6 +202,10 @@ body.loaded {
     content: "*";
 }
 
+#menu-file-tree div .open::after {
+    content: "·"
+}
+
 .menu-action {
     font-weight: normal;
     float: right;
