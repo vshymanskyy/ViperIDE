@@ -240,13 +240,13 @@ export async function connectDevice(type) {
 
             const fs_tree = await raw.walkFs()
 
-            if        (fs_tree.filter(x => x.name === 'main.py').length) {
-                await _raw_loadFile(raw, 'main.py')
-            } else if (fs_tree.filter(x => x.name === 'code.py').length) {
-                await _raw_loadFile(raw, 'code.py')
-            }
-
             _updateFileTree(fs_tree, fs_stats);
+
+            if        (fs_tree.filter(x => x.path === '/main.py').length) {
+                await _raw_loadFile(raw, '/main.py')
+            } else if (fs_tree.filter(x => x.path === '/code.py').length) {
+                await _raw_loadFile(raw, '/code.py')
+            }
             document.dispatchEvent(new CustomEvent("deviceConnected", {detail: {port: port}}))
 
         } catch (err) {
@@ -513,7 +513,6 @@ async function _raw_loadFile(raw, fn) {
         }
     }
     await _loadContent(fn, content, createTab(fn))
-    QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("open")
 }
 
 async function _loadContent(fn, content, editorElement) {
@@ -1201,6 +1200,10 @@ export function applyTranslation() {
         fileTreeSelect(event.detail.fn)
         editor = getEditorFromElement(event.detail.editorElement)
         editorFn = event.detail.fn
+        const fileElement = QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`)
+        if (fileElement) {
+            fileElement.classList.add("open")
+        }
     })
     document.addEventListener("tabClosed", (event) => {
         const fileElement = QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`)

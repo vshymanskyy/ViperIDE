@@ -55,10 +55,14 @@ export function createTab(fn) {
     editorTabElement.addEventListener("click", (_event) => {
         _activateTab(editorTabElement.dataset.tab)
     })
-    editorTabElement.querySelector(".menu-action").addEventListener("click", (event) => {
+    const closeButton = editorTabElement.querySelector(".menu-action")
+
+    function close_tab(event) {
         event.stopPropagation()
         _closeTab(editorTabElement.dataset.tab)
-    })
+    }
+    closeButton.addEventListener("click", close_tab)
+    editorTabElement.addEventListener("auxclick", close_tab)
 
     const editorTabTitle = editorTabElement.querySelector(".tab-title")
     editorTabTitle.textContent = fn.split("/").pop()
@@ -68,6 +72,7 @@ export function createTab(fn) {
     }
 
     const editorElement = QS(`.editor-tab-pane[data-pane="${currentTab}"] .editor`)
+    _activateTab(editorTabElement.dataset.tab)
     return editorElement
 }
 
