@@ -122,11 +122,12 @@ document.addEventListener("deviceConnected", (_event) => {
 
 function _closeTab(index) {
     const tabElement = QS(`#editor-tabs .tab[data-tab="${index}"]`)
+    const titleElement = tabElement.querySelector(".tab-title")
     const tabSelected = tabElement.classList.contains("active")
     const editorElement = QS(`.editor-tab-pane[data-pane="${index}"]`)
     const fn = tabElement.dataset.fn
 
-    if (tabElement.classList.contains("changed")) {
+    if (titleElement.classList.contains("changed")) {
         if (!confirm(`${fn} has unsaved changes. Close without saving?`)) {
             return
         }
