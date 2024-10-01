@@ -1203,7 +1203,10 @@ export function applyTranslation() {
         editorFn = event.detail.fn
     })
     document.addEventListener("tabClosed", (event) => {
-        QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`).classList.remove("open")
+        const fileElement = QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`)
+        if (fileElement) {
+            fileElement.classList.remove("open")
+        }
     })
 
     setTimeout(() => {
