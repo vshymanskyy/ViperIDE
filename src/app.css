@@ -77,7 +77,7 @@ body.loaded {
     display: flex;
 }
 
-#editor-tabs .tab.changed::after {
+#editor-tabs .tab .tab-title.changed::after {
     content: "*";
 }
 
@@ -202,8 +202,8 @@ body.loaded {
     content: "*";
 }
 
-#menu-file-tree div .open::after {
-    content: "·"
+#menu-file-tree div .open {
+    font-style: italic;
 }
 
 .menu-action {

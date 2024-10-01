@@ -104,7 +104,7 @@ document.addEventListener("fileSaved", (event) => {
 })
 
 document.addEventListener("editorLoaded", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${event.detail.fn}"]`)
+    const editorTab = QS(`#editor-tabs [data-fn="${event.detail.fn}"] .tab-title`)
     addUpdateHandler(event.detail.editor, (update) => {
         if (update.docChanged) {
             editorTab.classList.add("changed")
