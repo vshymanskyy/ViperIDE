@@ -503,6 +503,7 @@ async function _raw_loadFile(raw, fn) {
         content = await raw.readSysInfoMD()
     } else if (displayOpenFile(fn)) {
         console.debug(`File ${fn} already opened. Switched to tab`)
+        autoHideSideMenu()
         return
     } else {
         content = await raw.readFile(fn)

@@ -265,3 +265,9 @@ body.loaded {
     }
 }
 
+@media (max-width: 768px) {
+    #editor-tabs {
+        display: none;
+    }
+}
+
