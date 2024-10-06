@@ -60,7 +60,7 @@ export class MicroPythonWASM extends Transport {
     }
 
     async requestAccess() {
-        const processStream = async (reader) => {
+        const processStream = async (_reader) => {
             while (this.isConnected) {
                 const { value, done } = await this.reader.read()
                 if (done) break

@@ -6,6 +6,8 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
+import { report } from "./utils"
+
 export class MpRawMode {
     constructor(port) {
         this.port = port
@@ -35,6 +37,7 @@ export class MpRawMode {
                 await this.port.flushInput()
                 return
             } catch (err) {
+                report("Error", err)
             }
         }
         throw new Error('Board is not responding')
@@ -192,7 +195,7 @@ print('|'.join(str(x) for x in d))
         // See https://docs.micropython.org/en/latest/reference/mpyfiles.html
         try {
             mpy_arch = [null, 'x86', 'x64', 'armv6', 'armv6m', 'armv7m', 'armv7em', 'armv7emsp', 'armv7emdp', 'xtensa', 'xtensawin', 'rv32imc'][mpy_arch]
-        } catch (err) {
+        } catch (_err) {
             mpy_arch = null
         }
         mpy_ver = parseInt(mpy_ver, 10)

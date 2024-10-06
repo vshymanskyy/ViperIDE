@@ -169,7 +169,9 @@ export async function getRuffWorkspace() {
         settings.set('line-length', 120)
         //console.log(settings)
         _ruff_wspace = new RuffWorkspace(settings);
-    } catch (err) {}
+    } catch (err) {
+        console.error(`Failed to init Ruff workspace: ${err}`)
+    }
     return _ruff_wspace
 }
 

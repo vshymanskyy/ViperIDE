@@ -177,7 +177,9 @@ export class WebSerial extends Transport {
                 vid: pi.usbVendorId.toString(16).padStart(4, '0'),
                 pid: pi.usbProductId.toString(16).padStart(4, '0'),
             }
-        } catch(err) {}
+        } catch(err) {
+            report("Error", err)
+        }
     }
 
     async connect() {
@@ -207,7 +209,7 @@ export class WebSerial extends Transport {
                 this.receiveCallback(decoder.decode(value))
                 this.activityCallback()
             }
-        } catch (err) {
+        } catch (_err) {
             this.disconnectCallback()
         }
     }
@@ -267,7 +269,9 @@ export class WebBluetooth extends Transport {
             this.info = {
                 name: this.device.name,
             }
-        } catch(err) {}
+        } catch(err) {
+            report("Error", err)
+        }
     }
 
     async connect() {
@@ -407,7 +411,7 @@ export class WebSocketREPL extends Transport {
             this.last_activity = Date.now()
         }
 
-        this.socket.onclose = (ev) => {
+        this.socket.onclose = (_ev) => {
             this.disconnectCallback()
         }
 
@@ -415,7 +419,7 @@ export class WebSocketREPL extends Transport {
         try {
             try {
                 await this.readUntil('Password:', 1000)
-            } catch (err) {
+            } catch (_err) {
                 return
             }
             const pass = await this._passReqCallback()
@@ -510,7 +514,6 @@ export class WebRTCTransport extends Transport {
                 signal: controller.signal,
             })).json()
             iceServers.push(...ice)
-        } catch (err) {
         } finally {
             clearTimeout(timeout)
         }
