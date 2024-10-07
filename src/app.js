@@ -1210,6 +1210,7 @@ export function applyTranslation() {
         const fileElement = QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`)
         if (fileElement) {
             fileElement.classList.remove("open")
+            fileElement.classList.remove("changed")
         }
     })
 
