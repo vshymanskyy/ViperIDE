@@ -40,7 +40,7 @@ export function createTab(fn) {
         `<div class="tab active" data-tab="${currentTab}" data-fn="${fn}"">
             <span class="tab-title">${fn}</span>
             <a class="menu-action" title="Close">
-                <i class="fa-solid fa-xmark fa-fw"></i>
+                <i class="fa-solid fa-xmark"></i>
             </a>
         </div>
         `

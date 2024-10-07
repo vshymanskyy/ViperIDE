@@ -75,6 +75,7 @@ body.loaded {
 #editor-tabs .tab {
     cursor: pointer;
     display: flex;
+    padding: 2px 10px;
 }
 
 #editor-tabs .tab .tab-title.changed::after {
