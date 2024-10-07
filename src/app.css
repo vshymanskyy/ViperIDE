@@ -78,7 +78,8 @@ body.loaded {
 }
 
 #editor-tabs .tab .tab-title.changed::after {
-    content: "*";
+    content: " ●";
+    color: var(--fg-color-highlight);
 }
 
 #editor-tabs .menu-action {
@@ -87,6 +88,7 @@ body.loaded {
 
 #editor-tabs .tab-title {
     pointer-events: none;
+    text-wrap: nowrap;
 }
 
 .editor-tab-pane {
@@ -190,20 +192,24 @@ body.loaded {
     white-space: nowrap;
 }
 
+#menu-file-tree div .open {
+    color: var(--fg-color);
+    background: #666;
+    border-radius: 1px;
+    outline: 2px solid #666;
+}
+
 #menu-file-tree div .selected {
-    font-weight: bold;
     color: var(--bg-color);
     background: var(--fg-color);
     border-radius: 1px;
     outline: 2px solid var(--fg-color);
+    position: relative;
 }
 
 #menu-file-tree div .changed::after {
-    content: "*";
-}
-
-#menu-file-tree div .open {
-    font-style: italic;
+    content: "●";
+    color: var(--fg-color-highlight);
 }
 
 .menu-action {

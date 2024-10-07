@@ -8,12 +8,13 @@
 
 :root {
     --fg-color: white;
+    --fg-color-highlight: orange;
     --bg-color: #2a2e32;
     --bg-color-menu: #2a2e32ee;
     --bg-color-edit: #111314;
     --font-size: 14px;
     --connected-passive: #87c244;
-    --connected-active: #ffcc4d;
+    --connected-active: orange;
     --connected-color: var(--connected-passive);
     --animation: 0.3s ease-in-out;
 }
