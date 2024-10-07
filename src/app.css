@@ -192,11 +192,9 @@ body.loaded {
     white-space: nowrap;
 }
 
-#menu-file-tree div .open {
-    color: var(--fg-color);
-    background: #666;
-    border-radius: 1px;
-    outline: 2px solid #666;
+#menu-file-tree div .open::after {
+    content: "●";
+    color: #666;
 }
 
 #menu-file-tree div .selected {
@@ -204,7 +202,6 @@ body.loaded {
     background: var(--fg-color);
     border-radius: 1px;
     outline: 2px solid var(--fg-color);
-    position: relative;
 }
 
 #menu-file-tree div .changed::after {
