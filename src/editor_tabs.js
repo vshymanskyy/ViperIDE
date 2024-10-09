@@ -99,7 +99,7 @@ document.addEventListener("fileRenamed", (event) => {
 })
 
 document.addEventListener("fileSaved", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${event.detail.fn}"]`)
+    const editorTab = QS(`#editor-tabs [data-fn="${event.detail.fn}"] .tab-title`)
     editorTab.classList.remove("changed")
 })
 

@@ -118,6 +118,19 @@ async function prepareNewPort(type) {
         }
 
         if (url.startsWith('ws://') || url.startsWith('wss://')) {
+            try {
+                // Special handling of URLs like
+                // wss://blynk.cloud/stream/qe7FBr7Sj.../Terminal
+                const info = URL.parse(url)
+                if (info.host.includes('blynk') && info.pathname.startsWith('/stream/')) {
+                    const [_, _path, token, ds] = info.pathname.split('/')
+                    const blynkAuthPattern = /^[A-Za-z0-9\-_]{32}$/;
+                    if (blynkAuthPattern.test(token)) {
+                        url = `wss://${info.host}:443/msgforwarder?deviceToken=${token}&dataStreamName=${ds}`
+                    }
+                }
+            } catch (_err) {}
+
             new_port = new WebSocketREPL(url)
             new_port.onPasswordRequest(async () => {
                 const pass = prompt('WebREPL password:', defaultWsPass)
