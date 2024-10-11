@@ -698,11 +698,27 @@ const MIP_INDEXES = {
     'micropython-lib': 'https://micropython.org/pi/v2',
 }
 
-const MIP_FEATURED = [
-    { "name": "viper-tools",        "url": "github:vshymanskyy/ViperIDE/packages/viper-tools/package.json" },
-    { "name": "memory-profiler",    "url": "github:pi-mst/micropython-memory-profiler/package.json" },
-    { "name": "aioprof",            "url": "gitlab:alelec/aioprof/aioprof.py" },
-]
+const MIP_FEATURED = [{
+    "name":  "viper-tools",
+    "url":   "github:vshymanskyy/ViperIDE/packages/viper-tools/package.json",
+    "about": "https://github.com/vshymanskyy/ViperIDE/tree/main/packages/viper-tools",
+},{
+    "name":  "memory-profiler",
+    "url":   "github:pi-mst/micropython-memory-profiler/package.json",
+    "about": "https://github.com/pi-mst/micropython-memory-profiler",
+},{
+    "name": "aioprof",
+    "url": "gitlab:alelec/aioprof/aioprof.py",
+    "about": "https://gitlab.com/alelec/aioprof",
+},{
+    "name": "async-primitives",
+    "url": "github:peterhinch/micropython-async/v3/primitives/package.json",
+    "about": "https://github.com/peterhinch/micropython-async",
+},{
+    "name": "async-threadsafe",
+    "url": "github:peterhinch/micropython-async/v3/threadsafe/package.json",
+    "about": "https://github.com/peterhinch/micropython-async",
+}]
 
 function rewriteUrl(url, branch='HEAD') {
     if (url.startsWith('github:')) {
@@ -725,7 +741,7 @@ export async function loadAllPkgIndexes() {
     pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">featured</div>`)
     for (const pkg of MIP_FEATURED) {
         pkgList.insertAdjacentHTML('beforeend', `<div>
-            <span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
+            <span><a href="${pkg.about}" target="_blank"><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name} <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i></a></span>
             <a href="#" class="menu-action" onclick="app.installPkgFromUrl('${pkg.name}','${pkg.url}');return false;">latest <i class="fa-regular fa-circle-down"></i></a>
         </div>`)
     }
