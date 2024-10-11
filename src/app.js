@@ -59,7 +59,9 @@ function getBuildDate() {
 }
 
 async function fetchJSON(url) {
-    return await (await fetch(url, {cache: 'no-store'})).json()
+    const response = await fetch(url, {cache: 'no-store'})
+    if (!response.ok) { throw new Error(response.status) }
+    return await response.json()
 }
 
 const T = i18next.t.bind(i18next)
@@ -692,22 +694,15 @@ export async function runCurrentFile() {
 
 let loadedPackages = false
 
-const MIP_INDEXES = [
-    'https://micropython.org/pi/v2'
-]
-
-export async function loadAllPkgIndexes() {
-    if (!loadedPackages) {
-        for (const index of MIP_INDEXES) {
-            try {
-                await fetchPkgList(index)
-                loadedPackages = true
-            } catch (err) {
-                console.error(err.name, err.message, err.stack)
-            }
-        }
-    }
+const MIP_INDEXES = {
+    'micropython-lib': 'https://micropython.org/pi/v2',
 }
+
+const MIP_FEATURED = [
+    { "name": "viper-tools",        "url": "github:vshymanskyy/ViperIDE/packages/viper-tools/package.json" },
+    { "name": "memory-profiler",    "url": "github:pi-mst/micropython-memory-profiler/package.json" },
+    { "name": "aioprof",            "url": "gitlab:alelec/aioprof/aioprof.py" },
+]
 
 function rewriteUrl(url, branch='HEAD') {
     if (url.startsWith('github:')) {
@@ -715,37 +710,45 @@ function rewriteUrl(url, branch='HEAD') {
         url = 'https://raw.githubusercontent.com/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
     } else if (url.startsWith('gitlab:')) {
         url = url.slice(7).split('/')
-        url = 'https://gitlab.com/' + url[0] + '/' + url[1] + '/-/raw/' + branch + '/' + url.slice(2).join('/')
+        url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
     }
     return url
 }
 
-async function fetchPkgList(index_url) {
-    const mipindex = await fetchJSON(rewriteUrl(`${index_url}/index.json`))
-
+export async function loadAllPkgIndexes() {
+    if (loadedPackages) {
+        return
+    }
     const pkgList = QID('menu-pkg-list')
     pkgList.innerHTML = ''
 
-    pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">viper-ide</div>`)
-    pkgList.insertAdjacentHTML('beforeend', `<div>
-        <span><i class="fa-solid fa-cube fa-fw"></i> viper-tools</span>
-        <a href="#" class="menu-action" onclick="app.installReplTools();return false;">${viper_tools_pkg.version} <i class="fa-regular fa-circle-down"></i></a>
-    </div>`)
-    pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">micropython-lib</div>`)
-    for (const pkg of mipindex.packages) {
-        let offset = ''
-        if (pkg.name.includes('-')) {
-            const parent = pkg.name.split('-').slice(0, -1).join('-')
-            const exists = mipindex.packages.some(pkg => (pkg.name === parent))
-            if (exists) {
-                offset = '&emsp;'
-            }
-        }
+    pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">featured</div>`)
+    for (const pkg of MIP_FEATURED) {
         pkgList.insertAdjacentHTML('beforeend', `<div>
-            ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
-            <a href="#" class="menu-action" onclick="app.installPkg('${index_url}','${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
+            <span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
+            <a href="#" class="menu-action" onclick="app.installPkgFromUrl('${pkg.name}','${pkg.url}');return false;">latest <i class="fa-regular fa-circle-down"></i></a>
         </div>`)
     }
+    for (const [index_name, index_url] of Object.entries(MIP_INDEXES)) {
+        const mipindex = await fetchJSON(rewriteUrl(`${index_url}/index.json`))
+
+        pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">${index_name}</div>`)
+        for (const pkg of mipindex.packages) {
+            let offset = ''
+            if (pkg.name.includes('-')) {
+                const parent = pkg.name.split('-').slice(0, -1).join('-')
+                const exists = mipindex.packages.some(pkg => (pkg.name === parent))
+                if (exists) {
+                    offset = '&emsp;'
+                }
+            }
+            pkgList.insertAdjacentHTML('beforeend', `<div>
+                ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
+                <a href="#" class="menu-action" onclick="app.installPkg('${index_url}','${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
+            </div>`)
+        }
+    }
+    loadedPackages = true
 }
 
 async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=null) {
@@ -765,12 +768,25 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
 
         if (!pkg_info) {
             pkg_info = await fetchJSON(rewriteUrl(`${index_url}/package/${mpy_ver}/${pkg}/${version}.json`))
+        } else if (typeof pkg_info === 'string') {
+            if (pkg_info.endsWith('.json')) {
+                pkg_info = await fetchJSON(rewriteUrl(pkg_info));
+            } else {
+                const url = pkg_info
+                pkg_info = {
+                    version: "latest",
+                    urls: [
+                        [url.split('/').pop(), url]
+                    ]
+                }
+            }
         }
 
         if ('hashes' in pkg_info) {
             for (const [fn, hash, ..._] of pkg_info.hashes) {
-                const file_rsp = await fetch(rewriteUrl(`${index_url}/file/${hash.slice(0,2)}/${hash}`))
-                const content = await file_rsp.arrayBuffer()
+                const response = await fetch(rewriteUrl(`${index_url}/file/${hash.slice(0,2)}/${hash}`))
+                if (!response.ok) { throw new Error(response.status) }
+                const content = await response.arrayBuffer()
                 const target_file = `${lib_path}/${fn}`
 
                 // Ensure path exists
@@ -783,8 +799,9 @@ async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=n
 
         if ('urls' in pkg_info) {
             for (const [fn, url, ..._] of pkg_info.urls) {
-                const file_rsp = await fetch(rewriteUrl(url))
-                const content = await file_rsp.arrayBuffer()
+                const response = await fetch(rewriteUrl(url))
+                if (!response.ok) { throw new Error(response.status) }
+                const content = await response.arrayBuffer()
                 const target_file = `${lib_path}/${fn}`
 
                 // Ensure path exists
@@ -817,20 +834,8 @@ export async function installPkg(index_url, pkg, version='latest', pkg_info=null
     }
 }
 
-const viper_tools_pkg = {
-    v: 1,
-    version: '0.1.1',
-    urls: [
-        ['web_repl.py',   'github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py'],
-        ['ble_repl.py',   'github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py'],
-        ['ble_nus.py',    'github:vshymanskyy/ViperIDE/packages/viper-tools/ble_nus.py'],
-        ['ws_client.py',  'github:vshymanskyy/ViperIDE/packages/viper-tools/ws_client.py'],
-        ['wss_repl.py',   'github:vshymanskyy/ViperIDE/packages/viper-tools/wss_repl.py'],
-    ]
-}
-
-export async function installReplTools() {
-    await installPkg(null, 'viper-tools', 'latest', viper_tools_pkg)
+export async function installPkgFromUrl(name, url) {
+    await installPkg(null, name, 'latest', url)
 }
 
 /*
