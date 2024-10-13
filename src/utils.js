@@ -26,6 +26,12 @@ export class Mutex {
     }
 }
 
+export async function fetchJSON(url) {
+    const response = await fetch(url, {cache: 'no-store'})
+    if (!response.ok) { throw new Error(response.status) }
+    return await response.json()
+}
+
 export function getUserUID() {
     const localStorageKey = 'uuid';
 

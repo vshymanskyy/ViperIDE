@@ -177,7 +177,7 @@ export class WebSerial extends Transport {
                 vid: pi.usbVendorId.toString(16).padStart(4, '0'),
                 pid: pi.usbProductId.toString(16).padStart(4, '0'),
             }
-        } catch(err) {
+        } catch (err) {
             report("Error", err)
         }
     }
@@ -185,33 +185,36 @@ export class WebSerial extends Transport {
     async connect() {
         await this.port.open({ baudRate: 115200 })
 
-        this.reader = this.port.readable.getReader()
+        const decoderStream = new TextDecoderStream()
+        this.readableStreamClosed = this.port.readable.pipeTo(decoderStream.writable)
+        this.reader = decoderStream.readable.getReader()
         this.writer = this.port.writable.getWriter()
 
-        this.listen()
+        const processStream = async () => {
+            while (true) {
+                const { value, done } = await this.reader.read()
+                if (done) {
+                    this.reader.releaseLock()
+                    break
+                }
+                this.receiveCallback(value)
+                this.activityCallback()
+            }
+            this.disconnectCallback()
+        }
+        processStream()
     }
 
     async disconnect() {
-        await this.reader.cancel()
+        if (this.reader) {
+            await this.reader.cancel()
+            await this.readableStreamClosed.catch(() => {})
+        }
         await this.port.forget()
     }
 
     async writeBytes(data) {
         await this.writer.write(data)
-    }
-
-    async listen() {
-        const decoder = new TextDecoder()
-        try {
-            while (true) {
-                const { value, done } = await this.reader.read()
-                if (done) break
-                this.receiveCallback(decoder.decode(value))
-                this.activityCallback()
-            }
-        } catch (_err) {
-            this.disconnectCallback()
-        }
     }
 }
 
@@ -232,21 +235,25 @@ const ADA_FT = 'adaf0200-4669-6c65-5472-616e73666572'
 const ADA_NUS_TX_LIMIT = 20
 
 const CH9143_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb'
-const CH9143_TX = '0000fff2-0000-1000-8000-00805f9b34fb'       // Write or Write Without Response
-const CH9143_RX = '0000fff1-0000-1000-8000-00805f9b34fb'       // Notify
+const CH9143_TX = '0000fff2-0000-1000-8000-00805f9b34fb'    // Write or Write Without Response
+const CH9143_RX = '0000fff1-0000-1000-8000-00805f9b34fb'    // Notify
+const CH9143_CTRL = '0000fff3-0000-1000-8000-00805f9b34fb'  // Read / Write
+const CH9143_TX_LIMIT = 64
 
 export class WebBluetooth extends Transport {
     constructor() {
         super()
+        if (typeof navigator.bluetooth === 'undefined') {
+            throw new Error('WebBluetooth not available')
+        }
         this.device = null
         this.server = null
         this.service = null
         this.rx = null
         this.tx = null
         this.tx_limit = 20
-        if (typeof navigator.bluetooth === 'undefined') {
-            throw new Error('WebBluetooth not available')
-        }
+        this.decoderStream = null
+        this.reader = null
     }
 
     async requestAccess() {
@@ -269,7 +276,7 @@ export class WebBluetooth extends Transport {
             this.info = {
                 name: this.device.name,
             }
-        } catch(err) {
+        } catch (err) {
             report("Error", err)
         }
     }
@@ -285,6 +292,7 @@ export class WebBluetooth extends Transport {
                 this.rx = await service.getCharacteristic(NUS_RX)
                 this.tx = await service.getCharacteristic(NUS_TX)
                 this.tx_limit = NUS_TX_LIMIT
+                break
             } else if (service.uuid === ADA_NUS_SERVICE) {
                 this.service = service
                 this.rx = await service.getCharacteristic(ADA_NUS_RX)
@@ -304,39 +312,61 @@ export class WebBluetooth extends Transport {
                 //ft.removeEventListener('characteristicvaluechanged', () => {})
                 ft.addEventListener('characteristicvaluechanged', () => {})
                 await ft.startNotifications()
+                break
             } else if (service.uuid === CH9143_SERVICE) {
                 this.service = service
                 this.rx = await service.getCharacteristic(CH9143_RX)
                 this.tx = await service.getCharacteristic(CH9143_TX)
-                this.tx_limit = NUS_TX_LIMIT
-            }
+                this.tx_limit = CH9143_TX_LIMIT
 
-            if (this.service) {
-                await this.rx.startNotifications()
-                this.rx.addEventListener('characteristicvaluechanged', this.handleNotifications.bind(this))
-                return
+                // Setup 115200 8N1
+                const ctrl = await service.getCharacteristic(CH9143_CTRL)
+                await ctrl.writeValue(new Uint8Array([0x06,0x00,0x09,0x00,0x00,0xC2,0x01,0x00,0x08,0x01,0x00,0x06]))
+                break
             }
         }
 
-        throw new Error('No compatible NUS service found')
+        if (!this.service) {
+            throw new Error('No compatible NUS service found')
+        }
+
+        this.decoderStream = new TextDecoderStream()
+        this.reader = this.decoderStream.readable.getReader()
+        const writer = this.decoderStream.writable.getWriter()
+
+        const processStream = async () => {
+            while (this.device.gatt.connected) {
+                const { value, done } = await this.reader.read()
+                if (done) break
+                this.receiveCallback(value)
+                this.activityCallback()
+            }
+        }
+
+        this.rx.addEventListener('characteristicvaluechanged', (ev) => {
+            writer.write(ev.target.value)
+        })
+        await this.rx.startNotifications()
+        processStream()
     }
 
     async disconnect() {
         if (this.device && this.device.gatt.connected) {
             await this.device.gatt.disconnect();
         }
+        if (this.reader) {
+            await this.reader.cancel()
+            this.reader.releaseLock()
+        }
+        if (this.decoderStream) {
+            await this.decoderStream.writable.abort()
+        }
     }
 
     async writeBytes(data) {
         //await this.tx.writeValueWithoutResponse(data)
         await this.tx.writeValue(data)
-    }
-
-    handleNotifications(event) {
-        const decoder = new TextDecoder()
-        const value = event.target.value
-        this.receiveCallback(decoder.decode(value))
-        this.activityCallback()
+        await sleep(1)
     }
 }
 
@@ -402,6 +432,8 @@ export class WebSocketREPL extends Transport {
 
         this.socket.onmessage = (event) => {
             if (event.data instanceof ArrayBuffer) {
+                // NOTE: for WebSockets, we assume that each binary message
+                // contains a complete unicode string
                 const decoder = new TextDecoder()
                 this.receiveCallback(decoder.decode(event.data))
             } else {

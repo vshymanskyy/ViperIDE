@@ -52,15 +52,17 @@ if __name__ == "__main__":
 export class MicroPythonWASM extends Transport {
     constructor() {
         super()
-        this.mpy = null
-        this.decoderStream = new TextDecoderStream()
-        this.reader = this.decoderStream.readable.getReader()
-        this.writer = this.decoderStream.writable.getWriter()
+        this.mp = null
+        this.reader = null
         this.isConnected = false
     }
 
     async requestAccess() {
-        const processStream = async (_reader) => {
+        this.decoderStream = new TextDecoderStream()
+        this.reader = this.decoderStream.readable.getReader()
+        const writer = this.decoderStream.writable.getWriter()
+
+        const processStream = async () => {
             while (this.isConnected) {
                 const { value, done } = await this.reader.read()
                 if (done) break
@@ -72,7 +74,7 @@ export class MicroPythonWASM extends Transport {
         this.mp = await loadMicroPython({
             url: 'https://viper-ide.org/assets/micropython.wasm',
             stdout: (data) => {
-                this.writer.write(data)
+                writer.write(data)
             },
             linebuffer: false,
         });
