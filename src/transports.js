@@ -238,7 +238,7 @@ const CH9143_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb'
 const CH9143_TX = '0000fff2-0000-1000-8000-00805f9b34fb'    // Write or Write Without Response
 const CH9143_RX = '0000fff1-0000-1000-8000-00805f9b34fb'    // Notify
 const CH9143_CTRL = '0000fff3-0000-1000-8000-00805f9b34fb'  // Read / Write
-const CH9143_TX_LIMIT = 64
+const CH9143_TX_LIMIT = 20
 
 export class WebBluetooth extends Transport {
     constructor() {
