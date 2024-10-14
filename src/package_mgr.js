@@ -20,19 +20,27 @@ const MIP_INDEXES = [{
 }]
 
 function rewriteUrl(url, { base=null, branch='HEAD' } = {}) {
+    if (url.startsWith('http://')) {
+        url = 'https://' + url.slice(7)
+    }
+
+    if (url.startsWith('https://github.com/')) {
+        // TODO: trim "?raw=true"
+    } else if (url.startsWith('https://gitlab.com/')) {
+        // TODO
+    }
+
     if (url.startsWith('github:')) {
         url = url.slice(7).split('/')
         url = 'https://raw.githubusercontent.com/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
     } else if (url.startsWith('gitlab:')) {
         url = url.slice(7).split('/')
         url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
-    } else if (url.startsWith('http://')) {
-        url = 'https://' + url.slice(7)
     } else if (url.startsWith('https://')) {
         // ok, use it
     } else {
         if (!base) { throw new Error(`${url} cannot be relative in this context`) }
-        base = base.replace(/\/[^/]*\.[^/]*$/, '')     // Strip filename, if any
+        base = base.replace(/\/[^/]*\.[^/]*$/, '')      // Strip filename, if any
         base = rewriteUrl(base, { branch })             // Rewite base url
         url = base + '/' + url
     }
@@ -44,19 +52,27 @@ export async function getPkgIndexes() {
         if (!i.index) {
             i.index = await fetchJSON(rewriteUrl(`${i.url}/index.json`))
         }
+        for (const pkg of i.index.packages) {
+            if (!pkg.version && i.index.v === '3.viper-ide') {
+                pkg.version = pkg.versions[0].version
+            }
+        }
     }
     return MIP_INDEXES
 }
 
-export async function rawInstallPkg(raw, index_name, pkg, { dev=null, version=null, pkg_info=null, pkg_json=null, prefer_source=false } = {}) {
-    let index = MIP_INDEXES.find(o => o.name === index_name)
-    if (!index) {
-        index = {}
+export async function findPkg(name) {
+    for (const index of await getPkgIndexes()) {
+        for (const pkg of index.index.packages) {
+            if (pkg.name === name) {
+                return [index, pkg]
+            }
+        }
     }
+    return [{}, null]
+}
 
-    if (!dev) {
-        dev = await raw.getDeviceInfo()
-    }
+export async function rawInstallPkg(raw, name, { dev=null, version=null, index=null, pkg_info=null, pkg_json=null, prefer_source=false } = {}) {
     const mpy_ver = prefer_source ? 'py' : dev.mpy_ver
     const mpy_ver_full = dev.mpy_ver + "." + dev.mpy_sub
     // Find the first `lib` folder in sys.path
@@ -72,32 +88,38 @@ export async function rawInstallPkg(raw, index_name, pkg, { dev=null, version=nu
     }
 
     if (!pkg_info) {
-        const index_pkg = index.index.packages.find(o => o.name === pkg);
-        if (index.index.v === 2) {
-            if (!version) { version = 'latest' }
-            pkg_json = rewriteUrl(`${index.url}/package/${mpy_ver}/${pkg}/${version}.json`)
-            pkg_info = await fetchJSON(pkg_json)
-        } else if (index.index.v === '3.viper-ide') {
-            for (const pkg_ver of index_pkg.versions) {
-                if (!verify_mpy_ver(pkg_ver.mpy)) continue;
-                pkg_json = rewriteUrl(pkg_ver.url, { base: index.url })
+        let index_pkg;
+        [index, index_pkg] = await findPkg(name)
+        if (index_pkg) {  // Found in index
+            if (index.index.v === 2) {
+                if (!version) { version = 'latest' }
+                pkg_json = rewriteUrl(`${index.url}/package/${mpy_ver}/${index_pkg.name}/${version}.json`)
                 pkg_info = await fetchJSON(pkg_json)
-                break
+            } else if (index.index.v === '3.viper-ide') {
+                for (const pkg_ver of index_pkg.versions) {
+                    if (!verify_mpy_ver(pkg_ver.mpy)) continue;
+                    pkg_json = rewriteUrl(pkg_ver.url, { base: index.url })
+                    pkg_info = await fetchJSON(pkg_json)
+                    break
+                }
+            } else {
+                throw new Error(`Package index version ${index.index.v} is not supported`)
             }
-        } else {
-            throw new Error(`Package index version ${index.index.v} is not supported`)
-        }
-    } else if (typeof pkg_info === 'string') {
-        if (pkg_info.endsWith('.json')) {
-            pkg_json = rewriteUrl(pkg_info, { base: index.url })
-            pkg_info = await fetchJSON(pkg_json);
-        } else {
-            const url = pkg_info
-            pkg_info = {
-                version: "latest",
-                urls: [
-                    [url.split('/').pop(), url]
-                ]
+        } else {  // Not in index => URL?
+            let url = name
+            if (url.endsWith('.py') || url.endsWith('.mpy')) {
+                pkg_info = {
+                    version: "latest",
+                    urls: [
+                        [url.split('/').pop(), url]
+                    ]
+                }
+            } else {
+                if (!url.endsWith('.json')) {
+                    url += '/package.json'
+                }
+                pkg_json = rewriteUrl(url, { base: index.url })
+                pkg_info = await fetchJSON(pkg_json);
             }
         }
     }
@@ -137,12 +159,14 @@ export async function rawInstallPkg(raw, index_name, pkg, { dev=null, version=nu
             throw new Error(`Package version ${pkg_info.mpy} incompatible with ${mpy_ver_full}`)
         }
         const native_pkg_info = pkg_info.native[dev.mpy_arch]
-        await rawInstallPkg(raw, index_name, pkg, { dev, version, pkg_json, pkg_info: native_pkg_info })
+        await rawInstallPkg(raw, pkg_info.name, { dev, version, index, pkg_json, pkg_info: native_pkg_info })
     }
 
     if ('deps' in pkg_info) {
         for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
-            await rawInstallPkg(raw, index_name, dep_pkg, { dev, version: dep_ver })
+            await rawInstallPkg(raw, dep_pkg, { dev, version: dep_ver })
         }
     }
+
+    return pkg_info
 }
