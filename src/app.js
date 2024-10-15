@@ -25,6 +25,7 @@ import { displayOpenFile, createTab } from './editor_tabs.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
 import { MpRawMode } from './rawmode.js'
+import { getPkgIndexes, rawInstallPkg } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
 import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettifyPython } from './python_utils.js'
@@ -33,7 +34,7 @@ import { MicroPythonWASM } from './emulator.js'
 import { marked } from 'marked'
 import { UAParser } from 'ua-parser-js'
 
-import { splitPath, sleep, getUserUID, getScreenInfo, IdleMonitor,
+import { splitPath, sleep, fetchJSON, getUserUID, getScreenInfo, IdleMonitor,
          getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, isRunningStandalone,
          sizeFmt, indicateActivity, setupTabs, report } from './utils.js'
 
@@ -56,12 +57,6 @@ dom.watch()
 
 function getBuildDate() {
     return (new Date(VIPER_IDE_BUILD)).toISOString().substring(0, 19).replace('T',' ')
-}
-
-async function fetchJSON(url) {
-    const response = await fetch(url, {cache: 'no-store'})
-    if (!response.ok) { throw new Error(response.status) }
-    return await response.json()
 }
 
 const T = i18next.t.bind(i18next)
@@ -131,7 +126,9 @@ async function prepareNewPort(type) {
                         url = `wss://${info.host}:443/msgforwarder?deviceToken=${token}&dataStreamName=${ds}`
                     }
                 }
-            } catch (_err) {}
+            } catch (_err) {
+                // all ok
+            }
 
             new_port = new WebSocketREPL(url)
             new_port.onPasswordRequest(async () => {
@@ -275,6 +272,11 @@ export async function connectDevice(type) {
         }
         // Print banner. TODO: optimize
         await port.write('\x02')
+
+        if (window.pkg_import_url) {
+            await installPkg(window.pkg_import_url)
+            window.pkg_import_url = null
+        }
     } else {
         toastr.success('Device connected')
         analytics.track('Device Connected')
@@ -692,166 +694,67 @@ export async function runCurrentFile() {
  * Package Management
  */
 
-let loadedPackages = false
-
-const MIP_INDEXES = {
-    'micropython-lib': 'https://micropython.org/pi/v2',
-}
-
-const MIP_FEATURED = [{
-    "name":  "viper-tools",
-    "url":   "github:vshymanskyy/ViperIDE/packages/viper-tools/package.json",
-    "about": "https://github.com/vshymanskyy/ViperIDE/tree/main/packages/viper-tools",
-},{
-    "name":  "memory-profiler",
-    "url":   "github:pi-mst/micropython-memory-profiler/package.json",
-    "about": "https://github.com/pi-mst/micropython-memory-profiler",
-},{
-    "name": "aioprof",
-    "url": "gitlab:alelec/aioprof/aioprof.py",
-    "about": "https://gitlab.com/alelec/aioprof",
-},{
-    "name": "async-primitives",
-    "url": "github:peterhinch/micropython-async/v3/primitives/package.json",
-    "about": "https://github.com/peterhinch/micropython-async",
-},{
-    "name": "async-threadsafe",
-    "url": "github:peterhinch/micropython-async/v3/threadsafe/package.json",
-    "about": "https://github.com/peterhinch/micropython-async",
-}]
-
-function rewriteUrl(url, branch='HEAD') {
-    if (url.startsWith('github:')) {
-        url = url.slice(7).split('/')
-        url = 'https://raw.githubusercontent.com/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
-    } else if (url.startsWith('gitlab:')) {
-        url = url.slice(7).split('/')
-        url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
-    }
-    return url
-}
-
 export async function loadAllPkgIndexes() {
-    if (loadedPackages) {
-        return
-    }
     const pkgList = QID('menu-pkg-list')
     pkgList.innerHTML = ''
-
-    pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">featured</div>`)
-    for (const pkg of MIP_FEATURED) {
-        pkgList.insertAdjacentHTML('beforeend', `<div>
-            <span><a href="${pkg.about}" target="_blank"><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name} <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i></a></span>
-            <a href="#" class="menu-action" onclick="app.installPkgFromUrl('${pkg.name}','${pkg.url}');return false;">latest <i class="fa-regular fa-circle-down"></i></a>
-        </div>`)
-    }
-    for (const [index_name, index_url] of Object.entries(MIP_INDEXES)) {
-        const mipindex = await fetchJSON(rewriteUrl(`${index_url}/index.json`))
-
-        pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">${index_name}</div>`)
-        for (const pkg of mipindex.packages) {
+    for (const i of await getPkgIndexes()) {
+        pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">${i.name}</div>`)
+        for (const pkg of i.index.packages) {
             let offset = ''
             if (pkg.name.includes('-')) {
                 const parent = pkg.name.split('-').slice(0, -1).join('-')
-                const exists = mipindex.packages.some(pkg => (pkg.name === parent))
+                const exists = i.index.packages.some(pkg => (pkg.name === parent))
                 if (exists) {
                     offset = '&emsp;'
                 }
             }
             pkgList.insertAdjacentHTML('beforeend', `<div>
                 ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
-                <a href="#" class="menu-action" onclick="app.installPkg('${index_url}','${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
+                <a href="#" class="menu-action" onclick="app.installPkg('${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
             </div>`)
         }
     }
-    loadedPackages = true
 }
 
-async function _raw_installPkg(raw, index_url, pkg, version='latest', pkg_info=null) {
-    analytics.track('Package Install', { name: pkg })
-    toastr.info(`Installing ${pkg}...`)
+export async function installPkg(pkg, { version=null } = {}) {
+    if (!port) {
+        toastr.info('Connect yout board first')
+        return
+    }
+    const raw = await MpRawMode.begin(port)
     try {
+        analytics.track('Package Install', { name: pkg })
+        toastr.info(`Installing ${pkg}...`)
         if (!devInfo) {
             devInfo = await raw.getDeviceInfo()
         }
-        const mpy_ver = QID('force-install-package-source').checked ? 'py' : devInfo.mpy_ver
-        // Find the first `lib` folder in sys.path
-        const lib_path = devInfo.sys_path.find(x => x.endsWith('/lib'))
-        if (!lib_path) {
-            toastr.error(`"lib" folder not found in sys.path`)
-            return
+        const pkg_info = await rawInstallPkg(raw, pkg, {
+            version,
+            dev: devInfo,
+            prefer_source: QID('force-install-package-source').checked,
+        })
+        if (pkg_info.version) {
+            toastr.success(`Installed ${pkg}@${pkg_info.version}`)
+        } else {
+            toastr.success(`Installed ${pkg}`)
         }
-
-        if (!pkg_info) {
-            pkg_info = await fetchJSON(rewriteUrl(`${index_url}/package/${mpy_ver}/${pkg}/${version}.json`))
-        } else if (typeof pkg_info === 'string') {
-            if (pkg_info.endsWith('.json')) {
-                pkg_info = await fetchJSON(rewriteUrl(pkg_info));
-            } else {
-                const url = pkg_info
-                pkg_info = {
-                    version: "latest",
-                    urls: [
-                        [url.split('/').pop(), url]
-                    ]
-                }
-            }
-        }
-
-        if ('hashes' in pkg_info) {
-            for (const [fn, hash, ..._] of pkg_info.hashes) {
-                const response = await fetch(rewriteUrl(`${index_url}/file/${hash.slice(0,2)}/${hash}`))
-                if (!response.ok) { throw new Error(response.status) }
-                const content = await response.arrayBuffer()
-                const target_file = `${lib_path}/${fn}`
-
-                // Ensure path exists
-                const [dirname, _] = splitPath(target_file)
-                await raw.makePath(dirname)
-
-                await raw.writeFile(target_file, content, 128, true)
-            }
-        }
-
-        if ('urls' in pkg_info) {
-            for (const [fn, url, ..._] of pkg_info.urls) {
-                const response = await fetch(rewriteUrl(url))
-                if (!response.ok) { throw new Error(response.status) }
-                const content = await response.arrayBuffer()
-                const target_file = `${lib_path}/${fn}`
-
-                // Ensure path exists
-                const [dirname, _] = splitPath(target_file)
-                await raw.makePath(dirname)
-
-                await raw.writeFile(target_file, content, 128, true)
-            }
-        }
-
-        if ('deps' in pkg_info) {
-            for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
-                await _raw_installPkg(raw, index_url, dep_pkg, dep_ver)
-            }
-        }
-        toastr.success(`Installed ${pkg}@${pkg_info.version} to ${lib_path}`)
+        await _raw_updateFileTree(raw)
     } catch (err) {
         report('Installing failed', err)
-    }
-}
-
-export async function installPkg(index_url, pkg, version='latest', pkg_info=null) {
-    if (!port) return;
-    const raw = await MpRawMode.begin(port)
-    try {
-        await _raw_installPkg(raw, index_url, pkg, version, pkg_info)
-        await _raw_updateFileTree(raw)
     } finally {
         await raw.end()
     }
 }
 
-export async function installPkgFromUrl(name, url) {
-    await installPkg(null, name, 'latest', url)
+export async function installPkgFromUrl() {
+    if (!port) {
+        toastr.info('Connect yout board first')
+        return
+    }
+    const url = prompt('Enter package name or URL:')
+    if (url) {
+        await installPkg(url)
+    }
 }
 
 /*
@@ -1268,10 +1171,13 @@ export function applyTranslation() {
         } catch (err) {
             report('Cannot connect', err)
         }
-    } else if ((urlID = urlParams.get('emulator'))) {   // TODO: remove, back-compat
-        window.webrepl_url = 'vm://' + urlID
     } else if ((urlID = urlParams.get('vm'))) {
         window.webrepl_url = 'vm://' + urlID
+    }
+
+    if ((urlID = urlParams.get('import'))) {
+        window.pkg_import_url = urlID
+        toastr.info('Warning: your files may be overwritten!', `Connect your board to import ${urlID}`)
     }
 
     if (typeof webrepl_url !== 'undefined') {

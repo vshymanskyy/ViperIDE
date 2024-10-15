@@ -19,29 +19,48 @@ const MIP_INDEXES = [{
     url:  'https://micropython.org/pi/v2',
 }]
 
-function rewriteUrl(url, { base=null, branch='HEAD' } = {}) {
+function rewriteUrl(url, { base=null, branch=null } = {}) {
     if (url.startsWith('http://')) {
         url = 'https://' + url.slice(7)
     }
 
     if (url.startsWith('https://github.com/')) {
-        // TODO: trim "?raw=true"
+        const githubRegex = /https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.*?)(\?raw=true)?$/
+        const match = url.match(githubRegex)
+        if (match) {
+            const [, user, repo, urlBranch, filePath] = match
+            branch = branch || urlBranch;
+            url = `github:${user}/${repo}/${filePath}`
+        } else {
+            // Handle root URL case
+            url = 'github:' + url.split('/').slice(3).join('/')
+        }
     } else if (url.startsWith('https://gitlab.com/')) {
-        // TODO
+        const gitlabRegex = /https:\/\/gitlab\.com\/([^/]+)\/([^/]+)\/-\/raw\/([^/]+)\/(.*)$/
+        const match = url.match(gitlabRegex)
+        if (match) {
+            const [, user, repo, urlBranch, filePath] = match
+            branch = branch || urlBranch;
+            url = `gitlab:${user}/${repo}/${filePath}`
+        } else {
+            // Handle root URL case
+            url = 'gitlab:' + url.split('/').slice(3).join('/')
+        }
     }
 
     if (url.startsWith('github:')) {
         url = url.slice(7).split('/')
-        url = 'https://raw.githubusercontent.com/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
+        url = 'https://raw.githubusercontent.com/' + url[0] + '/' + url[1] + '/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
     } else if (url.startsWith('gitlab:')) {
         url = url.slice(7).split('/')
-        url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + branch + '/' + url.slice(2).join('/')
+        url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
     } else if (url.startsWith('https://')) {
-        // ok, use it
+        // OK, use it as is
     } else {
-        if (!base) { throw new Error(`${url} cannot be relative in this context`) }
+        if (!base) {
+            throw new Error(`${url} cannot be relative in this context`)
+        }
         base = base.replace(/\/[^/]*\.[^/]*$/, '')      // Strip filename, if any
-        base = rewriteUrl(base, { branch })             // Rewite base url
         url = base + '/' + url
     }
     return url
@@ -144,7 +163,13 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
             const response = await fetch(rewriteUrl(url, { base: pkg_json }))
             if (!response.ok) { throw new Error(response.status) }
             const content = await response.arrayBuffer()
-            const target_file = `${lib_path}/${fn}`
+
+            let target_file
+            if (fn.startsWith('./')) {
+                target_file = fn.slice(2)
+            } else {
+                target_file = `${lib_path}/${fn}`
+            }
 
             // Ensure path exists
             const [dirname, _] = splitPath(target_file)
