@@ -273,9 +273,9 @@ export async function connectDevice(type) {
         // Print banner. TODO: optimize
         await port.write('\x02')
 
-        if (window.pkg_import_url) {
-            await installPkg(window.pkg_import_url)
-            window.pkg_import_url = null
+        if (window.pkg_install_url) {
+            await installPkg(window.pkg_install_url)
+            window.pkg_install_url = null
         }
     } else {
         toastr.success('Device connected')
@@ -1175,8 +1175,8 @@ export function applyTranslation() {
         window.webrepl_url = 'vm://' + urlID
     }
 
-    if ((urlID = urlParams.get('import'))) {
-        window.pkg_import_url = urlID
+    if ((urlID = urlParams.get('install'))) {
+        window.pkg_install_url = urlID
         toastr.info('Warning: your files may be overwritten!', `Connect your board to import ${urlID}`)
     }
 

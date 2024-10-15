@@ -25,10 +25,10 @@ function rewriteUrl(url, { base=null, branch=null } = {}) {
     }
 
     if (url.startsWith('https://github.com/')) {
-        const githubRegex = /https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.*?)(\?raw=true)?$/
+        const githubRegex = /https:\/\/github\.com\/([^/]+)\/([^/]+)\/(blob|tree)\/([^/]+)\/(.*?)(\?raw=true)?$/
         const match = url.match(githubRegex)
         if (match) {
-            const [, user, repo, urlBranch, filePath] = match
+            const [, user, repo, , urlBranch, filePath] = match
             branch = branch || urlBranch;
             url = `github:${user}/${repo}/${filePath}`
         } else {
