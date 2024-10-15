@@ -13,13 +13,14 @@ const MIP_INDEXES = [{
     url:  'https://vsh.pp.ua/mip-featured',
 },{
     name: 'emlearn-micropython',
-    url:  'https://vsh.pp.ua/emlearn',
+    url:  'https://emlearn.github.io/emlearn-micropython/builds',
 },{
     name: 'micropython-lib',
     url:  'https://micropython.org/pi/v2',
 }]
 
 function rewriteUrl(url, { base=null, branch=null } = {}) {
+    //const input_url = url;
     if (url.startsWith('http://')) {
         url = 'https://' + url.slice(7)
     }
@@ -36,10 +37,10 @@ function rewriteUrl(url, { base=null, branch=null } = {}) {
             url = 'github:' + url.split('/').slice(3).join('/')
         }
     } else if (url.startsWith('https://gitlab.com/')) {
-        const gitlabRegex = /https:\/\/gitlab\.com\/([^/]+)\/([^/]+)\/-\/raw\/([^/]+)\/(.*)$/
+        const gitlabRegex = /https:\/\/gitlab\.com\/([^/]+)\/([^/]+)\/-\/(blob|tree)\/([^/]+)\/(.*?)(\?ref_type=.*)?$/
         const match = url.match(gitlabRegex)
         if (match) {
-            const [, user, repo, urlBranch, filePath] = match
+            const [, user, repo, , urlBranch, filePath] = match
             branch = branch || urlBranch;
             url = `gitlab:${user}/${repo}/${filePath}`
         } else {
@@ -63,6 +64,7 @@ function rewriteUrl(url, { base=null, branch=null } = {}) {
         base = base.replace(/\/[^/]*\.[^/]*$/, '')      // Strip filename, if any
         url = base + '/' + url
     }
+    //console.log("Translated", input_url, "=>", url)
     return url
 }
 
