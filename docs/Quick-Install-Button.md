@@ -6,7 +6,7 @@ ViperIDE provides a convenient way to share your packages. This includes:
 - Libraries, modules
 - Demos, projects, code samples
 
-For example, using this button you can install `aiodns`:
+For example, using this button you can install [`aiodns`](https://github.com/vshymanskyy/aiodns):
 
 [<img src="https://raw.githubusercontent.com/vshymanskyy/ViperIDE/refs/heads/main/assets/btn_install.png" alt="Install using ViperIDE" height="48"/>](https://viper-ide.org/?install=github:vshymanskyy/aiodns)
 
