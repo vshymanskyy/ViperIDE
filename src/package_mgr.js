@@ -208,9 +208,8 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
     }
 
     if ('deps' in pkg_info) {
-        for (dep of pkg_info.deps) {
-            let dep_pkg = null
-            let dep_ver = null
+        for (const dep of pkg_info.deps) {
+            let dep_pkg, dep_ver, _;
             if (typeof dep === 'string') {
                 [dep_pkg, dep_ver] = splitPkgName(dep)
             } else if (Array.isArray(dep)) {

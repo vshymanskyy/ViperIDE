@@ -8,7 +8,7 @@ ViperIDE provides a convenient way to share your packages. This includes:
 
 For example, using this button you can install `aiodns`:
 
-[<img src="https://raw.githubusercontent.com/vshymanskyy/ViperIDE/refs/heads/main/assets/btn_install.png" alt="Install using ViperIDE" height="36"/>](https://viper-ide.org/?install=github:vshymanskyy/aiodns)
+[<img src="https://raw.githubusercontent.com/vshymanskyy/ViperIDE/refs/heads/main/assets/btn_install.png" alt="Install using ViperIDE" height="48"/>](https://viper-ide.org/?install=github:vshymanskyy/aiodns)
 
 ## Creating a quick install link
 
@@ -31,6 +31,6 @@ Create a link in form of `https://viper-ide.org/?install=YOUR_LINK`. The link to
 ## Insert the button image into your README.md
 
 ```md
-[<img src="https://raw.githubusercontent.com/vshymanskyy/ViperIDE/refs/heads/main/assets/btn_install.png" alt="Install using ViperIDE" height="36"/>](https://viper-ide.org/?install=YOUR_LINK)
+[<img src="https://raw.githubusercontent.com/vshymanskyy/ViperIDE/refs/heads/main/assets/btn_install.png" alt="Install using ViperIDE" height="48"/>](https://viper-ide.org/?install=YOUR_LINK)
 ```
 
