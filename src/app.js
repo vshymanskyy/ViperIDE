@@ -734,9 +734,9 @@ export async function installPkg(pkg, { version=null } = {}) {
             prefer_source: QID('force-install-package-source').checked,
         })
         if (pkg_info.version) {
-            toastr.success(`Installed ${pkg}@${pkg_info.version}`)
+            toastr.success(`Installed ${pkg_info.name}@${pkg_info.version}`)
         } else {
-            toastr.success(`Installed ${pkg}`)
+            toastr.success(`Installed ${pkg_info.name}`)
         }
         await _raw_updateFileTree(raw)
     } catch (err) {

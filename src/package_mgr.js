@@ -98,7 +98,7 @@ export async function findPkg(name) {
     return [{}, null]
 }
 
-async function loadPkgInfo(url, { base=null }= {}) {
+async function loadPkgInfo(url, { base=null, version=null }= {}) {
     if (url.endsWith('.py') || url.endsWith('.mpy')) {
         const pkg_info = {
             version: "latest",
@@ -111,7 +111,7 @@ async function loadPkgInfo(url, { base=null }= {}) {
         if (!url.endsWith('.json')) {
             url += '/package.json'
         }
-        const pkg_json = rewriteUrl(url, { base })
+        const pkg_json = rewriteUrl(url, { base, branch: version })
         const pkg_info = await fetchJSON(pkg_json);
         return [ pkg_info, pkg_json ]
     }
@@ -137,24 +137,35 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
     }
 
     if (!pkg_info) {
-        let index_pkg;
-        [index, index_pkg] = await findPkg(name)
-        if (index_pkg) {  // Found in index
-            if (index.index.v === 2) {
-                pkg_json = rewriteUrl(`${index.url}/package/${mpy_ver}/${index_pkg.name}/${version || 'latest'}.json`)
-                pkg_info = await fetchJSON(pkg_json)
-            } else if (index.index.v === '3.viper-ide') {
-                for (const pkg_ver of index_pkg.versions) {
-                    if (!verify_mpy_ver(pkg_ver.mpy)) continue;
-                    [ pkg_info, pkg_json ] = await loadPkgInfo(pkg_ver.url, { base: index.url })
-                    break
+        try {
+            let index_pkg;
+            [index, index_pkg] = await findPkg(name)
+            if (index_pkg) {  // Found in index
+                if (index.index.v === 2) {
+                    pkg_json = rewriteUrl(`${index.url}/package/${mpy_ver}/${name}/${version || 'latest'}.json`)
+                    pkg_info = await fetchJSON(pkg_json)
+                } else if (index.index.v === '3.viper-ide') {
+                    for (const pkg_ver of index_pkg.versions) {
+                        if (!verify_mpy_ver(pkg_ver.mpy)) continue;
+                        [ pkg_info, pkg_json ] = await loadPkgInfo(pkg_ver.url, { base: index.url, version })
+                        break
+                    }
+                    if (!pkg_info) {
+                        throw new Error('Not found')
+                    }
+                } else {
+                    throw new Error(`Package index version ${index.index.v} is not supported`)
                 }
-            } else {
-                throw new Error(`Package index version ${index.index.v} is not supported`)
+            } else {  // Not in index => URL?
+                [ pkg_info, pkg_json ] = await loadPkgInfo(name, { base: index.url, version })
             }
-        } else {  // Not in index => URL?
-            [ pkg_info, pkg_json ] = await loadPkgInfo(name, { base: index.url })
+        } catch (_err) {
+            throw new Error(`Cannot find ${name}@${version}`)
         }
+    }
+
+    if (!pkg_info.name) {
+        pkg_info.name = name
     }
 
     if ('hashes' in pkg_info) {
@@ -174,7 +185,7 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
     if ('urls' in pkg_info) {
         for (const [fn, url, ..._] of pkg_info.urls) {
-            const response = await fetch(rewriteUrl(url, { base: pkg_json }))
+            const response = await fetch(rewriteUrl(url, { base: pkg_json, branch: version }))
             if (!response.ok) { throw new Error(response.status) }
             const content = await response.arrayBuffer()
 

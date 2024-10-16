@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
   "main": "index.js",
   "scripts": {
@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
-    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-replace": "^6.0.1",
