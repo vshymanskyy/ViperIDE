@@ -19,6 +19,11 @@ const MIP_INDEXES = [{
     url:  'https://micropython.org/pi/v2',
 }]
 
+function splitPkgName(s) {
+    const [name, version] = s.split(/@(?=[^@]*$)/)
+    return [name, version]
+}
+
 function rewriteUrl(url, { base=null, branch=null } = {}) {
     //const input_url = url;
     if (url.startsWith('http://')) {
@@ -93,6 +98,25 @@ export async function findPkg(name) {
     return [{}, null]
 }
 
+async function loadPkgInfo(url, { base=null }= {}) {
+    if (url.endsWith('.py') || url.endsWith('.mpy')) {
+        const pkg_info = {
+            version: "latest",
+            urls: [
+                [url.split('/').pop(), url]
+            ]
+        }
+        return [ pkg_info, null ]
+    } else {
+        if (!url.endsWith('.json')) {
+            url += '/package.json'
+        }
+        const pkg_json = rewriteUrl(url, { base })
+        const pkg_info = await fetchJSON(pkg_json);
+        return [ pkg_info, pkg_json ]
+    }
+}
+
 export async function rawInstallPkg(raw, name, { dev=null, version=null, index=null, pkg_info=null, pkg_json=null, prefer_source=false } = {}) {
     const mpy_ver = prefer_source ? 'py' : dev.mpy_ver
     const mpy_ver_full = dev.mpy_ver + "." + dev.mpy_sub
@@ -108,40 +132,28 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
         return true
     }
 
+    if (!version) {
+        [ name, version ] = splitPkgName(name)
+    }
+
     if (!pkg_info) {
         let index_pkg;
         [index, index_pkg] = await findPkg(name)
         if (index_pkg) {  // Found in index
             if (index.index.v === 2) {
-                if (!version) { version = 'latest' }
-                pkg_json = rewriteUrl(`${index.url}/package/${mpy_ver}/${index_pkg.name}/${version}.json`)
+                pkg_json = rewriteUrl(`${index.url}/package/${mpy_ver}/${index_pkg.name}/${version || 'latest'}.json`)
                 pkg_info = await fetchJSON(pkg_json)
             } else if (index.index.v === '3.viper-ide') {
                 for (const pkg_ver of index_pkg.versions) {
                     if (!verify_mpy_ver(pkg_ver.mpy)) continue;
-                    pkg_json = rewriteUrl(pkg_ver.url, { base: index.url })
-                    pkg_info = await fetchJSON(pkg_json)
+                    [ pkg_info, pkg_json ] = await loadPkgInfo(pkg_ver.url, { base: index.url })
                     break
                 }
             } else {
                 throw new Error(`Package index version ${index.index.v} is not supported`)
             }
         } else {  // Not in index => URL?
-            let url = name
-            if (url.endsWith('.py') || url.endsWith('.mpy')) {
-                pkg_info = {
-                    version: "latest",
-                    urls: [
-                        [url.split('/').pop(), url]
-                    ]
-                }
-            } else {
-                if (!url.endsWith('.json')) {
-                    url += '/package.json'
-                }
-                pkg_json = rewriteUrl(url, { base: index.url })
-                pkg_info = await fetchJSON(pkg_json);
-            }
+            [ pkg_info, pkg_json ] = await loadPkgInfo(name, { base: index.url })
         }
     }
 
@@ -185,12 +197,27 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
         if (!verify_mpy_ver(pkg_info.mpy)) {
             throw new Error(`Package version ${pkg_info.mpy} incompatible with ${mpy_ver_full}`)
         }
+        if (!dev.mpy_arch) {
+            throw new Error(`Target architecture is incompatible with native modules`)
+        }
         const native_pkg_info = pkg_info.native[dev.mpy_arch]
+        if (!native_pkg_info) {
+            throw new Error(`Package ${pkg_info.name} is incompatible with ${dev.mpy_arch}`)
+        }
         await rawInstallPkg(raw, pkg_info.name, { dev, version, index, pkg_json, pkg_info: native_pkg_info })
     }
 
     if ('deps' in pkg_info) {
-        for (const [dep_pkg, dep_ver, ..._] of pkg_info.deps) {
+        for (dep of pkg_info.deps) {
+            let dep_pkg = null
+            let dep_ver = null
+            if (typeof dep === 'string') {
+                [dep_pkg, dep_ver] = splitPkgName(dep)
+            } else if (Array.isArray(dep)) {
+                [dep_pkg, dep_ver, ..._] = dep
+            } else {
+                throw new Error(`Only strings and arrays are supported in 'deps'`)
+            }
             await rawInstallPkg(raw, dep_pkg, { dev, version: dep_ver })
         }
     }

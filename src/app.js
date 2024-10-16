@@ -1177,7 +1177,7 @@ export function applyTranslation() {
 
     if ((urlID = urlParams.get('install'))) {
         window.pkg_install_url = urlID
-        toastr.info('Warning: your files may be overwritten!', `Connect your board to import ${urlID}`)
+        toastr.info('Warning: your files may be overwritten!', `Connect your board to install ${urlID}`)
     }
 
     if (typeof webrepl_url !== 'undefined') {
