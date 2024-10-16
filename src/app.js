@@ -243,6 +243,11 @@ export async function connectDevice(type) {
             analytics.track('Device Connected', devInfo)
             console.log('Device info', devInfo)
 
+            if (window.pkg_install_url) {
+                await _raw_installPkg(raw, window.pkg_install_url)
+                window.pkg_install_url = null
+            }
+
             let fs_stats = [null, null, null];
             try {
                 fs_stats = await raw.getFsStats()
@@ -272,11 +277,6 @@ export async function connectDevice(type) {
         }
         // Print banner. TODO: optimize
         await port.write('\x02')
-
-        if (window.pkg_install_url) {
-            await installPkg(window.pkg_install_url)
-            window.pkg_install_url = null
-        }
     } else {
         toastr.success('Device connected')
         analytics.track('Device Connected')
@@ -716,6 +716,24 @@ export async function loadAllPkgIndexes() {
     }
 }
 
+async function _raw_installPkg(raw, pkg, { version=null } = {}) {
+    analytics.track('Package Install', { name: pkg })
+    toastr.info(`Installing ${pkg}...`)
+    if (!devInfo) {
+        devInfo = await raw.getDeviceInfo()
+    }
+    const pkg_info = await rawInstallPkg(raw, pkg, {
+        version,
+        dev: devInfo,
+        prefer_source: QID('force-install-package-source').checked,
+    })
+    if (pkg_info.version) {
+        toastr.success(`Installed ${pkg_info.name}@${pkg_info.version}`)
+    } else {
+        toastr.success(`Installed ${pkg_info.name}`)
+    }
+}
+
 export async function installPkg(pkg, { version=null } = {}) {
     if (!port) {
         toastr.info('Connect yout board first')
@@ -723,21 +741,7 @@ export async function installPkg(pkg, { version=null } = {}) {
     }
     const raw = await MpRawMode.begin(port)
     try {
-        analytics.track('Package Install', { name: pkg })
-        toastr.info(`Installing ${pkg}...`)
-        if (!devInfo) {
-            devInfo = await raw.getDeviceInfo()
-        }
-        const pkg_info = await rawInstallPkg(raw, pkg, {
-            version,
-            dev: devInfo,
-            prefer_source: QID('force-install-package-source').checked,
-        })
-        if (pkg_info.version) {
-            toastr.success(`Installed ${pkg_info.name}@${pkg_info.version}`)
-        } else {
-            toastr.success(`Installed ${pkg_info.name}`)
-        }
+        await _raw_installPkg(raw, pkg, { version })
         await _raw_updateFileTree(raw)
     } catch (err) {
         report('Installing failed', err)
