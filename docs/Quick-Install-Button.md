@@ -1,7 +1,7 @@
 
-## Distributing Your Own Packages Using ViperIDE
+## Sharing Your Projects Using ViperIDE
 
-ViperIDE makes it easy to share your packages, including:
+ViperIDE makes it easy to distribute packages, including:
 
 - Libraries and modules
 - Demos, projects, and code samples
@@ -36,4 +36,3 @@ To insert the install button into your `README.md`, use the following markdown c
 ```md
 [<img src="https://raw.githubusercontent.com/vshymanskyy/ViperIDE/refs/heads/main/assets/btn_install.png" alt="Install using ViperIDE" height="48"/>](https://viper-ide.org/?install=YOUR_LINK)
 ```
-
