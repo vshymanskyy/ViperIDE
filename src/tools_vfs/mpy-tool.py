@@ -26,17 +26,9 @@
 
 # Python 2/3 compatibility code
 from __future__ import print_function
-import platform
 import sys
 
-if sys.implementation.name == 'micropython':
-    py_ver = "mpy"
-elif platform.python_version_tuple()[0] == "2":
-    py_ver = "2"
-elif platform.python_version_tuple()[0] == "3":
-    py_ver = "3"
-
-if py_ver == "2":
+if sys.version_info[0] == 2:
     from binascii import hexlify as hexlify_py2
 
     str_cons = lambda val, enc=None: str(val)
@@ -49,7 +41,7 @@ if py_ver == "2":
         x = hexlify_py2(b)
         return ":".join(x[i : i + 2] for i in range(0, len(x), 2))
 
-elif py_ver in ("3", "mpy"):
+elif sys.version_info[0] == 3:  # Also handles MicroPython
     from binascii import hexlify
 
     str_cons = str
@@ -1088,6 +1080,7 @@ class RawCodeNative(RawCode):
             MP_NATIVE_ARCH_X64,
             MP_NATIVE_ARCH_XTENSA,
             MP_NATIVE_ARCH_XTENSAWIN,
+            MP_NATIVE_ARCH_RV32IMC,
         ):
             self.fun_data_attributes = '__attribute__((section(".text,\\"ax\\",@progbits # ")))'
         else:
