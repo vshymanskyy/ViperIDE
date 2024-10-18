@@ -12,9 +12,6 @@ const MIP_INDEXES = [{
     name: 'featured',
     url:  'https://vsh.pp.ua/mip-featured',
 },{
-    name: 'emlearn-micropython',
-    url:  'https://emlearn.github.io/emlearn-micropython/builds',
-},{
     name: 'micropython-lib',
     url:  'https://micropython.org/pi/v2',
 }]
@@ -192,9 +189,10 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
             const content = await response.arrayBuffer()
 
             let target_file
-            if (fn.startsWith('./')) {  // TODO: root:
-                target_file = fn.slice(2)
+            if (fn.startsWith('fs:')) {
+                target_file = fn.slice(3)
             } else {
+                if (fn.startsWith('lib:')) { target_file = fn.slice(4) }
                 target_file = `${lib_path}/${fn}`
                 // TODO: compile to .mpy
             }
