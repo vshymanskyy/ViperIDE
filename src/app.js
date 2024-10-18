@@ -719,12 +719,10 @@ export async function loadAllPkgIndexes() {
 async function _raw_installPkg(raw, pkg, { version=null } = {}) {
     analytics.track('Package Install', { name: pkg })
     toastr.info(`Installing ${pkg}...`)
-    if (!devInfo) {
-        devInfo = await raw.getDeviceInfo()
-    }
+    const dev_info = await raw.getDeviceInfo()
     const pkg_info = await rawInstallPkg(raw, pkg, {
         version,
-        dev: devInfo,
+        dev: dev_info,
         prefer_source: QID('force-install-package-source').checked,
     })
     if (pkg_info.version) {
@@ -1127,6 +1125,8 @@ export function applyTranslation() {
         if (ev.ctrlKey || ev.metaKey) {
             if (ev.code == 'KeyS') {
                 saveCurrentFile()
+            } else if (ev.code == 'KeyD') {
+                reboot('soft')
             } else {
                 return
             }

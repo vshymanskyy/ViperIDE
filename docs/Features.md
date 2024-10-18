@@ -67,6 +67,7 @@
 | Key                     | Action                      |
 |---                      |---                          |
 | <kbd>Ctrl-S</kbd>       | save file without running   |
+| <kbd>Ctrl-D</kbd>       | soft-reset board            |
 | <kbd>F5</kbd>           | run file without saving     |
 | <kbd>F11</kbd>          | toggle full screen          |
 | <kbd>Ctrl-/</kbd>       | toggle comments             |
