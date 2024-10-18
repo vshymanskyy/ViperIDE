@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "start": "rollup --config --configDebug --watch"
   },
   "dependencies": {
-    "@astral-sh/ruff-wasm-web": "0.6.9",
+    "@astral-sh/ruff-wasm-web": "0.7.0",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-markdown": "^6.3.0",
     "@codemirror/lang-python": "^6.1.6",

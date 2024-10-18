@@ -170,10 +170,12 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
     if ('hashes' in pkg_info) {
         for (const [fn, hash, ..._] of pkg_info.hashes) {
-            const response = await fetch(rewriteUrl(`${index.url}/file/${hash.slice(0,2)}/${hash}`))
+            const response = await fetch(rewriteUrl(`${index.url}/file/${hash.slice(0,2)}/${hash}`), {cache: 'no-store'})
             if (!response.ok) { throw new Error(response.status) }
             const content = await response.arrayBuffer()
             const target_file = `${lib_path}/${fn}`
+
+            // TODO: compile to .mpy
 
             // Ensure path exists
             const [dirname, _] = splitPath(target_file)
@@ -185,15 +187,16 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
     if ('urls' in pkg_info) {
         for (const [fn, url, ..._] of pkg_info.urls) {
-            const response = await fetch(rewriteUrl(url, { base: pkg_json, branch: version }))
+            const response = await fetch(rewriteUrl(url, { base: pkg_json, branch: version }), {cache: 'no-store'})
             if (!response.ok) { throw new Error(response.status) }
             const content = await response.arrayBuffer()
 
             let target_file
-            if (fn.startsWith('./')) {
+            if (fn.startsWith('./')) {  // TODO: root:
                 target_file = fn.slice(2)
             } else {
                 target_file = `${lib_path}/${fn}`
+                // TODO: compile to .mpy
             }
 
             // Ensure path exists
