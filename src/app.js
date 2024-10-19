@@ -42,7 +42,7 @@ import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
 import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
-         faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
+         faPlug, faArrowUpRightFromSquare, faTerminal, faBug, faGaugeHigh,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark
        } from '@fortawesome/free-solid-svg-icons'
 import { faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
@@ -50,7 +50,7 @@ import { faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
 library.add(faUsb, faBluetoothB)
 library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
-         faPlug, faArrowUpRightFromSquare, faTerminal, faBug,
+         faPlug, faArrowUpRightFromSquare, faTerminal, faBug, faGaugeHigh,
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
 library.add(faMessage, faCircleDown)
 dom.watch()
@@ -701,6 +701,7 @@ export async function loadAllPkgIndexes() {
         pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">${i.name}</div>`)
         for (const pkg of i.index.packages) {
             let offset = ''
+            let icon = ''
             if (pkg.name.includes('-')) {
                 const parent = pkg.name.split('-').slice(0, -1).join('-')
                 const exists = i.index.packages.some(pkg => (pkg.name === parent))
@@ -708,8 +709,15 @@ export async function loadAllPkgIndexes() {
                     offset = '&emsp;'
                 }
             }
+            const keywords = pkg.keywords ? pkg.keywords.split(',').map(x => x.trim()) : [];
+            if (keywords.includes('__hidden__')) {
+                continue
+            }
+            if (keywords.includes('native')) {
+                icon = ' <i class="fa-solid fa-gauge-high" title="Efficient native module"></i>'
+            }
             pkgList.insertAdjacentHTML('beforeend', `<div>
-                ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}</span>
+                ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}${icon}</span>
                 <a href="#" class="menu-action" onclick="app.installPkg('${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
             </div>`)
         }
@@ -723,7 +731,7 @@ async function _raw_installPkg(raw, pkg, { version=null } = {}) {
     const pkg_info = await rawInstallPkg(raw, pkg, {
         version,
         dev: dev_info,
-        prefer_source: QID('force-install-package-source').checked,
+        prefer_source: QID('install-package-source').checked,
     })
     if (pkg_info.version) {
         toastr.success(`Installed ${pkg_info.name}@${pkg_info.version}`)
