@@ -75,6 +75,26 @@ export async function validatePython(filename, content, devInfo) {
     }
 }
 
+export async function compilePython(filename, content, devInfo) {
+    if (content instanceof ArrayBuffer) {
+        const codec = new TextDecoder("utf-8")
+        content = codec.decode(content)
+    }
+    const [_, fname] = splitPath(filename)
+    const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
+    let options = null
+    if (devInfo && devInfo.mpy_arch) {
+        options = [ "-march="+devInfo.mpy_arch ]
+    }
+    const result = await compile_v6(fname, content, options, wasmUrlV6)
+    if (result.status !== 0) {
+        const stderr = result.err.join('\n')
+        const stdout = result.out.join('\n')
+        throw new Error("mpy-cross failed:\n" + stdout + "\n" + stderr)
+    }
+    return result.mpy
+}
+
 export function detectIndentStyle(content) {
     const lines = content.split('\n');
 

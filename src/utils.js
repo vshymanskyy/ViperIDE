@@ -32,6 +32,12 @@ export async function fetchJSON(url) {
     return await response.json()
 }
 
+export async function fetchArrayBuffer(url) {
+    const response = await fetch(url, {cache: 'no-store'})
+    if (!response.ok) { throw new Error(response.status) }
+    return await response.arrayBuffer()
+}
+
 export function getUserUID() {
     const localStorageKey = 'uuid';
 

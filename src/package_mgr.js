@@ -6,7 +6,8 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { fetchJSON, splitPath } from './utils.js'
+import { fetchJSON, fetchArrayBuffer, splitPath } from './utils.js'
+import { compilePython } from './python_utils.js'
 
 const MIP_INDEXES = [{
     name: 'featured',
@@ -19,6 +20,10 @@ const MIP_INDEXES = [{
 function splitPkgName(s) {
     const [name, version] = s.split(/@(?=[^@]*$)/)
     return [name, version]
+}
+
+function expandVars(s, vars) {
+    return s.replace(/\{(\w+)\}/g, (match, key) => (vars[key.trim()] || match))
 }
 
 function rewriteUrl(url, { base=null, branch=null } = {}) {
@@ -74,6 +79,7 @@ export async function getPkgIndexes() {
     for (const i of MIP_INDEXES) {
         if (!i.index) {
             i.index = await fetchJSON(rewriteUrl(`${i.url}/index.json`))
+            i.index.packages.sort((a,b) => a.name.localeCompare(b.name))
         }
         for (const pkg of i.index.packages) {
             if (!pkg.version && i.index.v === '3.viper-ide') {
@@ -115,18 +121,14 @@ async function loadPkgInfo(url, { base=null, version=null }= {}) {
 }
 
 export async function rawInstallPkg(raw, name, { dev=null, version=null, index=null, pkg_info=null, pkg_json=null, prefer_source=false } = {}) {
-    const mpy_ver = prefer_source ? 'py' : dev.mpy_ver
-    const mpy_ver_full = dev.mpy_ver + "." + dev.mpy_sub
     // Find the first `lib` folder in sys.path
     const lib_path = dev.sys_path.find(x => x.endsWith('/lib'))
     if (!lib_path) {
         throw new Error(`"lib" folder not found in sys.path`)
     }
-
-    function verify_mpy_ver(mpy) {
-        if ((typeof mpy === 'string') && !(mpy === mpy_ver_full || mpy === mpy_ver)) { return false }
-        if (Array.isArray(mpy) && !(mpy.includes(mpy_ver_full) || mpy.includes(mpy_ver))) { return false }
-        return true
+    let fs_path = ''
+    if (dev.sys_path.indexOf('/flash') >= 0 || dev.sys_path.indexOf('/flash/lib') >= 0) {
+        fs_path = '/flash'
     }
 
     if (!version) {
@@ -139,11 +141,11 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
             [index, index_pkg] = await findPkg(name)
             if (index_pkg) {  // Found in index
                 if (index.index.v === 2) {
-                    pkg_json = rewriteUrl(`${index.url}/package/${mpy_ver}/${name}/${version || 'latest'}.json`)
+                    const mpy_majour = prefer_source ? 'py' : dev.mpy_ver
+                    pkg_json = rewriteUrl(`${index.url}/package/${mpy_majour}/${name}/${version || 'latest'}.json`)
                     pkg_info = await fetchJSON(pkg_json)
                 } else if (index.index.v === '3.viper-ide') {
                     for (const pkg_ver of index_pkg.versions) {
-                        if (!verify_mpy_ver(pkg_ver.mpy)) continue;
                         [ pkg_info, pkg_json ] = await loadPkgInfo(pkg_ver.url, { base: index.url, version })
                         break
                     }
@@ -167,12 +169,8 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
     if ('hashes' in pkg_info) {
         for (const [fn, hash, ..._] of pkg_info.hashes) {
-            const response = await fetch(rewriteUrl(`${index.url}/file/${hash.slice(0,2)}/${hash}`), {cache: 'no-store'})
-            if (!response.ok) { throw new Error(response.status) }
-            const content = await response.arrayBuffer()
+            const content = await fetchArrayBuffer(rewriteUrl(`${index.url}/file/${hash.slice(0,2)}/${hash}`))
             const target_file = `${lib_path}/${fn}`
-
-            // TODO: compile to .mpy
 
             // Ensure path exists
             const [dirname, _] = splitPath(target_file)
@@ -183,18 +181,32 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
     }
 
     if ('urls' in pkg_info) {
-        for (const [fn, url, ..._] of pkg_info.urls) {
-            const response = await fetch(rewriteUrl(url, { base: pkg_json, branch: version }), {cache: 'no-store'})
-            if (!response.ok) { throw new Error(response.status) }
-            const content = await response.arrayBuffer()
+        const vars = {
+            ARCH:   dev.mpy_arch,
+            MPY:    dev.mpy_ver + '.' + dev.mpy_sub,
+            MPY_MAJ: '' + dev.mpy_ver,
+        }
+        for (let [fn, url, ..._] of pkg_info.urls) {
+            url = rewriteUrl(url, { base: pkg_json, branch: version })
+            url = expandVars(url, vars)
+            let content = await fetchArrayBuffer(url)
 
             let target_file
             if (fn.startsWith('fs:')) {
                 target_file = fn.slice(3)
+                target_file = `${fs_path}/${fn}`
             } else {
                 if (fn.startsWith('lib:')) { target_file = fn.slice(4) }
                 target_file = `${lib_path}/${fn}`
-                // TODO: compile to .mpy
+
+                if (!prefer_source && target_file.endsWith('.py')) {
+                    try {
+                        content = await compilePython(target_file, content, dev)
+                        target_file = target_file.replace(/\.py$/, '.mpy')
+                    } catch (_err) {
+                        // Ok, just install the source
+                    }
+                }
             }
 
             // Ensure path exists
@@ -203,20 +215,6 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
             await raw.writeFile(target_file, content, 128, true)
         }
-    }
-
-    if ('native' in pkg_info) {
-        if (!verify_mpy_ver(pkg_info.mpy)) {
-            throw new Error(`Package version ${pkg_info.mpy} incompatible with ${mpy_ver_full}`)
-        }
-        if (!dev.mpy_arch) {
-            throw new Error(`Target architecture is incompatible with native modules`)
-        }
-        const native_pkg_info = pkg_info.native[dev.mpy_arch]
-        if (!native_pkg_info) {
-            throw new Error(`Package ${pkg_info.name} is incompatible with ${dev.mpy_arch}`)
-        }
-        await rawInstallPkg(raw, pkg_info.name, { dev, version, index, pkg_json, pkg_info: native_pkg_info })
     }
 
     if ('deps' in pkg_info) {
