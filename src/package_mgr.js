@@ -168,15 +168,15 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
     }
 
     if ('hashes' in pkg_info) {
-        for (const [fn, hash, ..._] of pkg_info.hashes) {
+        for (let [fn, hash, ..._] of pkg_info.hashes) {
             const content = await fetchArrayBuffer(rewriteUrl(`${index.url}/file/${hash.slice(0,2)}/${hash}`))
-            const target_file = `${lib_path}/${fn}`
+            fn = `${lib_path}/${fn}`
 
             // Ensure path exists
-            const [dirname, _] = splitPath(target_file)
+            const [dirname, _] = splitPath(fn)
             await raw.makePath(dirname)
 
-            await raw.writeFile(target_file, content, 128, true)
+            await raw.writeFile(fn, content, 128, true)
         }
     }
 
@@ -191,18 +191,17 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
             url = expandVars(url, vars)
             let content = await fetchArrayBuffer(url)
 
-            let target_file
             if (fn.startsWith('fs:')) {
-                target_file = fn.slice(3)
-                target_file = `${fs_path}/${fn}`
+                fn = fn.slice(3)
+                fn = `${fs_path}/${fn}`
             } else {
-                if (fn.startsWith('lib:')) { target_file = fn.slice(4) }
-                target_file = `${lib_path}/${fn}`
+                if (fn.startsWith('lib:')) { fn = fn.slice(4) }
+                fn = `${lib_path}/${fn}`
 
-                if (!prefer_source && target_file.endsWith('.py')) {
+                if (!prefer_source && fn.endsWith('.py')) {
                     try {
-                        content = await compilePython(target_file, content, dev)
-                        target_file = target_file.replace(/\.py$/, '.mpy')
+                        content = await compilePython(fn, content, dev)
+                        fn = fn.replace(/\.py$/, '.mpy')
                     } catch (_err) {
                         // Ok, just install the source
                     }
@@ -210,10 +209,10 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
             }
 
             // Ensure path exists
-            const [dirname, _] = splitPath(target_file)
+            const [dirname, _] = splitPath(fn)
             await raw.makePath(dirname)
 
-            await raw.writeFile(target_file, content, 128, true)
+            await raw.writeFile(fn, content, 128, true)
         }
     }
 

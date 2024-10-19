@@ -83,8 +83,14 @@ export async function compilePython(filename, content, devInfo) {
     const [_, fname] = splitPath(filename)
     const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
     let options = null
-    if (devInfo && devInfo.mpy_arch) {
-        options = [ "-march="+devInfo.mpy_arch ]
+
+    if (devInfo) {
+        if (devInfo.mpy_ver != 6) {
+            throw new Error("Only compiling mpy v6 is supported")
+        }
+        if (devInfo.mpy_arch) {
+            options = [ "-march="+devInfo.mpy_arch ]
+        }
     }
     const result = await compile_v6(fname, content, options, wasmUrlV6)
     if (result.status !== 0) {
