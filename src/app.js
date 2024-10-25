@@ -1056,15 +1056,15 @@ export function applyTranslation() {
 
     toastr.options.preventDuplicates = true;
 
-    const fn = 'test.py'
+    const fn = 'README.md'
     const content = `
 # ViperIDE - MicroPython Web IDE
-# Read more: https://github.com/vshymanskyy/ViperIDE
+Read more: https://github.com/vshymanskyy/ViperIDE
 
-# Connect your device and start creating! 🤖👨‍💻🕹️
+Connect your device and start creating! 🤖👨‍💻🕹️
 
-# You can also open a virtual device and explore some examples:
-# https://viper-ide.org?vm=1
+You can also open a virtual device and explore some examples:
+https://viper-ide.org?vm=1
 `
     await _loadContent(fn, content, createTab(fn))
 
