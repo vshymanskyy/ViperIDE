@@ -69,14 +69,16 @@ function _loadSettings() {
         loadedSettings = JSON.parse(localStorage.getItem("settings"))
     }
 
-    function _setLoadedValue(setting, loadedValue, setter) {
-        // if we loaded nothing, then do nothing
-        if (loadedValue == undefined) {
-            return
+    function _setLoadedValue(setting, loadedValue, domValue, setter) {
+        // if we loaded nothing, then don't try to set the DOM (perhaps a brand new setting and
+        // therefore should use the default)
+        if (loadedValue != undefined) {
+            // set the loaded value to the DOM
+            setter(loadedValue)
+        } else {
+            loadedSettings[setting] = domValue
+            loadedValue = domValue
         }
-
-        // set the loaded value to the DOM
-        setter(loadedValue)
 
         // notify any code that might need to know about what we loaded
         _notify(setting, loadedValue)
@@ -84,10 +86,10 @@ function _loadSettings() {
 
     // loop over all DOM settings elements and load them with the value from local storage
     settingsElement.querySelectorAll("input[type='checkbox']").forEach(element => {
-        _setLoadedValue(element.id, loadedSettings[element.id], (value) => element.checked = value)
+        _setLoadedValue(element.id, loadedSettings[element.id], element.checked, (value) => element.checked = value)
     })
     settingsElement.querySelectorAll("select").forEach(element => {
-        _setLoadedValue(element.id, loadedSettings[element.id], (value) => element.value = value)
+        _setLoadedValue(element.id, loadedSettings[element.id], element.value, (value) => element.value = value)
     })
 
     return loadedSettings
