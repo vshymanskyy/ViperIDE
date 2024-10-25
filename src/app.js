@@ -30,6 +30,7 @@ import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
 import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettifyPython } from './python_utils.js'
 import { MicroPythonWASM } from './emulator.js'
+import { getSetting, onSettingChange, updateSetting } from './settings.js'
 
 import { marked } from 'marked'
 import { UAParser } from 'ua-parser-js'
@@ -176,7 +177,7 @@ async function prepareNewPort(type) {
             toastr.error('Try Chrome, Edge, Opera, Brave', 'WebSerial and WebUSB are not supported')
             return
         }
-        if (typeof navigator.serial === 'undefined' || QID('force-serial-poly').checked) {
+        if (typeof navigator.serial === 'undefined' || getSetting('force-serial-poly')) {
             console.log('Using WebSerial polyfill')
             new_port = new WebSerial(webSerialPolyfill)
         } else {
@@ -231,7 +232,7 @@ export async function connectDevice(type) {
 
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
-    if (QID('interrupt-device').checked) {
+    if (getSetting('interrupt-device')) {
         // TODO: detect WDT and disable it temporarily
 
         const raw = await MpRawMode.begin(port)
@@ -438,7 +439,7 @@ function _updateFileTree(fs_tree, fs_stats)
         QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("open")
     }
 
-    if (QID('advanced-mode').checked) {
+    if (getSetting("advanced-mode")) {
         fileTree.insertAdjacentHTML('beforeend', `<div>
             <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
             <span class="menu-action">virtual</span>
@@ -539,12 +540,12 @@ async function _loadContent(fn, content, editorElement) {
     if (content instanceof Uint8Array && !willDisasm) {
         hexViewer(content.buffer, editorElement)
         editor = null
-    } else if (fn.endsWith('.md') && QID('render-markdown').checked) {
+    } else if (fn.endsWith('.md') && getSetting('render-markdown')) {
         editorElement.innerHTML = `<div class="marked-viewer">` + marked(content) + `</div>`
         editor = null
     } else {
         let readOnly = false
-        if (fn.endsWith('.json') && QID('expand-minify-json').checked) {
+        if (fn.endsWith('.json') && getSetting('expand-minify-json')) {
             try {
                 // Prettify JSON
                 content = JSON.stringify(JSON.parse(content), null, 2)
@@ -559,7 +560,7 @@ async function _loadContent(fn, content, editorElement) {
 
         editorElement.innerHTML = '' // Clear existing content
         editor = await createNewEditor(editorElement, fn, content, {
-            wordWrap: QID('use-word-wrap').checked,
+            wordWrap: getSetting('use-word-wrap'),
             devInfo,
             readOnly,
         })
@@ -592,7 +593,7 @@ export async function saveCurrentFile() {
     }
 
     let content = editor.state.doc.toString()
-    if (editorFn.endsWith('.json') && QID('expand-minify-json').checked) {
+    if (editorFn.endsWith('.json') && getSetting('expand-minify-json')) {
         try {
             // Minify JSON
             content = JSON.stringify(JSON.parse(content))
@@ -731,7 +732,7 @@ async function _raw_installPkg(raw, pkg, { version=null } = {}) {
     const pkg_info = await rawInstallPkg(raw, pkg, {
         version,
         dev: dev_info,
-        prefer_source: QID('install-package-source').checked,
+        prefer_source: getSetting('install-package-source'),
     })
     if (pkg_info.version) {
         toastr.success(`Installed ${pkg_info.name}@${pkg_info.version}`)
@@ -967,10 +968,9 @@ export function applyTranslation() {
 
     const currentLang = i18next.resolvedLanguage || 'en';
 
-    const lang_sel = QID('lang')
-    lang_sel.value = currentLang
-    lang_sel.addEventListener('change', async function() {
-        await i18next.changeLanguage(this.value)
+    updateSetting('lang', currentLang)
+    onSettingChange('lang', async function(newValue) {
+        await i18next.changeLanguage(newValue)
         applyTranslation()
     })
 
@@ -1040,10 +1040,8 @@ export function applyTranslation() {
         }
     }
 
-    const zoom_sel = QID('zoom')
-    zoom_sel.value = '1.00'
-    zoom_sel.addEventListener('change', async function() {
-        const size = 14 * parseFloat(this.value)
+    onSettingChange('zoom', function(newValue) {
+        const size = 14 * parseFloat(newValue)
         document.documentElement.style.setProperty('--font-size', (size).toFixed(1) + 'px')
         term.options.fontSize = (size * 0.9).toFixed(1)
     })
@@ -1113,6 +1111,9 @@ export function applyTranslation() {
             }
         }
     })
+
+    // set zoom level in newly created terminal
+    updateSetting('zoom', getSetting('zoom'))
 
     const fitAddon = new FitAddon()
     term.loadAddon(fitAddon)
