@@ -127,17 +127,24 @@ export class Transport {
         throw new Error('Timeout')
     }
 
-    async readUntil(ending, timeout=5000) {
+    async readUntil(endings, timeout=5000) {
+        let err_message = 'any of the ending sequences'
+        if (!Array.isArray(endings)) {
+            endings = [endings]
+            err_message = 'the ending sequence'
+        }
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
         let endTime = Date.now() + timeout
         while (timeout <= 0 || (Date.now() < endTime)) {
-            const idx = this.receivedData.indexOf(ending) + ending.length
-            if (idx >= ending.length) {
-                const res = this.receivedData.substring(0, idx)
-                this.receivedData = this.receivedData.substring(idx)
-                return res
+            for (let ending of endings) {
+                const idx = this.receivedData.indexOf(ending) + ending.length
+                if (idx >= ending.length) {
+                    const res = this.receivedData.substring(0, idx)
+                    this.receivedData = this.receivedData.substring(idx)
+                    return res
+                }
             }
             const prev_avail = this.receivedData.length
             await sleep(10)
@@ -145,7 +152,7 @@ export class Transport {
                 endTime = Date.now() + timeout
             }
         }
-        throw new Error('Timeout reached before finding the ending sequence')
+        throw new Error(`Timeout reached before finding ${err_message}`)
     }
 }
 

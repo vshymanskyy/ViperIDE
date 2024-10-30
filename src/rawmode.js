@@ -8,6 +8,10 @@
 
 import { report } from "./utils"
 
+// >>> is the standard MicroPython prompt
+// --> is the aiorepl prompt
+let replPrompts = ['>>> ', '--> ']
+
 export class MpRawMode {
     constructor(port) {
         this.port = port
@@ -25,13 +29,26 @@ export class MpRawMode {
         return res
     }
 
+    async detectPrompt() {
+        await this.port.write('\r\x01')       // Ctrl-A: enter raw REPL
+        await this.port.readUntil('raw REPL; CTRL-B to exit\r\n')
+        // detect what the system prompt is and add it to our list of prompts to look for
+        const userPrompt = `${(await this.exec('print(sys.ps1)')).trim()} `
+        if (!replPrompts.includes(userPrompt)) {
+            console.log(`Detected user prompt as ${userPrompt}`)
+            replPrompts.push(userPrompt)
+        }
+        await this.port.write('\x02')     // Ctrl-B: exit raw REPL
+    }
+
     async interruptProgram(timeout=20000) {
         const endTime = Date.now() + timeout
         while (timeout <= 0 || (Date.now() < endTime)) {
             await this.port.write('\x03')   // Ctrl-C: interrupt any running program
             try {
-                let banner = await this.port.readUntil('>>> ', 500)
-                if (this.port.prevRecvCbk && banner != '\r\n>>> ') {
+                let banner = await this.port.readUntil(replPrompts, 500)
+                let promptRegex = RegExp(`\r\n(?:${replPrompts.join('|')})`)
+                if (this.port.prevRecvCbk && !promptRegex.test(banner)) {
                     this.port.prevRecvCbk(banner)
                 }
                 await this.port.flushInput()
@@ -46,6 +63,7 @@ export class MpRawMode {
     async enterRawRepl(soft_reboot=false) {
         const release = await this.port.startTransaction()
         try {
+            await this.detectPrompt()
             await this.interruptProgram()
 
             await this.port.write('\r\x01')       // Ctrl-A: enter raw REPL
@@ -60,7 +78,7 @@ export class MpRawMode {
                 try {
                     await this.port.write('\x02')     // Ctrl-B: exit raw REPL
                     await this.port.readUntil('>\r\n')
-                    await this.port.readUntil('>>> ')
+                    await this.port.readUntil(replPrompts)
                 } finally {
                     release()
                 }
