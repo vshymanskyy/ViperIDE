@@ -8,9 +8,7 @@
 
 import { report } from "./utils"
 
-// >>> is the standard MicroPython prompt
-// --> is the aiorepl prompt
-let replPrompts = ['>>> ', '--> ']
+let replPrompts = []
 
 export class MpRawMode {
     constructor(port) {
@@ -19,6 +17,7 @@ export class MpRawMode {
 
     static async begin(port, soft_reboot=false) {
         const res = new MpRawMode(port)
+        await res.detectPrompt()
         await res.enterRawRepl(soft_reboot)
         try {
             await res.exec(`import sys,os`)
@@ -30,15 +29,32 @@ export class MpRawMode {
     }
 
     async detectPrompt() {
-        await this.port.write('\r\x01')       // Ctrl-A: enter raw REPL
-        await this.port.readUntil('raw REPL; CTRL-B to exit\r\n')
-        // detect what the system prompt is and add it to our list of prompts to look for
-        const userPrompt = `${(await this.exec('print(sys.ps1)')).trim()} `
-        if (!replPrompts.includes(userPrompt)) {
-            console.log(`Detected user prompt as ${userPrompt}`)
-            replPrompts.push(userPrompt)
+        const release = await this.port.startTransaction()
+
+        // >>> is the standard MicroPython prompt
+        // --> is the aiorepl prompt
+        replPrompts = ['>>> ', '--> ']
+
+        try {
+            await this.port.write('\r\x01')       // Ctrl-A: enter raw REPL
+            await this.port.readUntil('raw REPL; CTRL-B to exit\r\n')
+            // detect what the system prompt is and add it to our list of prompts to look for
+            const userPrompt = `${(await this.exec('import sys; print(sys.ps1)')).trim()} `
+            if (!replPrompts.includes(userPrompt)) {
+                console.log(`Detected user prompt as ${userPrompt}`)
+                replPrompts.push(userPrompt)
+            }
+            await this.port.write('\x02')     // Ctrl-B: exit raw REPL
+            await this.port.readUntil('>\r\n')
+            let activePrompt = await this.port.readUntil(replPrompts)
+            // this is a hack because in the other cases, the prompt gets printed agian, but in the
+            // aiorepl case, it doesn't. Not sure why at the moment so I'm doing this
+            if (activePrompt == '--> ') {
+                await this.port.write(activePrompt)
+            }
+        } finally {
+            release()
         }
-        await this.port.write('\x02')     // Ctrl-B: exit raw REPL
     }
 
     async interruptProgram(timeout=20000) {
@@ -63,7 +79,6 @@ export class MpRawMode {
     async enterRawRepl(soft_reboot=false) {
         const release = await this.port.startTransaction()
         try {
-            await this.detectPrompt()
             await this.interruptProgram()
 
             await this.port.write('\r\x01')       // Ctrl-A: enter raw REPL
