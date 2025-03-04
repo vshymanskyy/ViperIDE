@@ -3,6 +3,8 @@ import { splitPath } from './utils.js'
 import { TarReader } from '@gera2ld/tarjs'
 import ruffInit, { Workspace as RuffWorkspace } from '@astral-sh/ruff-wasm-web'
 
+const BASE_URL = 'https://viper-ide.org';
+
 export function parseStackTrace(stackTrace)
 {
     const lines = stackTrace.split('\n');
@@ -54,7 +56,7 @@ export async function validatePython(filename, content, devInfo) {
     // Ideally we want ti init the wasm file once and then reuse the instance multiple times
     try {
         const [_, fname] = splitPath(filename)
-        const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
+        const wasmUrlV6 = `${BASE_URL}/assets/mpy-cross-v6.wasm`
         let options = null
         if (devInfo && devInfo.mpy_arch) {
             options = [ "-march="+devInfo.mpy_arch ]
@@ -81,7 +83,7 @@ export async function compilePython(filename, content, devInfo) {
         content = codec.decode(content)
     }
     const [_, fname] = splitPath(filename)
-    const wasmUrlV6 = 'https://viper-ide.org/assets/mpy-cross-v6.wasm'
+    const wasmUrlV6 = `${BASE_URL}/assets/mpy-cross-v6.wasm`
     let options = null
 
     if (devInfo) {
@@ -175,11 +177,11 @@ export async function getToolsVM() {
     _tools_vm = await loadMicroPython({
         pystack: 64 * 1024,
         heapsize: 32 * 1024 * 1024,
-        url: 'https://viper-ide.org/assets/micropython.wasm',
+        url: `${BASE_URL}/assets/micropython.wasm`,
         //stdout: (data) => { console.log(data) },
     })
 
-    await loadVFS(_tools_vm, 'https://viper-ide.org/assets/tools_vfs.tar.gz')
+    await loadVFS(_tools_vm, `${BASE_URL}/assets/tools_vfs.tar.gz`)
 
     return _tools_vm
 }
@@ -188,7 +190,7 @@ export async function getRuffWorkspace() {
     if (_ruff_wspace) { return _ruff_wspace }
     try {
         await ruffInit({
-            module_or_path: 'https://viper-ide.org/assets/ruff_wasm_bg.wasm',
+            module_or_path: `${BASE_URL}/assets/ruff_wasm_bg.wasm`,
         })
         console.log('Ruff', RuffWorkspace.version())
         const settings = RuffWorkspace.defaultSettings()
