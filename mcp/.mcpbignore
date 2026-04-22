@@ -1,0 +1,8 @@
+test/
+bun.lock
+package-lock.json
+install.sh
+build-mcpb.sh
+.mcpbignore
+.gitignore
+README.md

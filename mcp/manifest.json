@@ -1,0 +1,43 @@
+{
+  "manifest_version": "0.3",
+  "name": "viperIDE",
+  "display_name": "ViperIDE",
+  "version": "0.1.0",
+  "description": "MicroPython/CircuitPython IDE with full remote control. Connect to devices via USB serial, browse files, edit code, execute scripts, and interact with the REPL.",
+  "author": {
+    "name": "Andrew Leech & Volodymyr Shymanskyy"
+  },
+  "license": "MIT",
+  "homepage": "https://viper-ide.org",
+  "repository": {
+    "url": "https://github.com/vshymanskyy/ViperIDE"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "VIPERIDE_BUILD_DIR": "${__dirname}/build"
+      }
+    }
+  },
+  "tools": [
+    { "name": "viperIDE_get_status", "description": "Get IDE connection status, device info, and editor state" },
+    { "name": "viperIDE_connect_serial", "description": "Connect to a MicroPython device via USB serial" },
+    { "name": "viperIDE_list_serial_ports", "description": "List available USB serial ports with device details" },
+    { "name": "viperIDE_connect_device", "description": "Connect via WebSocket or virtual device" },
+    { "name": "viperIDE_disconnect_device", "description": "Disconnect from the current device" },
+    { "name": "viperIDE_list_files", "description": "List files and directories on the device" },
+    { "name": "viperIDE_read_file", "description": "Read a file from the device" },
+    { "name": "viperIDE_write_file", "description": "Write a file to the device" },
+    { "name": "viperIDE_delete_file", "description": "Delete a file from the device" },
+    { "name": "viperIDE_run_file", "description": "Execute the current file on the device" },
+    { "name": "viperIDE_stop", "description": "Stop the running script" },
+    { "name": "viperIDE_read_terminal", "description": "Read REPL output" },
+    { "name": "viperIDE_write_terminal", "description": "Send input to the REPL" }
+  ],
+  "tools_generated": true,
+  "compatibility": {}
+}

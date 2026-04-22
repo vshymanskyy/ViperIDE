@@ -30,7 +30,7 @@ export class MpRawMode {
         while (timeout <= 0 || (Date.now() < endTime)) {
             await this.port.write('\x03')   // Ctrl-C: interrupt any running program
             try {
-                let banner = await this.port.readUntil('>>> ', 500)
+                let banner = await this.port.readUntil('>>> ', 2000)
                 if (this.port.prevRecvCbk && banner != '\r\n>>> ') {
                     this.port.prevRecvCbk(banner)
                 }

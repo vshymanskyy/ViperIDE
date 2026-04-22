@@ -450,7 +450,7 @@ export class WebSocketREPL extends Transport {
         const release = await this.startTransaction()
         try {
             try {
-                await this.readUntil('Password:', 1000)
+                await this.readUntil('Password:', 5000)
             } catch (_err) {
                 return
             }
