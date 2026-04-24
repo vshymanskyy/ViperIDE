@@ -6,7 +6,6 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { report } from "./utils"
 
 export class MpRawMode {
     constructor(port) {
@@ -37,7 +36,9 @@ export class MpRawMode {
                 await this.port.flushInput()
                 return
             } catch (err) {
-                report("Error", err)
+                // Per-retry readUntil timeouts are expected while the device is busy.
+                // Only the final outer-timeout throw below is a real error surfaced to the user.
+                console.debug('interruptProgram retry:', err.message)
             }
         }
         throw new Error('Board is not responding')

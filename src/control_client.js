@@ -23,6 +23,13 @@ export function initControlClient(api) {
     let ws = null
     let reconnectDelay = 2000
 
+    // Tracks the MCP-visible connection state. app.js does not clear its
+    // module-local devInfo on disconnect, so we can't trust api.getDevInfo()
+    // to reflect the active port. Instead we snapshot devInfo here when the
+    // deviceConnected event fires, and drop it when the port goes away.
+    let connecting = false
+    let lastConnectedDevInfo = null
+
     function connect() {
         ws = new WebSocket(wsUrl)
 
@@ -119,9 +126,15 @@ export function initControlClient(api) {
         switch (method) {
             case 'get_status': {
                 const port = api.getPort()
+                if (!port) {
+                    lastConnectedDevInfo = null
+                    connecting = false
+                }
+                const isConnected = !!port && lastConnectedDevInfo !== null
                 return {
-                    connected: !!port,
-                    deviceInfo: api.getDevInfo(),
+                    connected: isConnected,
+                    connecting: !!port && connecting && !isConnected,
+                    deviceInfo: isConnected ? lastConnectedDevInfo : null,
                     currentFile: api.getEditorFn(),
                     isRunning: api.isRunning(),
                     hasEditor: !!api.getEditor(),
@@ -147,13 +160,20 @@ export function initControlClient(api) {
                 // Fire and forget - connectDevice includes raw mode handshake which
                 // can take 20+ seconds, exceeding Claude Desktop's API timeout.
                 const connType = type === 'vm' ? 'ws' : type
+                connecting = true
+                lastConnectedDevInfo = null
                 withDialogOverrides(overrides, () => api.connectDevice(connType))
-                    .catch(err => pushEvent('connect_error', { error: err.message }))
+                    .catch(err => {
+                        connecting = false
+                        pushEvent('connect_error', { error: err.message })
+                    })
                 return { ok: true, message: 'Connection initiated. Use get_status to check when the device is ready.' }
             }
 
             case 'disconnect_device': {
                 await api.disconnectDevice()
+                connecting = false
+                lastConnectedDevInfo = null
                 return { ok: true }
             }
 
@@ -328,7 +348,11 @@ export function initControlClient(api) {
         }
     }
 
-    document.addEventListener('deviceConnected', () => pushEvent('device_connected'))
+    document.addEventListener('deviceConnected', () => {
+        lastConnectedDevInfo = api.getDevInfo() || null
+        connecting = false
+        pushEvent('device_connected', lastConnectedDevInfo || {})
+    })
     document.addEventListener('fileRemoved', (e) => pushEvent('file_removed', e.detail))
     document.addEventListener('dirRemoved', (e) => pushEvent('dir_removed', e.detail))
     document.addEventListener('fileRenamed', (e) => pushEvent('file_renamed', e.detail))

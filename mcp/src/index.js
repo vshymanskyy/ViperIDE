@@ -77,7 +77,7 @@ const mcp = new McpServer({
 // get_status is handled separately so it works without the browser
 mcp.tool(
     'viperIDE_get_status',
-    'Get ViperIDE connection status, device info, and editor state',
+    'Get ViperIDE connection status, device info, and editor state. ViperIDE is served locally from this MCP server at ideUrl; it is NOT at viper-ide.org. If browserConnected is false the tab can be (re)launched with viperIDE_open_ide or by directing the user to ideUrl. The connected/connecting fields reflect the actual device connection state, not the browser state.',
     {},
     async () => {
         await ensureInit()
@@ -86,24 +86,41 @@ mcp.tool(
                 browserConnected: false,
                 connected: false,
                 deviceInfo: null,
-                message: 'ViperIDE browser tab is not open yet. Call any other tool to launch it.',
+                ideUrl,
+                message: 'ViperIDE browser tab is not open. Call viperIDE_open_ide to launch it, or open ideUrl in a browser. Do NOT direct the user to viper-ide.org - this MCP serves its own bundled copy locally.',
             })
         }
         try {
             const result = await bridge.call('get_status')
-            return textResult({ browserConnected: true, ...result })
+            return textResult({ browserConnected: true, ideUrl, ...result })
         } catch (err) {
             return errorResult(err.message)
         }
     }
 )
 
+mcp.tool(
+    'viperIDE_open_ide',
+    'Open the bundled ViperIDE in the user\'s default browser. Use this if get_status reports browserConnected: false, or if the user says they can\'t see ViperIDE. The URL is served by this MCP server on localhost; never direct the user to viper-ide.org.',
+    {},
+    async () => {
+        await ensureBrowser()
+        return textResult({
+            ideUrl,
+            browserConnected: bridge.isConnected,
+            message: bridge.isConnected
+                ? 'ViperIDE browser tab is already connected.'
+                : 'Launching ViperIDE in the default browser. The tab should appear momentarily; poll get_status until browserConnected is true.',
+        })
+    }
+)
+
 const tools = [
     {
         name: 'viperIDE_connect_device',
-        description: 'Connect to a MicroPython device. Use "ws" with a URL for WebSocket, "vm" for the built-in virtual device. USB and Bluetooth require the user to click the connect button in the browser. Non-blocking; the device handshake takes 10-20 seconds. Poll get_status every 5 seconds until connected is true; do not assume failure before 30 seconds.',
+        description: 'Connect to a MicroPython device over WebSocket (WebREPL), Bluetooth LE, or the built-in virtual device. For USB serial devices do NOT use this tool; use viperIDE_list_serial_ports + viperIDE_connect_serial instead (they go through the local serial bridge and work without browser interaction). Use type "ws" with a URL for WebREPL, "ble" for Bluetooth LE (requires user to pick the device in the browser), "vm" for the virtual device. Non-blocking; the device handshake takes 10-20 seconds. Poll viperIDE_get_status every 5 seconds until connected is true; do not assume failure before 30 seconds.',
         schema: {
-            type: z.enum(['ws', 'ble', 'usb', 'vm']).describe('Connection type'),
+            type: z.enum(['ws', 'ble', 'vm']).describe('Connection type: ws (WebREPL), ble (Bluetooth LE), vm (virtual device). For USB, use viperIDE_connect_serial instead.'),
             url: z.string().optional().describe('WebSocket URL, e.g. ws://192.168.1.1:8266 (required for ws type)'),
             password: z.string().optional().describe('WebREPL password (for ws type)'),
         },
@@ -255,7 +272,7 @@ for (const { name, description, schema, method, transform } of tools) {
 
 mcp.tool(
     'viperIDE_list_serial_ports',
-    'List available USB serial ports. Returns likelyPorts (known MicroPython-capable boards by VID: Raspberry Pi, Adafruit, Espressif, FTDI, etc.) and allPorts. On Windows, ports appear as COMx; on Linux as /dev/ttyACMx or /dev/serial/by-id/...',
+    'List available USB serial ports on the host. Use this as the FIRST step when the user asks to connect to a USB MicroPython device. Returns likelyPorts (MicroPython-capable boards identified by USB VID: Raspberry Pi/Pico, Adafruit, Espressif, WCH, Silicon Labs, FTDI, etc.) and allPorts. On Windows, ports appear as COMx; on Linux as /dev/ttyACMx or /dev/serial/by-id/...',
     {},
     async () => {
         await ensureInit()
@@ -270,7 +287,7 @@ mcp.tool(
 
 mcp.tool(
     'viperIDE_connect_serial',
-    'Connect to a MicroPython device via USB serial through the local WebSocket bridge. Use list_serial_ports first to find the port path. On Windows use COMx format, on Linux use /dev/ttyACMx or /dev/serial/by-id/... paths. Non-blocking; the device handshake takes 10-20 seconds. Poll get_status every 5 seconds until connected is true; do not assume failure before 30 seconds.',
+    'Connect to a USB MicroPython device. This is the PREFERRED way to connect to any USB/serial MicroPython board (do NOT use viperIDE_connect_device with type "usb"). Goes through the local serial bridge so no browser interaction is required. Call viperIDE_list_serial_ports first to find the port path; if exactly one likelyPort is returned, use it without prompting. On Windows use COMx format, on Linux use /dev/ttyACMx or /dev/serial/by-id/... paths. Non-blocking; the device handshake takes 10-20 seconds. Poll viperIDE_get_status every 5 seconds until connected is true; do not assume failure before 30 seconds.',
     {
         port_path: z.string().describe('Serial port path, e.g. COM4 or /dev/serial/by-id/usb-MicroPython_Board_...'),
     },
