@@ -225,7 +225,7 @@ export class WebSerial extends Transport {
 const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
 const NUS_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'       // Write or Write Without Response
 const NUS_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'       // Notify
-const NUS_TX_LIMIT = 241
+const NUS_TX_LIMIT = 20
 
 const ADA_NUS_SERVICE = 'adaf0001-4369-7263-7569-74507974686e'
 const ADA_NUS_TX = 'adaf0002-4369-7263-7569-74507974686e'   // Write or Write Without Response
@@ -251,7 +251,7 @@ export class WebBluetooth extends Transport {
         this.service = null
         this.rx = null
         this.tx = null
-        this.tx_limit = 20
+        super.writeChunk = 20
         this.decoderStream = null
         this.reader = null
     }
@@ -291,13 +291,13 @@ export class WebBluetooth extends Transport {
                 this.service = service
                 this.rx = await service.getCharacteristic(NUS_RX)
                 this.tx = await service.getCharacteristic(NUS_TX)
-                this.tx_limit = NUS_TX_LIMIT
+                super.writeChunk = NUS_TX_LIMIT
                 break
             } else if (service.uuid === ADA_NUS_SERVICE) {
                 this.service = service
                 this.rx = await service.getCharacteristic(ADA_NUS_RX)
                 this.tx = await service.getCharacteristic(ADA_NUS_TX)
-                this.tx_limit = ADA_NUS_TX_LIMIT
+                super.writeChunk = ADA_NUS_TX_LIMIT
 
                 // Check version
                 const ada_fts = await this.server.getPrimaryService(0xfebb)
@@ -317,7 +317,7 @@ export class WebBluetooth extends Transport {
                 this.service = service
                 this.rx = await service.getCharacteristic(CH9143_RX)
                 this.tx = await service.getCharacteristic(CH9143_TX)
-                this.tx_limit = CH9143_TX_LIMIT
+                super.writeChunk = CH9143_TX_LIMIT
 
                 // Setup 115200 8N1
                 const ctrl = await service.getCharacteristic(CH9143_CTRL)
