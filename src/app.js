@@ -38,6 +38,8 @@ import { splitPath, sleep, fetchJSON, getUserUID, getScreenInfo, IdleMonitor,
          getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, isRunningStandalone,
          sizeFmt, indicateActivity, setupTabs, report } from './utils.js'
 
+import { initControlClient } from './control_client.js'
+
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
 import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
@@ -1195,6 +1197,21 @@ export function applyTranslation() {
     if (typeof webrepl_url !== 'undefined') {
         await sleep(100)
         await connectDevice('ws')
+    }
+
+    // MCP control client: enabled when served by the MCP server (?mcp=1)
+    if (urlParams.has('mcp')) {
+        initControlClient({
+            connectDevice, disconnectDevice, createNewFile,
+            removeFile, removeDir, fileClick, saveCurrentFile, runCurrentFile,
+            reboot, clearTerminal, installPkg, MpRawMode,
+            getPort: () => port,
+            getEditor: () => editor,
+            getEditorFn: () => editorFn,
+            getTerm: () => term,
+            getDevInfo: () => devInfo,
+            isRunning: () => isInRunMode,
+        })
     }
 
 })();

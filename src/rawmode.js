@@ -6,7 +6,6 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { report } from "./utils"
 
 export class MpRawMode {
     constructor(port) {
@@ -30,14 +29,16 @@ export class MpRawMode {
         while (timeout <= 0 || (Date.now() < endTime)) {
             await this.port.write('\x03')   // Ctrl-C: interrupt any running program
             try {
-                let banner = await this.port.readUntil('>>> ', 500)
+                let banner = await this.port.readUntil('>>> ', 2000)
                 if (this.port.prevRecvCbk && banner != '\r\n>>> ') {
                     this.port.prevRecvCbk(banner)
                 }
                 await this.port.flushInput()
                 return
             } catch (err) {
-                report("Error", err)
+                // Per-retry readUntil timeouts are expected while the device is busy.
+                // Only the final outer-timeout throw below is a real error surfaced to the user.
+                console.debug('interruptProgram retry:', err.message)
             }
         }
         throw new Error('Board is not responding')

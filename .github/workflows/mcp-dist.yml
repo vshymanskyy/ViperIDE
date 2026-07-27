@@ -1,0 +1,147 @@
+name: Build and publish MCP distributions
+
+on:
+  push:
+    tags: ['mcp-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  # Extract version from tag (mcp-v0.5.2-mcp.1 -> 0.5.2-mcp.1), or use package.json for manual runs
+  MCP_VERSION: ${{ startsWith(github.ref, 'refs/tags/mcp-v') && github.ref_name || '' }}
+
+jobs:
+  build-viperide:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: pip install requests
+      - run: npm install && python3 build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: viperide-build
+          path: build/
+
+  build-dist:
+    needs: build-viperide
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: darwin
+          - os: windows-latest
+            platform: win32
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: viperide-build
+          path: build/
+      - name: Set version from tag
+        if: env.MCP_VERSION != ''
+        working-directory: mcp
+        shell: bash
+        run: |
+          VERSION="${MCP_VERSION#mcp-v}"
+          node -e "const p=require('./package.json'); p.version='$VERSION'; require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+      - name: Build distribution
+        working-directory: mcp
+        shell: bash
+        run: bash build-dist.sh ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.platform }}
+          path: |
+            mcp/dist/*.tar.gz
+            mcp/dist/*.mcpb
+
+  build-npm:
+    needs: build-viperide
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: viperide-build
+          path: build/
+      - name: Set version from tag
+        if: env.MCP_VERSION != ''
+        working-directory: mcp
+        run: |
+          VERSION="${MCP_VERSION#mcp-v}"
+          node -e "const p=require('./package.json'); p.version='$VERSION'; require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+      - name: Build npm package
+        working-directory: mcp
+        run: bash build-npm.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: mcp/dist/npm-staging/
+
+  publish-npm:
+    needs: build-npm
+    if: startsWith(github.ref, 'refs/tags/mcp-v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: package/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      # Uses NPM_TOKEN for initial publish. To switch to trusted publishing:
+      # 1. Configure OIDC at npmjs.com/package/@andrewleech/viperide-mcp/access
+      # 2. Delete the NPM_TOKEN secret from GitHub repo settings
+      # 3. Remove the NODE_AUTH_TOKEN env line below
+      - name: Publish to npm
+        working-directory: package
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q '-'; then TAG="next"; fi
+          npm publish --access public --provenance --tag "$TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-release:
+    needs: build-dist
+    if: startsWith(github.ref, 'refs/tags/mcp-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: false
+      - name: Collect release files
+        run: |
+          mkdir release
+          find artifacts/dist-* -type f \( -name '*.tar.gz' -o -name '*.mcpb' \) -exec cp {} release/ \;
+          ls -lh release/
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
