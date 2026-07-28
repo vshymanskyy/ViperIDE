@@ -200,6 +200,17 @@ export async function getRuffWorkspace() {
                     'UP031',    // Use format specifiers instead of percent format
                 ],
             },
+            builtins: [
+                'const',            // should be imported, but often used as a builtin
+                // Viper code
+                //'ViperTypeError', // rarely used
+                //'int',            // already a builtin
+                'uint',
+                'ptr',
+                'ptr8',
+                'ptr16',
+                'ptr32',
+            ],
         }, PositionEncoding.Utf16)
     } catch (err) {
         console.error(`Failed to init Ruff workspace: ${err}`)
