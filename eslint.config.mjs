@@ -4,6 +4,7 @@ import pluginJs from "@eslint/js"
 export default [
   { ignores: ["build/", "src/websocket_relay.js", "mcp/"] },
   { languageOptions: { globals: globals.browser }},
+  { files: ["*.mjs"], languageOptions: { globals: globals.node }},
   pluginJs.configs.recommended,
   {
     rules: {
@@ -23,6 +24,7 @@ export default [
         loadMicroPython:    "readonly",
         VIPER_IDE_VERSION:  "readonly",
         VIPER_IDE_BUILD:    "readonly",
+        VIPER_IDE_BASE_URL: "readonly",
       }
     }
   }

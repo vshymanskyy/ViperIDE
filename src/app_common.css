@@ -77,10 +77,10 @@ a {
 }
 
 a.link {
+    font-weight: 600;
     text-decoration: underline dotted 1px;
-    -webkit-text-decoration-line: underline;
-    -webkit-text-decoration-style: dotted;
-    -webkit-text-decoration-thickness: 1px;
+    text-underline-offset: 0.2rem;
+    -webkit-text-decoration: underline dotted 1px;
 }
 
 label {

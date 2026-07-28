@@ -1,2 +1,5 @@
 import js
-js.eval("alert('Hello from JavaScript')")
+
+js.eval("""
+    alert('Hello from JavaScript')
+""")

@@ -32,11 +32,11 @@ import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettify
 import { MicroPythonWASM } from './emulator.js'
 import { getSetting, onSettingChange, updateSetting } from './settings.js'
 
-import { marked } from 'marked'
+import { marked, Renderer as MarkedRenderer } from 'marked'
 import { UAParser } from 'ua-parser-js'
 
 import { splitPath, sleep, fetchJSON, getUserUID, getScreenInfo, IdleMonitor,
-         getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, isRunningStandalone,
+         getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, escapeHTML, isRunningStandalone,
          sizeFmt, indicateActivity, setupTabs, report } from './utils.js'
 
 import { initControlClient } from './control_client.js'
@@ -57,6 +57,14 @@ library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, fa
          faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
 library.add(faMessage, faCircleDown)
 dom.watch()
+
+marked.use({
+    renderer: {
+        link(token) {
+            return MarkedRenderer.prototype.link.call(this, token).replace(/^<a /, '<a class="link" target="_blank" ')
+        }
+    }
+})
 
 function getBuildDate() {
     return (new Date(VIPER_IDE_BUILD)).toISOString().substring(0, 19).replace('T',' ')
@@ -389,8 +397,8 @@ function _updateFileTree(fs_tree, fs_stats)
     const fileTree = QID('menu-file-tree')
     fileTree.innerHTML = `<div>
         <span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span>
-        <a href="#" class="menu-action" title="Refresh" onclick="app.refreshFileTree();return false;"><i class="fa-solid fa-arrows-rotate fa-fw"></i></a>
-        <a href="#" class="menu-action" title="Create" onclick="app.createNewFile('/');return false;"><i class="fa-solid fa-plus fa-fw"></i></a>
+        <a href="#" class="menu-action" title="Refresh" data-action="refresh"><i class="fa-solid fa-arrows-rotate fa-fw"></i></a>
+        <a href="#" class="menu-action" title="Create" data-action="create" data-path="/"><i class="fa-solid fa-plus fa-fw"></i></a>
         <span class="menu-action">${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
     </div>`
     function traverse(node, depth) {
@@ -398,9 +406,9 @@ function _updateFileTree(fs_tree, fs_stats)
         for (const n of sorted(node)) {
             if ('content' in n) {
                 fileTree.insertAdjacentHTML('beforeend', `<div>
-                    ${offset}<span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> ${n.name}</span>
-                    <a href="#" class="menu-action" title="Remove" onclick="app.removeDir('${n.path}');return false;"><i class="fa-solid fa-xmark fa-fw"></i></a>
-                    <a href="#" class="menu-action" title="Create" onclick="app.createNewFile('${n.path}/');return false;"><i class="fa-solid fa-plus fa-fw"></i></a>
+                    ${offset}<span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> ${escapeHTML(n.name)}</span>
+                    <a href="#" class="menu-action" title="Remove" data-action="remove-dir" data-path="${escapeHTML(n.path)}"><i class="fa-solid fa-xmark fa-fw"></i></a>
+                    <a href="#" class="menu-action" title="Create" data-action="create" data-path="${escapeHTML(n.path)}/"><i class="fa-solid fa-plus fa-fw"></i></a>
                 </div>`)
                 traverse(n.content, depth+1)
             } else {
@@ -420,12 +428,12 @@ function _updateFileTree(fs_tree, fs_stats)
                 if (n.path.startsWith("/proc/") || n.path.startsWith("/dev/")) {
                     icon = '<i class="fa-solid fa-gear fa-fw"></i>'
                     fileTree.insertAdjacentHTML('beforeend', `<div>
-                        ${offset}<span>${icon} ${n.name}&nbsp;</span>
+                        ${offset}<span>${icon} ${escapeHTML(n.name)}&nbsp;</span>
                     </div>`)
                 } else {
                     fileTree.insertAdjacentHTML('beforeend', `<div>
-                        ${offset}<a href="#" class="name ${sel}" data-fn="${n.path}" onclick="app.fileClick('${n.path}');return false;">${icon} ${n.name}&nbsp;</a>
-                        <a href="#" class="menu-action" title="Remove" onclick="app.removeFile('${n.path}');return false;"><i class="fa-solid fa-xmark fa-fw"></i></a>
+                        ${offset}<a href="#" class="name ${sel}" data-fn="${escapeHTML(n.path)}" data-action="open" data-path="${escapeHTML(n.path)}">${icon} ${escapeHTML(n.name)}&nbsp;</a>
+                        <a href="#" class="menu-action" title="Remove" data-action="remove-file" data-path="${escapeHTML(n.path)}"><i class="fa-solid fa-xmark fa-fw"></i></a>
                         <span class="menu-action">${sizeFmt(n.size)}</span>
                     </div>`)
                 }
@@ -443,12 +451,26 @@ function _updateFileTree(fs_tree, fs_stats)
 
     if (getSetting("advanced-mode")) {
         fileTree.insertAdjacentHTML('beforeend', `<div>
-            <a href="#" class="name" onclick="app.fileClick('~sysinfo.md');return false;"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
+            <a href="#" class="name" data-action="open" data-path="~sysinfo.md"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
             <span class="menu-action">virtual</span>
         </div>`)
     }
 
 }
+
+QID('menu-file-tree').addEventListener('click', (ev) => {
+    const target = ev.target.closest('[data-action]')
+    if (!target) return
+    ev.preventDefault()
+    const path = target.dataset.path
+    switch (target.dataset.action) {
+        case 'refresh':     refreshFileTree(); break
+        case 'create':      createNewFile(path); break
+        case 'remove-dir':  removeDir(path); break
+        case 'remove-file': removeFile(path); break
+        case 'open':        fileClick(path); break
+    }
+})
 
 async function _raw_updateFileTree(raw) {
     let fs_stats = [null, null, null];
@@ -529,8 +551,8 @@ async function _raw_loadFile(raw, fn) {
         content = await raw.readFile(fn)
         try {
             content = (new TextDecoder('utf-8', { fatal: true })).decode(content)
-        } catch (err) {
-            toastr.error(`Unable to load file: ${err}`)
+        } catch (_err) {
+            // Not valid UTF-8, treat as binary and let _loadContent handle it.
         }
     }
     await _loadContent(fn, content, createTab(fn))
@@ -720,12 +742,19 @@ export async function loadAllPkgIndexes() {
                 icon = ' <i class="fa-solid fa-gauge-high" title="Efficient native module"></i>'
             }
             pkgList.insertAdjacentHTML('beforeend', `<div>
-                ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${pkg.name}${icon}</span>
-                <a href="#" class="menu-action" onclick="app.installPkg('${pkg.name}');return false;">${pkg.version} <i class="fa-regular fa-circle-down"></i></a>
+                ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${escapeHTML(pkg.name)}${icon}</span>
+                <a href="#" class="menu-action" data-action="install" data-pkg="${escapeHTML(pkg.name)}">${escapeHTML(pkg.version)} <i class="fa-regular fa-circle-down"></i></a>
             </div>`)
         }
     }
 }
+
+QID('menu-pkg-list').addEventListener('click', (ev) => {
+    const target = ev.target.closest('[data-action="install"]')
+    if (!target) return
+    ev.preventDefault()
+    installPkg(target.dataset.pkg)
+})
 
 async function _raw_installPkg(raw, pkg, { version=null } = {}) {
     analytics.track('Package Install', { name: pkg })
@@ -953,6 +982,7 @@ export function applyTranslation() {
 }
 
 (async () => {
+    const urlParams = new URLSearchParams(window.location.search)
 
     if ('serviceWorker' in navigator) {
         try {
@@ -977,7 +1007,9 @@ export function applyTranslation() {
     })
 
     try {
-        if (typeof window.analytics.track === 'undefined') {
+        if (typeof window.analytics.identify === 'undefined' ||
+            typeof window.analytics.track === 'undefined'
+        ) {
             throw new Error()
         }
 
@@ -1056,17 +1088,19 @@ export function applyTranslation() {
 
     toastr.options.preventDuplicates = true;
 
-    const fn = 'README.md'
-    const content = `
+    if (!urlParams.get('vm')) {
+        const fn = 'README.md'
+        const content = `
 # ViperIDE - MicroPython Web IDE
-Read more: https://github.com/vshymanskyy/ViperIDE
 
 Connect your device and start creating! 🤖👨‍💻🕹️
 
-You can also open a virtual device and explore some examples:
-https://viper-ide.org?vm=1
+You can also open a [virtual device](${VIPER_IDE_BASE_URL}/?vm=1) and explore some examples.
+
+Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
 `
-    await _loadContent(fn, content, createTab(fn))
+        await _loadContent(fn, content, createTab(fn))
+    }
 
     const xtermTheme = {
         foreground: '#F8F8F8',
@@ -1170,8 +1204,7 @@ https://viper-ide.org?vm=1
         document.body.classList.add('loaded')
     }, 100)
 
-    const urlParams = new URLSearchParams(window.location.search)
-    let urlID = null
+    let urlID
     if ((urlID = urlParams.get('wss'))) {
         try {
             const connID = ConnectionUID.parse(urlID).value()
@@ -1236,7 +1269,7 @@ async function checkForUpdates() {
 
     let manifest;
     try {
-        manifest = await fetchJSON('https://viper-ide.org/manifest.json')
+        manifest = await fetchJSON(`${VIPER_IDE_BASE_URL}/manifest.json`)
     } catch {
         return
     }

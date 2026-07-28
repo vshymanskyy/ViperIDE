@@ -1,25 +1,34 @@
 #!/usr/bin/env python3
 
-import os, time
-import json, glob, tarfile, requests
-from io import BytesIO
-from zipfile import ZipFile
-from os import remove as rm, system, path, makedirs
+import os, sys
+import json, glob, gzip, tarfile, subprocess
+from os import remove, path, makedirs
 from shutil import copyfile as cp, copytree, rmtree
 
+# Base URL the IDE is deployed at. It is substituted into the JS (as the
+# VIPER_IDE_BASE_URL constant) and into the HTML at build time.
+# Override it for local development, i.e. VIPER_IDE_BASE_URL=http://localhost:10001
+BASE_URL = os.environ.get("VIPER_IDE_BASE_URL", "https://viper-ide.org")
+
 def run(cmd):
-    if system(cmd) != 0:
-        raise Exception(f"Command failed: {cmd}")
+    subprocess.run(cmd, shell=isinstance(cmd, str), check=True)
 
 def readfile(fn):
     with open(fn, 'r', encoding='utf-8') as f:
         return f.read()
 
+def remove_files(*filenames):
+    for fn in filenames:
+        try:
+            remove(fn)
+        except FileNotFoundError:
+            pass
+
 def gen_translations(src, dst):
     result = {}
     for fn in glob.glob('*.json', root_dir=src):
         lang = fn.replace('.json', '')
-        result[lang] = json.loads(readfile(src + fn))
+        result[lang] = json.loads(readfile(path.join(src, fn)))
     with open(dst, 'w', encoding='utf-8') as f:
         json.dump(result, f, separators=(',',':'), ensure_ascii=False, sort_keys=True)
 
@@ -32,36 +41,33 @@ def gen_manifest(src, dst):
 
 def gen_tar(src, dst):
     def reset_tarinfo(tarinfo):
+        # Stray bytecode caches must never reach the device image. Returning
+        # None drops the entry, and for a directory also stops the recursion.
+        if '__pycache__' in tarinfo.name.split('/') or tarinfo.name.endswith('.pyc'):
+            return None
         tarinfo.uid = 0
         tarinfo.gid = 0
         tarinfo.uname = ""
         tarinfo.gname = ""
         tarinfo.mtime = 0
         return tarinfo
-    with tarfile.open(dst, "w:gz") as tar:
-        for item in os.listdir(src):
-            item_path = os.path.join(src, item)
-            tar.add(item_path, arcname=item, filter=reset_tarinfo)
+    with open(dst, 'wb') as raw:
+        with gzip.GzipFile(filename='', mode='wb', fileobj=raw, mtime=0) as gz:
+            with tarfile.open(fileobj=gz, mode='w') as tar:
+                for item in sorted(os.listdir(src)):
+                    item_path = os.path.join(src, item)
+                    tar.add(item_path, arcname=item, filter=reset_tarinfo)
 
-def download_and_extract(url, subfolder, dest):
-    response = requests.get(url)
-    response.raise_for_status()
-    with ZipFile(BytesIO(response.content)) as zip_file:
-        # Filter for files within the specific subfolder
-        subfolder_files = [f for f in zip_file.namelist() if f.startswith(subfolder)]
-
-        # Extract each file, adjusting the path
-        for file_path in subfolder_files:
-            # Extract only if it's a file (not an empty directory)
-            if not file_path.endswith('/'):
-                new_path = file_path[len(subfolder):]  # Remove the subfolder part of the path
-                with zip_file.open(file_path) as source:
-                    data = source.read()
-                target_path = f'{dest}/{new_path}'  # Define new extraction path
-                # Create target directory if not exists
-                os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                with open(target_path, 'wb') as target_file:
-                    target_file.write(data)
+def vendor_pypi_package(spec, dest):
+    # --upgrade is required: without it pip silently skips an existing target
+    # directory, so a stale vendored copy would never be replaced.
+    run([sys.executable, "-m", "pip", "install", "--target", dest,
+         "--no-compile", "--no-deps", "--upgrade", "--quiet", spec])
+    # pip also drops console scripts and metadata into the target; neither
+    # belongs in the on-device filesystem image.
+    rmtree(path.join(dest, "bin"), ignore_errors=True)
+    for meta in glob.glob("*.dist-info", root_dir=dest):
+        rmtree(path.join(dest, meta), ignore_errors=True)
 
 def combine(dst):
     # Insert CSS and JS into HTML
@@ -74,6 +80,10 @@ def combine(dst):
     ).replace(
         '<script src="./viper_lib.js"></script>', '<script>\n' + readfile('build/viper_lib.js') + '\n</script>'
     )
+
+    for asset in ("app.css", "viper_lib.css", "app.js", "viper_lib.js"):
+        if f'{BASE_URL}/{asset}"' in combined:
+            raise Exception(f"{dst}: failed to inline {asset}")
 
     # Write the combined content
     with open(dst, 'w', encoding='utf-8') as f:
@@ -88,13 +98,12 @@ if __name__ == "__main__":
     gen_translations("./src/lang/", "build/translations.json")
     gen_manifest("./src/manifest.json", "build/manifest.json")
 
-    download_and_extract("https://github.com/dflook/python-minifier/archive/refs/tags/3.1.1.zip",
-                         "python-minifier-3.1.1/src/python_minifier/",
-                         "src/tools_vfs/lib/python_minifier")
+    vendor_pypi_package("python-minifier==3.2.0", "src/tools_vfs/lib")
     gen_tar("src/tools_vfs", "build/assets/tools_vfs.tar.gz")
     gen_tar("src/vm_vfs", "build/assets/vm_vfs.tar.gz")
 
     # Build
+    os.environ["VIPER_IDE_BASE_URL"] = BASE_URL
     if not path.isdir("node_modules"):
         run("npm install")
     run("npx eslint")
@@ -106,9 +115,9 @@ if __name__ == "__main__":
     combine("build/benchmark.html")
 
     # Cleanup
-    #run("rm build/translations.json")
-    run("rm build/app.css   build/viper_lib.css")
-    run("rm build/app.js    build/viper_lib.js")
+    #remove_files("build/translations.json")
+    remove_files("build/app.css", "build/viper_lib.css")
+    remove_files("build/app.js", "build/viper_lib.js")
 
     # Add assets from packages
     cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.wasm", "./build/assets/micropython.wasm")

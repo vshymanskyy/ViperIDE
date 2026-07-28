@@ -1,9 +1,7 @@
 import { compile as compile_v6 } from '@pybricks/mpy-cross-v6'
 import { splitPath } from './utils.js'
 import { TarReader } from '@gera2ld/tarjs'
-import ruffInit, { Workspace as RuffWorkspace } from '@astral-sh/ruff-wasm-web'
-
-const BASE_URL = 'https://viper-ide.org';
+import __wbg_init, { PositionEncoding, Workspace as RuffWorkspace } from '@astral-sh/ruff-wasm-web'
 
 export function parseStackTrace(stackTrace)
 {
@@ -56,9 +54,10 @@ export async function validatePython(filename, content, devInfo) {
     // Ideally we want ti init the wasm file once and then reuse the instance multiple times
     try {
         const [_, fname] = splitPath(filename)
-        const wasmUrlV6 = `${BASE_URL}/assets/mpy-cross-v6.wasm`
+        const wasmUrlV6 = `${VIPER_IDE_BASE_URL}/assets/mpy-cross-v6.wasm`
         let options = null
-        if (devInfo && devInfo.mpy_arch) {
+        // TODO: update mpy-cross to support more architectures and mpy versions
+        if (devInfo && devInfo.mpy_arch && !['rv32imc', 'rv64imc'].includes(devInfo.mpy_arch)) {
             options = [ "-march="+devInfo.mpy_arch ]
         }
         const result = await compile_v6(fname, content, options, wasmUrlV6)
@@ -83,7 +82,7 @@ export async function compilePython(filename, content, devInfo) {
         content = codec.decode(content)
     }
     const [_, fname] = splitPath(filename)
-    const wasmUrlV6 = `${BASE_URL}/assets/mpy-cross-v6.wasm`
+    const wasmUrlV6 = `${VIPER_IDE_BASE_URL}/assets/mpy-cross-v6.wasm`
     let options = null
 
     if (devInfo) {
@@ -177,11 +176,11 @@ export async function getToolsVM() {
     _tools_vm = await loadMicroPython({
         pystack: 64 * 1024,
         heapsize: 32 * 1024 * 1024,
-        url: `${BASE_URL}/assets/micropython.wasm`,
+        url: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm`,
         //stdout: (data) => { console.log(data) },
     })
 
-    await loadVFS(_tools_vm, `${BASE_URL}/assets/tools_vfs.tar.gz`)
+    await loadVFS(_tools_vm, `${VIPER_IDE_BASE_URL}/assets/tools_vfs.tar.gz`)
 
     return _tools_vm
 }
@@ -189,14 +188,19 @@ export async function getToolsVM() {
 export async function getRuffWorkspace() {
     if (_ruff_wspace) { return _ruff_wspace }
     try {
-        await ruffInit({
-            module_or_path: `${BASE_URL}/assets/ruff_wasm_bg.wasm`,
+        await __wbg_init({
+            module_or_path: `${VIPER_IDE_BASE_URL}/assets/ruff_wasm_bg.wasm`,
         })
         console.log('Ruff', RuffWorkspace.version())
-        const settings = RuffWorkspace.defaultSettings()
-        settings.set('line-length', 120)
-        //console.log(settings)
-        _ruff_wspace = new RuffWorkspace(settings);
+        _ruff_wspace = new RuffWorkspace({
+            'line-length': 120,
+            lint: {
+                ignore: [
+                    'I001',     // Import block is un-sorted or un-formatted
+                    'UP031',    // Use format specifiers instead of percent format
+                ],
+            },
+        }, PositionEncoding.Utf16)
     } catch (err) {
         console.error(`Failed to init Ruff workspace: ${err}`)
     }

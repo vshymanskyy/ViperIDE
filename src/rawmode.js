@@ -6,6 +6,16 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
+// Renders a JS string as a single-quoted Python string literal, so it can be safely
+// spliced into generated Python source (filenames/paths may contain ' or \).
+function pyStr(s) {
+    return "'" + String(s)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/\r/g, '\\r')
+        .replace(/\n/g, '\\n')
+        + "'"
+}
 
 export class MpRawMode {
     constructor(port) {
@@ -103,7 +113,7 @@ try:
  h(b'')
 except:
  h=lambda b: ''.join('{:02x}'.format(byte) for byte in b)
-with open('${fn}','rb') as f:
+with open(${pyStr(fn)},'rb') as f:
  while 1:
   b=f.read(64)
   if not b:break
@@ -152,7 +162,7 @@ try:
  h('')
 except:
  h=lambda s: bytes(int(s[i:i+2], 16) for i in range(0, len(s), 2))
-f=open('${dest}','wb')
+f=open(${pyStr(dest)},'wb')
 w=lambda d: f.write(h(d))
 o=f.write
 `)
@@ -173,9 +183,9 @@ o=f.write
             await this.exec(`f.close()`)
         } else {
             await this.exec(`f.close()
-try: os.remove('${fn}')
+try: os.remove(${pyStr(fn)})
 except: pass
-os.rename('${dest}','${fn}')
+os.rename(${pyStr(dest)},${pyStr(fn)})
 `)
         }
     }
@@ -188,14 +198,14 @@ try: v=sys.version.split(';')[1].strip()
 except: v='MicroPython '+u[2]
 mpy=getattr(sys.implementation, '_mpy', 0)
 sp=':'.join(sys.path)
-d=[u[4],u[2],u[0],v,mpy>>10,mpy&0xFF,(mpy>>8)&3,sp]
+d=[u[4],u[2],u[0],v,(mpy>>10)&0x0F,mpy&0xFF,(mpy>>8)&3,sp]
 print('|'.join(str(x) for x in d))
 `)
         let [machine, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path] = rsp.trim().split('|')
         sys_path = sys_path.split(':')
         // See https://docs.micropython.org/en/latest/reference/mpyfiles.html
         try {
-            mpy_arch = [null, 'x86', 'x64', 'armv6', 'armv6m', 'armv7m', 'armv7em', 'armv7emsp', 'armv7emdp', 'xtensa', 'xtensawin', 'rv32imc'][mpy_arch]
+            mpy_arch = [null, 'x86', 'x64', 'armv6', 'armv6m', 'armv7m', 'armv7em', 'armv7emsp', 'armv7emdp', 'xtensa', 'xtensawin', 'rv32imc', 'rv64imc'][mpy_arch]
         } catch (_err) {
             mpy_arch = null
         }
@@ -208,7 +218,7 @@ print('|'.join(str(x) for x in d))
 
     async touchFile(fn) {
         await this.exec(`
-f=open('${fn}','wb')
+f=open(${pyStr(fn)},'wb')
 f.close()
 `)
     }
@@ -217,7 +227,7 @@ f.close()
         // TODO: remove error code 20 once it is fixed in wasm port
         await this.exec(`
 p=''
-for d in '${path}'.split('/'):
+for d in ${pyStr(path)}.split('/'):
  if not d: continue
  p += '/'+d
  try: os.mkdir(p)
@@ -229,7 +239,7 @@ for d in '${path}'.split('/'):
     async removeFile(path) {
         await this.exec(`
 try:
- os.remove('${path}')
+ os.remove(${pyStr(path)})
 except OSError as e:
  if e.args[0] == 39:
   raise Exception('Directory not empty')
@@ -241,7 +251,7 @@ except OSError as e:
     async removeDir(path) {
         await this.exec(`
 try:
- os.rmdir('${path}')
+ os.rmdir(${pyStr(path)})
 except OSError as e:
  if e.args[0] == 39:
   raise Exception('Directory not empty')
@@ -252,7 +262,7 @@ except OSError as e:
 
     async getFsStats(path='/') {
         const rsp = await this.exec(`
-s = os.statvfs('${path}')
+s = os.statvfs(${pyStr(path)})
 fs = s[1] * s[2]
 ff = s[3] * s[0]
 fu = fs - ff

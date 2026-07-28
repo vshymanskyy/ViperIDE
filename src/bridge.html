@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ViperIDE P2P Bridge</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png"/>
+    <link rel="icon" type="image/png" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
 
     <link rel="stylesheet" href="./viper_lib.css">
     <style>
@@ -36,14 +36,14 @@
         <li>Grab a Bridge P2P ID:<br>
             <span class="highlight monospace" id="bridge-id"></span>
         </li>
-        <li>In <a class="link" href="https://viper-ide.org" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-link"></i> Connect WebREPL</span> button and insert your Bridge P2P ID.<br>
+        <li>In <a class="link" href="${VIPER_IDE_BASE_URL}" target="_blank">Viper IDE</a>, click <span class="highlight"><i class="fa-solid fa-link"></i> Connect WebREPL</span> button and insert your Bridge P2P ID.<br>
             You can also use a direct link: <span class="highlight monospace" id="ide-link"></span>
         </li>
     </ol>
 
     <p>⚠️ Keep this page open for the connection to remain active</p>
 
-    <script src="https://viper-ide.org/micropython.mjs" type="module" crossorigin="anonymous"></script>
+    <script src="${VIPER_IDE_BASE_URL}/micropython.mjs" type="module" crossorigin="anonymous"></script>
     <script src="./viper_lib.js"></script>
     <script>
     Object.assign(window, viper_lib)
@@ -55,7 +55,7 @@ let wakeLock = null;
 
 async function disconnectDevice() {
     QID('bridge-id').textContent = '---'
-    QID('ide-link').textContent = 'https://viper-ide.org?rtc=YOUR-BRIDGE-ID'
+    QID('ide-link').textContent = '${VIPER_IDE_BASE_URL}?rtc=YOUR-BRIDGE-ID'
 
     for (const t of ["ws", "ble", "usb"]) {
         QID(`btn-conn-${t}`).classList.remove('connected')
@@ -198,7 +198,7 @@ async function connectDevice(type) {
     await rtc.requestAccess()
 
     QID('bridge-id').textContent = "rtc://" + rtc.info.id
-    QID('ide-link').textContent = 'https://viper-ide.org?rtc=' + rtc.info.id
+    QID('ide-link').textContent = '${VIPER_IDE_BASE_URL}?rtc=' + rtc.info.id
 
     rtc.onConnect(() => {
         toastr.info('ViperIDE connected')
@@ -228,10 +228,6 @@ async function connectDevice(type) {
     } catch (err) {}
 
     toastr.success('Bridge created')
-}
-
-window.analytics = {
-    track: function() {}
 }
 
 disconnectDevice()

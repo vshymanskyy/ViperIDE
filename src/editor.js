@@ -86,11 +86,11 @@ const linkCommentExtensions = [
   linkClickPlugin,
   EditorView.theme({
     ".cm-link": {
-      textDecoration: "underline dotted 1px",
-      "-webkit-text-decoration-line": "underline",
-      "-webkit-text-decoration-style": "dotted",
-      "-webkit-text-decoration-thickness": "1px",
-      cursor: "pointer",
+      "cursor": "pointer",
+      "font-weight": 600,
+      "text-underline-offset": "0.2rem",
+      "text-decoration": "underline dotted 1px",
+      "-webkit-text-decoration": "underline dotted 1px",
     }
   })
 ];
@@ -232,7 +232,7 @@ function ruffLinter(ruff) {
     const diagnostics = []
     for (let d of res) {
       diagnostics.push({
-        from: doc.line(d.location.row).from + d.location.column - 1,
+        from: doc.line(d.start_location.row).from + d.start_location.column - 1,
         to:   doc.line(d.end_location.row).from + d.end_location.column - 1,
         severity: (d.message.indexOf('Error:') >= 0) ? 'error' : 'warning',
         message: d.code ? d.code + ': ' + d.message : d.message,

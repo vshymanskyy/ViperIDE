@@ -158,8 +158,8 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
             } else {  // Not in index => URL?
                 [ pkg_info, pkg_json ] = await loadPkgInfo(name, { base: index.url, version })
             }
-        } catch (_err) {
-            throw new Error(`Cannot find ${name}@${version}`)
+        } catch (err) {
+            throw new Error(`Cannot find ${name}@${version}`, { cause: err })
         }
     }
 

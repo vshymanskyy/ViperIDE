@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ViperIDE</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png"/>
+    <link rel="icon" type="image/png" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
     <link rel="manifest" href="manifest.json">
 
     <link rel="stylesheet" href="./app.css">
@@ -196,10 +196,7 @@
     </div>
     <div id="dpi-ruler" style="position:absolute;height:1in;width:1in;left:-100%;top:-100%;"></div>
 
-    <script>window.analytics = { _writeKey: "WdDAz9IvQknVcbSS" }</script>
-    <script src="https://unpkg.com/@june-so/analytics-next@2.0.0/dist/umd/standalone.js" integrity="sha256-mm/qRhmZXfHLF27WLTxbnMVhPgFMOsxvjYXk3NpaKnc=" crossorigin="anonymous"></script>
-
-    <script src="https://viper-ide.org/micropython.mjs" type="module" crossorigin="anonymous"></script>
+    <script src="${VIPER_IDE_BASE_URL}/micropython.mjs" type="module" crossorigin="anonymous"></script>
     <script src="./app.js"></script>
 </body>
 </html>

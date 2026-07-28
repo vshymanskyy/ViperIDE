@@ -14,7 +14,7 @@
  * when the IDE is loaded with ?mcp query parameter.
  */
 
-import { splitPath, Mutex } from './utils.js'
+import { splitPath, Mutex, escapeCSS } from './utils.js'
 
 const utf8Decoder = new TextDecoder('utf-8', { fatal: false })
 
@@ -334,7 +334,7 @@ export function initControlClient(api) {
 
             case 'close_file': {
                 const { path } = params
-                const tab = document.querySelector(`#editor-tabs .tab[data-fn="${path}"]`)
+                const tab = document.querySelector(`#editor-tabs .tab[data-fn="${escapeCSS(path)}"]`)
                 if (!tab) return { ok: true, message: 'File not open' }
                 // Bypass unsaved changes confirm, then click close
                 await withDialogOverrides({ confirm: true }, () => {

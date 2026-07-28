@@ -10,9 +10,20 @@ import fs from 'fs'
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 
-fs.copyFileSync('src/ViperIDE.html',  'build/index.html')
-fs.copyFileSync('src/benchmark.html', 'build/benchmark.html')
-fs.copyFileSync('src/bridge.html',    'build/bridge.html')
+// build.py defaults this to the production URL and passes it via the environment.
+// When running Rollup directly, it has to be set explicitly.
+const BASE_URL = process.env.VIPER_IDE_BASE_URL
+if (!BASE_URL) {
+  throw new Error('VIPER_IDE_BASE_URL is not set, i.e. VIPER_IDE_BASE_URL=http://localhost:10001 npm start')
+}
+
+const copyHtml = (src, dst) => {
+  fs.writeFileSync(dst, fs.readFileSync(src, 'utf8').replaceAll('${VIPER_IDE_BASE_URL}', BASE_URL))
+}
+
+copyHtml('src/ViperIDE.html',  'build/index.html')
+copyHtml('src/benchmark.html', 'build/benchmark.html')
+copyHtml('src/bridge.html',    'build/bridge.html')
 
 const common = (args, name) => ({
   output: {
@@ -41,6 +52,7 @@ const common = (args, name) => ({
       values: {
         VIPER_IDE_VERSION:  '"' + pkg.version + '"',
         VIPER_IDE_BUILD:    Date.now(),
+        VIPER_IDE_BASE_URL: '"' + BASE_URL + '"',
       }
     }),
     args.configDebug && sourcemaps(),

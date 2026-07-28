@@ -187,6 +187,28 @@ export function sanitizeHTML(s) {
     return (new Option(s)).innerHTML.replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;')
 }
 
+// Escapes text for safe interpolation into HTML text nodes or attribute values.
+// Unlike sanitizeHTML(), this does not alter whitespace, so the result round-trips
+// exactly through the HTML parser (needed when the value is later looked up, e.g. via data-* attributes).
+export function escapeHTML(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+}
+
+// Escapes text for use inside a double-quoted string of a CSS selector,
+// e.g. QS(`[data-fn="${escapeCSS(fn)}"]`). File names may contain quotes,
+// backslashes, control or non-ASCII characters, which otherwise break
+// selector parsing (or silently fail to match in some engines).
+export function escapeCSS(s) {
+    return String(s).replace(/["\\]|[^\x20-\x7e]/gu,
+        (c) => (c === '"' || c === '\\') ? '\\' + c
+                                         : '\\' + c.codePointAt(0).toString(16) + ' ')
+}
+
 export function isRunningStandalone() {
     return (window.matchMedia('(display-mode: standalone)').matches);
 }

@@ -1,5 +1,5 @@
 import { addUpdateHandler } from './editor.js'
-import { QSA, QS, QID } from './utils.js'
+import { QSA, QS, QID, escapeHTML, escapeCSS } from './utils.js'
 
 
 let currentTab = 0
@@ -13,7 +13,7 @@ let connected = false
  * @returns {boolean} Returns true if a tab matching the given file name is found, else false
  */
 export function displayOpenFile(fn) {
-    const openTab = QS(`#editor-tabs [data-fn="${fn}"]`)
+    const openTab = QS(`#editor-tabs [data-fn="${escapeCSS(fn)}"]`)
     if (!openTab) {
         return false
     }
@@ -37,8 +37,8 @@ export function createTab(fn) {
     currentTab++
     tabContainer.insertAdjacentHTML(
         'beforeend',
-        `<div class="tab active" data-tab="${currentTab}" data-fn="${fn}"">
-            <span class="tab-title">${fn}</span>
+        `<div class="tab active" data-tab="${currentTab}" data-fn="${escapeHTML(fn)}">
+            <span class="tab-title">${escapeHTML(fn)}</span>
             <a class="menu-action" title="Close">
                 <i class="fa-solid fa-xmark"></i>
             </a>
@@ -80,31 +80,31 @@ export function createTab(fn) {
 /**Event Listeners **/
 
 document.addEventListener("fileRemoved", (event) => {
-    const tab = QS(`#editor-tabs [data-fn="${event.detail.path}"]`)
+    const tab = QS(`#editor-tabs [data-fn="${escapeCSS(event.detail.path)}"]`)
     if (tab) {
         _closeTab(tab.dataset.tab)
     }
 })
 
 document.addEventListener("dirRemoved", (event) => {
-    QSA(`#editor-tabs [data-fn^="${event.detail.path}/"]`).forEach((tab) => {
+    QSA(`#editor-tabs [data-fn^="${escapeCSS(event.detail.path + '/')}"]`).forEach((tab) => {
         _closeTab(tab.dataset.tab)
     })
 })
 
 document.addEventListener("fileRenamed", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${event.detail.old}"]`)
+    const editorTab = QS(`#editor-tabs [data-fn="${escapeCSS(event.detail.old)}"]`)
     editorTab.dataset.fn = event.detail.new
     editorTab.querySelector(".tab-title").textContent = event.detail.new.split("/").pop()
 })
 
 document.addEventListener("fileSaved", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${event.detail.fn}"] .tab-title`)
+    const editorTab = QS(`#editor-tabs [data-fn="${escapeCSS(event.detail.fn)}"] .tab-title`)
     editorTab.classList.remove("changed")
 })
 
 document.addEventListener("editorLoaded", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${event.detail.fn}"] .tab-title`)
+    const editorTab = QS(`#editor-tabs [data-fn="${escapeCSS(event.detail.fn)}"] .tab-title`)
     addUpdateHandler(event.detail.editor, (update) => {
         if (update.docChanged) {
             editorTab.classList.add("changed")

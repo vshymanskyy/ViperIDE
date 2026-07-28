@@ -45,7 +45,7 @@ if __name__ == "__main__":
 `);
 
     // ----------------------------------------------------------------------
-    await loadVFS(vm, 'https://viper-ide.org/assets/vm_vfs.tar.gz')
+    await loadVFS(vm, `${VIPER_IDE_BASE_URL}/assets/vm_vfs.tar.gz`)
 
 }
 
@@ -72,7 +72,7 @@ export class MicroPythonWASM extends Transport {
         }
 
         this.mp = await loadMicroPython({
-            url: 'https://viper-ide.org/assets/micropython.wasm',
+            url: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm`,
             stdout: (data) => {
                 writer.write(data)
             },

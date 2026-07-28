@@ -28,3 +28,6 @@ import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
 library.add(faLink, faUsb, faBluetoothB)
 dom.watch()
 
+window.analytics = {
+    track: function() {}
+}
