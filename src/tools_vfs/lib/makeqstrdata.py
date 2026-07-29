@@ -1,21 +1,13 @@
 """
 Process raw qstr file and output qstr data with length, hash and data bytes.
 
-This script works with Python 2.6, 2.7, 3.3 and 3.4.
+This script works with Python 3.3+.
 """
-
-from __future__ import print_function
 
 import re
 import sys
 
-# Python 2/3/micro compatibility:
-#   - iterating through bytes is different
-#   - codepoint2name from html.entities is hard-coded
-if sys.version_info[0] == 2:
-    bytes_cons = lambda val, enc=None: bytearray(val)
-elif sys.version_info[0] == 3:  # Also handles MicroPython
-    bytes_cons = bytes
+bytes_cons = bytes
 
 # fmt: off
 codepoint2name = {
@@ -57,7 +49,6 @@ codepoint2name = {
     253: "yacute", 165: "yen", 255: "yuml", 950: "zeta", 8205: "zwj", 8204: "zwnj"
 }
 # fmt: on
-# end compatibility code
 
 codepoint2name[ord("-")] = "hyphen"
 
@@ -332,6 +323,9 @@ unsorted_qstr_list = {
     "<genexpr>",
 }
 
+# Matches any string that needs no escaping (alphanum + _ only)
+RE_NO_ESCAPE = re.compile(r"^[a-zA-Z0-9_]$")
+
 
 # this must match the equivalent function in qstr.c
 def compute_hash(qstr, bytes_hash):
@@ -345,7 +339,7 @@ def compute_hash(qstr, bytes_hash):
 
 def qstr_escape(qst):
     def esc_char(c):
-        if re.match(r"^[a-zA-Z0-9_]$", c):
+        if RE_NO_ESCAPE.match(c):
             return c
         c = ord(c)
         try:

@@ -6,6 +6,7 @@ def count(start=0, step=1):
         yield start
         start += step
 
+
 def cycle(p):
     try:
         len(p)
@@ -29,9 +30,11 @@ def repeat(el, n=None):
         for i in range(n):
             yield el
 
+
 def chain(*p):
     for i in p:
         yield from i
+
 
 def islice(p, start, stop=(), step=1):
     if stop == ():
@@ -52,12 +55,15 @@ def islice(p, start, stop=(), step=1):
         if start >= stop:
             return
 
+
 def tee(iterable, n=2):
     return [builtins.iter(iterable)] * n
+
 
 def starmap(function, iterable):
     for args in iterable:
         yield function(*args)
+
 
 def accumulate(iterable, func=lambda x, y: x + y):
     it = builtins.iter(iterable)
