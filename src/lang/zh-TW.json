@@ -2,30 +2,31 @@
     "translation": {
         "example": {
             "hello": "你好",
-            "comment-colors": "用不同顏色打印每個字母",
-            "comment-count": "數到10"
+            "comment-colors": "用不同顏色列印每個字母",
+            "comment-count": "數到 10"
         },
         "tool": {
             "run": "執行檔案",
-            "save": "保存文件",
-            "fullscreen": "全屏",
+            "save": "儲存檔案",
+            "fullscreen": "全螢幕",
             "clear": "清除",
             "conn": {
                 "ws": "連接 WebREPL",
                 "ble": "連接藍牙",
-                "usb": "連接 USB/串行"
+                "usb": "連接 USB/序列埠"
             },
-            "terminal": "終端"
+            "terminal": "終端機"
         },
         "menu": {
-            "package-mgr": "包管理器",
-            "file-mgr": "文件管理器",
-            "settings": "設置"
+            "package-mgr": "套件管理器",
+            "file-mgr": "檔案管理器",
+            "settings": "設定"
         },
         "files": {
-            "no-files": "沒有文件",
+            "no-files": "沒有檔案",
             "connect": "連接",
-            "used": "已使用"
+            "used": "已使用",
+            "stale": "檔案清單可能已變更"
         },
         "settings": {
             "conn": "連接",
@@ -33,11 +34,12 @@
             "other": "其他",
             "interrupt-device": "中斷執行",
             "force-serial-poly": "強制使用 WebSerial polyfill",
-            "expand-minify-json": "JSON 自動縮小",
+            "expand-minify-json": "JSON 自動最小化",
             "use-word-wrap": "自動換行",
             "render-markdown": "Markdown 查看器",
+            "refresh-after-run": "執行後重新整理檔案",
             "use-natural-sort": "自然排序",
-            "lang": "本地化",
+            "lang": "語言",
             "zoom": "縮放"
         },
         "about": {

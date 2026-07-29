@@ -25,7 +25,8 @@
         "files": {
             "no-files": "لا توجد ملفات",
             "connect": "اتصال",
-            "used": "مستخدم"
+            "used": "مستخدم",
+            "stale": "قد تكون قائمة الملفات قد تغيّرت"
         },
         "settings": {
             "conn": "الاتصال",
@@ -36,8 +37,9 @@
             "expand-minify-json": "التصغير التلقائي لـ JSON",
             "use-word-wrap": "تغليف الكلمات",
             "render-markdown": "عارض Markdown",
+            "refresh-after-run": "تحديث الملفات بعد التشغيل",
             "use-natural-sort": "الفرز الطبيعي",
-            "lang": "الموقع",
+            "lang": "اللغة",
             "zoom": "تكبير"
         },
         "about": {

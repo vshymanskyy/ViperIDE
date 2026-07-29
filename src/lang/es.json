@@ -25,7 +25,8 @@
         "files": {
             "no-files": "sin archivos",
             "connect": "conectar",
-            "used": "usado"
+            "used": "usado",
+            "stale": "la lista de archivos puede haber cambiado"
         },
         "settings": {
             "conn": "conexión",
@@ -36,8 +37,9 @@
             "expand-minify-json": "Minificación automática de JSON",
             "use-word-wrap": "Ajuste de línea",
             "render-markdown": "Visualizador de Markdown",
+            "refresh-after-run": "Actualizar archivos después de ejecutar",
             "use-natural-sort": "Ordenación natural",
-            "lang": "Localización",
+            "lang": "Idioma",
             "zoom": "Zoom"
         },
         "about": {

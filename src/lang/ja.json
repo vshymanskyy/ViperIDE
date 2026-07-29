@@ -25,7 +25,8 @@
         "files": {
             "no-files": "ファイルなし",
             "connect": "接続",
-            "used": "使用中"
+            "used": "使用中",
+            "stale": "ファイル一覧が変更された可能性があります"
         },
         "settings": {
             "conn": "接続",
@@ -36,8 +37,9 @@
             "expand-minify-json": "JSONの自動圧縮",
             "use-word-wrap": "ワードラップ",
             "render-markdown": "Markdownビューア",
+            "refresh-after-run": "実行後にファイルを更新",
             "use-natural-sort": "自然な並び替え",
-            "lang": "ローカリゼーション",
+            "lang": "言語",
             "zoom": "ズーム"
         },
         "about": {

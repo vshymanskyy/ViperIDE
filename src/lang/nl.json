@@ -25,7 +25,8 @@
         "files": {
             "no-files": "geen bestanden",
             "connect": "verbinden",
-            "used": "gebruikt"
+            "used": "gebruikt",
+            "stale": "bestandslijst mogelijk gewijzigd"
         },
         "settings": {
             "conn": "verbinding",
@@ -36,9 +37,10 @@
             "expand-minify-json": "Automatische minimalisering van JSON",
             "use-word-wrap": "Woorden afbreken",
             "render-markdown": "Markdown viewer",
+            "refresh-after-run": "Bestanden vernieuwen na uitvoeren",
             "use-natural-sort": "Natuurlijke sortering",
-            "lang": "Lokalisatie",
-            "zoom": "Inzoomen"
+            "lang": "Taal",
+            "zoom": "Zoom"
         },
         "about": {
             "cta": "Als je ViperIDE leuk vindt, geef het dan alsjeblieft een <a id='gh-star'>ster op GitHub</a> ⭐ en vertel het verder op sociale media 📢",

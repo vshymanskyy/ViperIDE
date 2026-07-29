@@ -25,7 +25,8 @@
         "files": {
             "no-files": "немає файлів",
             "connect": "підключити",
-            "used": "зайнято"
+            "used": "зайнято",
+            "stale": "список міг змінитися"
         },
         "settings": {
             "conn": "підключення",
@@ -36,8 +37,9 @@
             "expand-minify-json": "Авто-стиснення JSON",
             "use-word-wrap": "Перенос слів",
             "render-markdown": "Переглядач Markdown",
+            "refresh-after-run": "Оновлювати файли після запуску",
             "use-natural-sort": "Природне сортування",
-            "lang": "Локалізація",
+            "lang": "Мова",
             "zoom": "Масштаб"
         },
         "about": {

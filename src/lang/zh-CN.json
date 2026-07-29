@@ -25,7 +25,8 @@
         "files": {
             "no-files": "没有文件",
             "connect": "连接",
-            "used": "已使用"
+            "used": "已使用",
+            "stale": "文件列表可能已更改"
         },
         "settings": {
             "conn": "连接",
@@ -36,8 +37,9 @@
             "expand-minify-json": "JSON 自动缩小",
             "use-word-wrap": "自动换行",
             "render-markdown": "Markdown 查看器",
+            "refresh-after-run": "运行后刷新文件",
             "use-natural-sort": "自然排序",
-            "lang": "本土化",
+            "lang": "语言",
             "zoom": "缩放"
         },
         "about": {

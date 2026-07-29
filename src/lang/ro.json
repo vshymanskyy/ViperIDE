@@ -6,38 +6,40 @@
             "comment-count": "Numără de la 1 la 10"
         },
         "tool": {
-            "run": "Rulați fișierul",
-            "save": "Salvați fișierul",
+            "run": "Rulează fișierul",
+            "save": "Salvează fișierul",
             "fullscreen": "Ecran complet",
             "clear": "Curățați",
             "conn": {
-                "ws": "Conectați WebREPL",
-                "ble": "Conectați Bluetooth",
-                "usb": "Conectați USB/Serial"
+                "ws": "Conectare WebREPL",
+                "ble": "Conectare Bluetooth",
+                "usb": "Conectare USB/Serial"
             },
             "terminal": "Terminal"
         },
         "menu": {
-            "package-mgr": "Manager de Pachete",
-            "file-mgr": "Manager de Fișiere",
+            "package-mgr": "Manager de pachete",
+            "file-mgr": "Manager de fișiere",
             "settings": "Setări"
         },
         "files": {
             "no-files": "fără fișiere",
-            "connect": "conectați",
-            "used": "folosit"
+            "connect": "conectare",
+            "used": "folosit",
+            "stale": "lista de fișiere s-ar putea să se fi schimbat"
         },
         "settings": {
             "conn": "conexiune",
             "editor": "editor",
             "other": "alte",
-            "interrupt-device": "Întrerupeți execuția",
-            "force-serial-poly": "Forțați utilizarea WebSerial polyfill",
+            "interrupt-device": "Întrerupe execuția",
+            "force-serial-poly": "Forțează utilizarea WebSerial polyfill",
             "expand-minify-json": "Minificarea automată a JSON",
             "use-word-wrap": "Împachetarea cuvintelor",
             "render-markdown": "Vizualizator Markdown",
+            "refresh-after-run": "Reîmprospătează fișierele după rulare",
             "use-natural-sort": "Sortare naturală",
-            "lang": "Localizare",
+            "lang": "Limbă",
             "zoom": "Zoom"
         },
         "about": {

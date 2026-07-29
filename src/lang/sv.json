@@ -18,14 +18,15 @@
             "terminal": "Terminal"
         },
         "menu": {
-            "package-mgr": "Paketchef",
+            "package-mgr": "Pakethanterare",
             "file-mgr": "Filhanterare",
             "settings": "Inställningar"
         },
         "files": {
             "no-files": "inga filer",
             "connect": "ansluta",
-            "used": "används"
+            "used": "används",
+            "stale": "fillistan kan ha ändrats"
         },
         "settings": {
             "conn": "anslutning",
@@ -36,8 +37,9 @@
             "expand-minify-json": "Automatisk minimisering av JSON",
             "use-word-wrap": "Ordbrytning",
             "render-markdown": "Markdown-visare",
+            "refresh-after-run": "Uppdatera filer efter körning",
             "use-natural-sort": "Naturlig sortering",
-            "lang": "Lokalisering",
+            "lang": "Språk",
             "zoom": "Zoom"
         },
         "about": {

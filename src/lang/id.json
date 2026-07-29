@@ -25,7 +25,8 @@
         "files": {
             "no-files": "tidak ada file",
             "connect": "hubungkan",
-            "used": "digunakan"
+            "used": "digunakan",
+            "stale": "daftar file mungkin telah berubah"
         },
         "settings": {
             "conn": "koneksi",
@@ -36,9 +37,10 @@
             "expand-minify-json": "Minifikasi otomatis JSON",
             "use-word-wrap": "Bungkus kata",
             "render-markdown": "Penampil Markdown",
+            "refresh-after-run": "Segarkan file setelah dijalankan",
             "use-natural-sort": "Penyortiran alami",
-            "lang": "Lokalisasi",
-            "zoom": "Perbesar"
+            "lang": "Bahasa",
+            "zoom": "Zoom"
         },
         "about": {
             "cta": "Jika Anda menyukai ViperIDE, silakan <a id='gh-star'>beri bintang di GitHub</a> ⭐ dan sebarkan berita di media sosial 📢",

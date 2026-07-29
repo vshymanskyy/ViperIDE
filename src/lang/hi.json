@@ -25,7 +25,8 @@
         "files": {
             "no-files": "कोई फाइल नहीं",
             "connect": "कनेक्ट करें",
-            "used": "प्रयुक्त"
+            "used": "प्रयुक्त",
+            "stale": "फ़ाइल सूची बदल गई हो सकती है"
         },
         "settings": {
             "conn": "कनेक्शन",
@@ -36,8 +37,9 @@
             "expand-minify-json": "JSON का स्वचालित-संपीड़न",
             "use-word-wrap": "शब्द आवरण",
             "render-markdown": "Markdown दर्शक",
+            "refresh-after-run": "चलाने के बाद फ़ाइलें ताज़ा करें",
             "use-natural-sort": "प्राकृतिक छंटाई",
-            "lang": "स्थानीयकरण",
+            "lang": "भाषा",
             "zoom": "ज़ूम"
         },
         "about": {
