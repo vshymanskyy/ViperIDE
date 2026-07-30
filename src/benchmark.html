@@ -7,33 +7,30 @@
     <link rel="icon" type="image/png" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
 
     <link rel="stylesheet" href="./viper_lib.css">
-    <style>
-    body {
-        padding: 20px;
-        line-height: 1.8rem;
-    }
-    </style>
 </head>
-<body>
-    <h2>ViperIDE Benchmark</h2>
-    <p>
-    <div>
-        1. Select benchmarks:
-        <span><input type="checkbox" id="test-fs"  checked/><label for="test-fs">File System</label></span>
-        <span><input type="checkbox" id="test-cpu" checked/><label for="test-cpu">CPU</label></span>
-    </div>
+<body class="page">
+    <h1>ViperIDE Benchmark</h1>
 
-    <div>
-        2. Connect your device:
-        <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
-        <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
-        <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
-    </div>
-    </p>
+    <ol>
+        <li>
+            Select benchmarks:
+            <span class="check-row">
+                <span><input type="checkbox" id="test-fs"  checked/><label for="test-fs">File System</label></span>
+                <span><input type="checkbox" id="test-cpu" checked/><label for="test-cpu">CPU</label></span>
+            </span>
+        </li>
+        <li>
+            Connect your device:
+            <span class="button-row">
+                <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
+                <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+                <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+            </span>
+        </li>
+    </ol>
 
     <pre class="monospace" id="log"></pre>
 
-    <script src="${VIPER_IDE_BASE_URL}/micropython.mjs" type="module" crossorigin="anonymous"></script>
     <script src="./viper_lib.js"></script>
     <script>
     Object.assign(window, viper_lib)

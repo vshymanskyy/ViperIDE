@@ -6,8 +6,9 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { Transport } from './transports.js'
+import { Transport } from './transports/base.js'
 import { loadVFS } from './python_utils.js'
+import { loadMicroPython } from '@micropython/micropython-webassembly-pyscript/micropython.mjs'
 import i18next from 'i18next'
 
 const T = i18next.t.bind(i18next)

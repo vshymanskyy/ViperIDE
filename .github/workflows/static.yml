@@ -30,17 +30,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      # The default target is the MicroPython WASM build, so no hardware is needed.
+      # The package suite skips itself if micropython.org cannot be reached.
+      - name: Test
+        run: |
+          npm install
+          npm run lint
+          npm run test
+
       - name: Build
         run: |
           python3 build.py
+
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           # Upload entire repository
           path: './build'
+
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

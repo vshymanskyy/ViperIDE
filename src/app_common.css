@@ -9,12 +9,13 @@
 :root {
     --fg-color: white;
     --fg-color-highlight: orange;
+    --accent-color: #1aafff;
     --bg-color: #2a2e32;
     --bg-color-menu: #2a2e32ee;
     --bg-color-edit: #111314;
     --font-size: 14px;
     --connected-passive: #87c244;
-    --connected-active: orange;
+    --connected-active: #1aafff;
     --connected-color: var(--connected-passive);
     --animation: 0.3s ease-in-out;
 }
@@ -29,7 +30,6 @@ html, body {
     height: 100%;
     width: 100%;
     overscroll-behavior: none;
-    touch-action: none;
     box-sizing: border-box;
     background: var(--bg-color);
     color: var(--fg-color);
@@ -42,12 +42,39 @@ html, body {
                 opacity var(--animation);
 }
 
+/* Only the IDE takes over scrolling and gestures wholesale. The standalone
+   pages (bridge, benchmark) are ordinary documents and must stay pannable. */
+body#app {
+    touch-action: none;
+}
+
 *, *:before, *:after {
     box-sizing: inherit;
 }
 
 *     { margin: 0; }
 p, hr { margin: revert; }
+
+@media (prefers-reduced-motion: reduce) {
+    :root { --animation: 1ms linear; }
+    *, *:before, *:after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Firefox has no ::-webkit-scrollbar, so it needs the standard properties to
+   get anything close to the flat scrollbars below. This must stay guarded:
+   Chromium 121+ supports scrollbar-width/-color and drops every
+   ::-webkit-scrollbar rule as soon as either is set to a non-auto value. */
+@supports not selector(::-webkit-scrollbar) {
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(0, 0%, 60%, .8) transparent;
+    }
+}
 
 ::-webkit-scrollbar {
     height: .5rem;
@@ -56,20 +83,22 @@ p, hr { margin: revert; }
 
 ::-webkit-scrollbar-track {
     background-color: transparent;
-    border-radius: 0px; /* 9999px; */
 }
 
 ::-webkit-scrollbar-thumb {
     background-color: hsla(0, 0%, 60%, .8);
-    border-color: rgba(255,255,255,1);
-    border-radius: 0px; /* 9999px; */
-    border-width: 0px;
 }
 
 ::-webkit-scrollbar-corner {
     background-color: transparent;
 }
 
+/* Nothing here draws a default focus ring (buttons and links are unstyled),
+   so keyboard navigation needs an explicit one. */
+:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 1px;
+}
 
 a {
     color: unset;
@@ -85,14 +114,29 @@ a.link {
 
 label {
     user-select: none;
+    cursor: pointer;
 }
 
 input[type="checkbox" i] {
-    margin: 3px 3px 3px 0px;
+    /* Sized in em so the checkbox tracks the zoom setting like everything else */
+    width: 1em;
+    height: 1em;
+    margin: 0 3px 0 0;
+    vertical-align: -0.1em;
+    cursor: pointer;
 }
 
 button {
     padding: 5px 5px;
+    background: none;
+    border: none;
+    color: unset;
+    cursor: pointer;
+    font-size: 1.3rem;
+}
+
+button.connected {
+    color: var(--connected-color);
 }
 
 select {
@@ -107,18 +151,6 @@ input, select, option {
 
 option {
     background-color: var(--bg-color);
-}
-
-button {
-    background: none;
-    border: none;
-    color: unset;
-    cursor: pointer;
-    font-size: 1.3rem;
-}
-
-button.connected {
-    color: var(--connected-color);
 }
 
 /*
@@ -145,7 +177,7 @@ button.connected {
 .fa-circle-info { color: #3b88c3; }
 .fa-file { color: #3b88c3; }
 .fa-file-circle-exclamation { color: #ed4337; }
-.fa-folder { color: #ffcc4d; }
+.fa-folder, .fa-folder-open { color: #ffcc4d; }
 .fa-certificate { color: #ba0311; }
 .fa-cube { color: #ba9066; }
 .fa-cubes { color: #ba9066; }
@@ -160,7 +192,7 @@ button.connected {
     background: var(--bg-color-edit);
     border-radius: 3px;
     padding: 3px 5px 3px 5px;
-    line-height: 19px;
+    line-height: 1.35;
     white-space: nowrap;
 }
 
@@ -175,36 +207,28 @@ button.connected {
 }
 
 .monospace {
-    font-family: "Droid Sans Mono", "monospace", monospace;
+    font-family: ui-monospace, "Droid Sans Mono", "Cascadia Mono", Consolas, Menlo, monospace;
     font-weight: normal;
     white-space: pre;
     font-size: 0.9rem;
-    line-height: 1.2rem;
+    line-height: 1.35;
 }
 
 /* Title-lines */
 
 .title-lines {
-    position: relative;
-    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     overflow: hidden;
     text-align: center;
 }
 
 .title-lines:before, .title-lines:after {
-    position: absolute;
-    top: 51%;
-    overflow: hidden;
-    width: 48%;
+    content: '';
+    flex: 1 1 auto;
     height: 1px;
-    content: '\a0';
     background-color: #cccccc88;
-    margin-left: 2%;
-}
-
-.title-lines:before {
-    margin-left: -50%;
-    text-align: right;
 }
 
 /* Tabs */
@@ -214,11 +238,16 @@ button.connected {
     align-items: center;
     justify-content: space-between;
     user-select: none;
-    font-size: 1.1rem;;
+    font-size: 1.1rem;
 }
 
 .tab {
-    display: inline;
+    /* inline-flex, not inline: an inline box ignores the vertical padding,
+       which let the active background bleed out of the line box. The gap
+       stands in for the markup whitespace that flex layout drops. */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
     padding: 5px 10px;
 }
 
@@ -236,3 +265,35 @@ button.connected {
     display: block;
 }
 
+/*
+ * Standalone pages (bridge, benchmark)
+ */
+
+body.page {
+    height: auto;
+    min-height: 100%;
+    padding: 20px;
+    line-height: 1.8;
+}
+
+body.page h1 {
+    font-size: 1.5em;
+}
+
+/* Keeps buttons and checkboxes on one baseline where they sit inline in a
+   sentence, and lets them wrap as a unit on narrow screens. The gaps stand in
+   for the markup whitespace that flex layout drops. */
+.button-row, .check-row {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.button-row {
+    gap: 0 4px;
+}
+
+.check-row {
+    gap: 0 1em;
+}

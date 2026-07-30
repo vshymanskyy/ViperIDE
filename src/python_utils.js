@@ -1,6 +1,7 @@
-import { compile as compile_v6 } from '@pybricks/mpy-cross-v6'
 import { splitPath } from './utils.js'
 import { TarReader } from '@gera2ld/tarjs'
+import { loadMicroPython } from '@micropython/micropython-webassembly-pyscript/micropython.mjs'
+import { compile as mpyCross, abiVersions, defaultAbi, wasmFileName } from '@vshymanskyy/mpy-cross-wasm'
 import __wbg_init, { PositionEncoding, Workspace as RuffWorkspace } from '@astral-sh/ruff-wasm-web'
 
 export function parseStackTrace(stackTrace)
@@ -49,18 +50,36 @@ export function parseStackTrace(stackTrace)
     }
 }
 
+/*
+ * The .mpy ABI a board imports, named the way mpy-cross-wasm names its targets.
+ * getDeviceInfo() reports it as the .mpy header does: mpy_ver is the major and mpy_sub
+ * the sub-version, so v6 sub 3 is ABI '6.3'. Boards without .mpy support report the
+ * major as 'py', and a board may well be newer than any ABI we can emit - both come
+ * back as null, so callers decide whether that is fatal.
+ */
+function boardMpyAbi(devInfo) {
+    if (!devInfo || !Number.isInteger(devInfo.mpy_ver)) { return null }
+    const abi = devInfo.mpy_sub ? `${devInfo.mpy_ver}.${devInfo.mpy_sub}` : `${devInfo.mpy_ver}`
+    return abiVersions.includes(abi) ? abi : null
+}
+
+function mpyCrossWasmUrl(abi) {
+    return `${VIPER_IDE_BASE_URL}/assets/${wasmFileName(abi)}`
+}
+
 export async function validatePython(filename, content, devInfo) {
     // TODO: looks like it fetches the (cached) wasm file on every run
-    // Ideally we want ti init the wasm file once and then reuse the instance multiple times
+    // Ideally we want to init the wasm file once and then reuse the instance multiple times
     try {
         const [_, fname] = splitPath(filename)
-        const wasmUrlV6 = `${VIPER_IDE_BASE_URL}/assets/mpy-cross-v6.wasm`
+        // Syntax checking only needs a compiler that accepts the board's dialect, so an
+        // unknown ABI falls back to the newest one rather than failing the lint.
+        const abi = boardMpyAbi(devInfo) || defaultAbi
         let options = null
-        // TODO: update mpy-cross to support more architectures and mpy versions
-        if (devInfo && devInfo.mpy_arch && !['rv32imc', 'rv64imc'].includes(devInfo.mpy_arch)) {
+        if (devInfo && devInfo.mpy_arch) {
             options = [ "-march="+devInfo.mpy_arch ]
         }
-        const result = await compile_v6(fname, content, options, wasmUrlV6)
+        const result = await mpyCross(fname, content, { abi, options, wasmPath: mpyCrossWasmUrl(abi) })
         if (result.status !== 0) {
             const stderr = result.err.join('\n')
             const stdout = result.out.join('\n')
@@ -82,18 +101,21 @@ export async function compilePython(filename, content, devInfo) {
         content = codec.decode(content)
     }
     const [_, fname] = splitPath(filename)
-    const wasmUrlV6 = `${VIPER_IDE_BASE_URL}/assets/mpy-cross-v6.wasm`
+    let abi = defaultAbi
     let options = null
 
     if (devInfo) {
-        if (devInfo.mpy_ver != 6) {
-            throw new Error("Only compiling mpy v6 is supported")
+        // Unlike validation, the result has to actually run on the board, so an ABI we
+        // cannot emit is fatal - the caller falls back to installing the .py source.
+        abi = boardMpyAbi(devInfo)
+        if (!abi) {
+            throw new Error(`Only compiling mpy ${abiVersions.join(', ')} is supported`)
         }
         if (devInfo.mpy_arch) {
             options = [ "-march="+devInfo.mpy_arch ]
         }
     }
-    const result = await compile_v6(fname, content, options, wasmUrlV6)
+    const result = await mpyCross(fname, content, { abi, options, wasmPath: mpyCrossWasmUrl(abi) })
     if (result.status !== 0) {
         const stderr = result.err.join('\n')
         const stdout = result.out.join('\n')

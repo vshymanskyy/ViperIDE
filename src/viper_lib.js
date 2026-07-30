@@ -13,7 +13,7 @@ import toastr from 'toastr'
 export { toastr }
 
 export { serial as webSerialPolyfill } from 'web-serial-polyfill'
-export { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
+export { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
 export { MpRawMode } from './rawmode.js'
 export { MicroPythonWASM } from './emulator.js'
 export { ConnectionUID } from './connection_uid.js'

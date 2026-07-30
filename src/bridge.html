@@ -8,30 +8,24 @@
 
     <link rel="stylesheet" href="./viper_lib.css">
     <style>
-    body {
-        padding: 20px;
-        line-height: 1.8rem;
-    }
-    .warning {
-        color: #ffd600;
-    }
     #bridge-id {
         font-size: 1.5rem;
-        line-height: 1.5em;
     }
     </style>
 </head>
-<body>
-    <h2>ViperIDE P2P Bridge</h2>
+<body class="page">
+    <h1>ViperIDE P2P Bridge</h1>
 
     <p>The bridge allows creating a secure, peer-to-peer connection between the device and ViperIDE <b>across the internet</b>.</p>
 
     <ol>
         <li>
-            <span>Connect your device:</span>
-            <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
-            <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
-            <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+            Connect your device:
+            <span class="button-row">
+                <button title="Connect WebREPL"       onclick="connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
+                <button title="Connect Bluetooth"     onclick="connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
+                <button title="Connect USB/Serial"    onclick="connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
+            </span>
         </li>
         <li>Grab a Bridge P2P ID:<br>
             <span class="highlight monospace" id="bridge-id"></span>
@@ -43,7 +37,6 @@
 
     <p>⚠️ Keep this page open for the connection to remain active</p>
 
-    <script src="${VIPER_IDE_BASE_URL}/micropython.mjs" type="module" crossorigin="anonymous"></script>
     <script src="./viper_lib.js"></script>
     <script>
     Object.assign(window, viper_lib)

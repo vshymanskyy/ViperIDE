@@ -161,7 +161,7 @@ const tools = [
     },
     {
         name: 'viperIDE_delete_dir',
-        description: 'Delete a directory from the connected MicroPython device',
+        description: 'Delete a directory from the connected MicroPython device, including everything inside it',
         schema: { path: z.string().describe('Directory path to delete') },
         method: 'delete_dir',
     },

@@ -1,11 +1,13 @@
 {
   "name": "ViperIDE",
-  "version": "0.5.3",
+  "version": "0.5.5",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
   "main": "index.js",
   "scripts": {
     "build": "rollup --config",
-    "start": "rollup --config --configDebug --watch"
+    "start": "rollup --config --configDebug --watch",
+    "lint": "npx eslint",
+    "test": "npx mocha"
   },
   "dependencies": {
     "@astral-sh/ruff-wasm-web": "0.16.0",
@@ -19,9 +21,9 @@
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
     "@gera2ld/tarjs": "^0.3.1",
     "@micropython/micropython-webassembly-pyscript": "1.28.0-6",
-    "@pybricks/mpy-cross-v6": "github:code4fukui/mpy-cross-v6",
     "@uiw/codemirror-theme-material": "^4.25.11",
     "@uiw/codemirror-theme-monokai": "^4.25.11",
+    "@vshymanskyy/mpy-cross-wasm": "https://github.com/vshymanskyy/mpy-cross-wasm/releases/download/v1.0.1/vshymanskyy-mpy-cross-wasm-1.0.1.tgz",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",
@@ -42,8 +44,10 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-terser": "^1.0.0",
+    "chai": "^6.2.2",
     "eslint": "^10.8.0",
     "globals": "^17.8.0",
+    "mocha": "^11.7.6",
     "rollup": "^4.62.3",
     "rollup-plugin-import-css": "^4.2.1",
     "rollup-plugin-serve": "^3.0.0",

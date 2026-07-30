@@ -23,10 +23,10 @@ export function initControlClient(api) {
     let ws = null
     let reconnectDelay = 2000
 
-    // Tracks the MCP-visible connection state. app.js does not clear its
-    // module-local devInfo on disconnect, so we can't trust api.getDevInfo()
-    // to reflect the active port. Instead we snapshot devInfo here when the
-    // deviceConnected event fires, and drop it when the port goes away.
+    // Tracks the MCP-visible connection state. api.getDevInfo() is only filled
+    // in once the board has answered, which is what "connected" means here, so
+    // it is snapshotted on the deviceConnected event and dropped again when the
+    // port goes away.
     let connecting = false
     let lastConnectedDevInfo = null
 
@@ -208,12 +208,16 @@ export function initControlClient(api) {
 
             case 'write_file': {
                 const { path, content } = params
-                return withRawMode(async (raw) => {
+                const result = await withRawMode(async (raw) => {
                     const [dir] = splitPath(path)
                     if (dir) await raw.makePath(dir)
                     await raw.writeFile(path, content)
                     return { ok: true, path }
                 })
+                // Brings the tree up to date and, if this path is open in the
+                // editor, reloads it - or flags it, if it has unsaved edits
+                await api.refreshFileTree()
+                return result
             }
 
             case 'delete_file': {
@@ -230,10 +234,11 @@ export function initControlClient(api) {
 
             case 'mkdir': {
                 const { path } = params
-                return withRawMode(async (raw) => {
+                await withRawMode(async (raw) => {
                     await raw.makePath(path)
-                    return { ok: true }
                 })
+                await api.refreshFileTree()
+                return { ok: true }
             }
 
             case 'open_file': {
@@ -352,6 +357,11 @@ export function initControlClient(api) {
         lastConnectedDevInfo = api.getDevInfo() || null
         connecting = false
         pushEvent('device_connected', lastConnectedDevInfo || {})
+    })
+    document.addEventListener('deviceDisconnected', () => {
+        lastConnectedDevInfo = null
+        connecting = false
+        pushEvent('device_disconnected', {})
     })
     document.addEventListener('fileRemoved', (e) => pushEvent('file_removed', e.detail))
     document.addEventListener('dirRemoved', (e) => pushEvent('dir_removed', e.detail))

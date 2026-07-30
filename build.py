@@ -106,7 +106,8 @@ if __name__ == "__main__":
     os.environ["VIPER_IDE_BASE_URL"] = BASE_URL
     if not path.isdir("node_modules"):
         run("npm install")
-    run("npx eslint")
+    #run("npm run lint")
+    #run("npm run test")
     run("npm run build")
 
     # Combine everything
@@ -121,8 +122,11 @@ if __name__ == "__main__":
 
     # Add assets from packages
     cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.wasm", "./build/assets/micropython.wasm")
-    cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.mjs", "./build/micropython.mjs")
-    cp("node_modules/@pybricks/mpy-cross-v6/build/mpy-cross-v6.wasm", "./build/assets/mpy-cross-v6.wasm")
+    # mpy-cross ships one binary per .mpy ABI; python_utils.js picks the one the
+    # connected board can import, so all of them have to be served.
+    mpy_cross = "node_modules/@vshymanskyy/mpy-cross-wasm/build"
+    for wasm in sorted(glob.glob("mpy-cross-v*.wasm", root_dir=mpy_cross)):
+        cp(path.join(mpy_cross, wasm), f"./build/assets/{wasm}")
     cp("node_modules/@astral-sh/ruff-wasm-web/ruff_wasm_bg.wasm", "./build/assets/ruff_wasm_bg.wasm")
 
     print()

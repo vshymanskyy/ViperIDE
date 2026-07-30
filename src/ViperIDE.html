@@ -44,10 +44,14 @@
             <div id="menu-files" class="tab-content active">
                 <div id="menu-file-title">File Manager</div>
                 <div id="menu-file-tree">
-                    <div><span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span></div>
-                    <div>
-                        <a href="#" class="name" onclick="app.connectDevice('usb');return false;">&emsp;🤔 <span id="no-files">no files</span></a>
-                        <a href="#" class="menu-action" onclick="app.connectDevice('usb');return false;"><i class="fa-solid fa-plug"></i></a>
+                    <div class="tree-node">
+                        <div class="tree-row"><span class="name"><i class="fa-solid fa-folder-open fa-fw"></i> /</span></div>
+                        <div class="tree-children">
+                            <div class="tree-row">
+                                <a href="#" class="name" onclick="app.connectDevice('usb');return false;">🤔 <span id="no-files">no files</span></a>
+                                <a href="#" class="menu-action" onclick="app.connectDevice('usb');return false;"><i class="fa-solid fa-plug"></i></a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -91,6 +95,7 @@
                     <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Auto expand/minify JSON</label></div>
                     <div><input type="checkbox" id="use-word-wrap"/><label for="use-word-wrap">Word wrapping</label></div>
                     <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
+                    <div><input type="checkbox" id="refresh-after-run"/><label for="refresh-after-run">Refresh files after run</label></div>
                     <!--div><input type="checkbox" id="auto-soft-reset" checked/><label for="auto-soft-reset">Soft-reset on Run/Save File</label></div-->
                     <div class="title-lines" id="menu-line-pkg-mgr">package manager</div>
                     <div><input type="checkbox" id="install-package-source"/><label for="install-package-source">Prefer installing sources (.py)</label></div>
@@ -145,11 +150,11 @@
             </div>
             <div id="menu-about" class="tab-content">
                 <a class="github-fork-ribbon left-top" href="https://github.com/vshymanskyy/ViperIDE" target="_blank" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
-                <div style="text-align: center; padding: 50px 0 0 0;">
-                    <img src="assets/logo_1024.png" alt="Logo" width="30%">
-                    <div style="font-size:1.5em;">ViperIDE</div>
+                <div class="about-header">
+                    <img class="about-logo" src="assets/logo_1024.png" alt="Logo">
+                    <div class="about-title">ViperIDE</div>
                     <div id='viper-ide-version'></div>
-                    <small><div id='viper-ide-build'></div></small>
+                    <div class="about-build" id='viper-ide-build'></div>
                     <p>
                         MicroPython Web IDE<br>
                         by <a class="link" href="https://x.com/vshymanskyy" target="_blank">Volodymyr Shymanskyy</a>
@@ -165,7 +170,7 @@
                     </p>
                     <hr/>
                 </div>
-                <p style="text-align: center;">
+                <p class="about-footer">
                     With 💙💛 from <a class="link" href="https://stand-with-ukraine.pp.ua" target="_blank">Ukraine</a>
                 </p>
             </div>
@@ -196,7 +201,6 @@
     </div>
     <div id="dpi-ruler" style="position:absolute;height:1in;width:1in;left:-100%;top:-100%;"></div>
 
-    <script src="${VIPER_IDE_BASE_URL}/micropython.mjs" type="module" crossorigin="anonymous"></script>
     <script src="./app.js"></script>
 </body>
 </html>

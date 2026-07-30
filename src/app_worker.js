@@ -7,6 +7,7 @@
  */
 
 const cacheName = `viper-${VIPER_IDE_VERSION}`;
+const offlineReadyMessage = 'VIPER_IDE_OFFLINE_CACHE_READY';
 
 const log = console.log.bind(console).bind(console, `[Service Worker ${VIPER_IDE_VERSION}]`);
 
@@ -15,7 +16,12 @@ const contentToCache = new Set([
     '/assets/favicon.png',
     '/assets/app_1024.png',
     '/assets/logo_1024.png',
+    '/assets/mpy-cross-v4.wasm',
+    '/assets/mpy-cross-v5.wasm',
     '/assets/mpy-cross-v6.wasm',
+    '/assets/mpy-cross-v6.1.wasm',
+    '/assets/mpy-cross-v6.2.wasm',
+    '/assets/mpy-cross-v6.3.wasm',
     '/assets/micropython.wasm',
     '/assets/ruff_wasm_bg.wasm',
     '/assets/tools_vfs.tar.gz',
@@ -29,6 +35,16 @@ self.addEventListener('install', event => {
     await Promise.all(contentToCache.values().map(resource => {
       return cache.add(new Request(resource, { cache: 'no-store' }));
     }));
+    const clients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
+    for (const client of clients) {
+      client.postMessage({
+        type: offlineReadyMessage,
+        version: VIPER_IDE_VERSION,
+      });
+    }
     self.skipWaiting();
   })());
 });

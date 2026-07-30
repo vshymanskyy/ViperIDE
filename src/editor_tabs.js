@@ -1,4 +1,3 @@
-import { addUpdateHandler } from './editor.js'
 import { QSA, QS, QID, escapeHTML, escapeCSS } from './utils.js'
 
 
@@ -67,13 +66,38 @@ export function createTab(fn) {
     const editorTabTitle = editorTabElement.querySelector(".tab-title")
     editorTabTitle.textContent = fn.split("/").pop()
     editorTabElement.dataset.fn = fn
-    if (fn == "Untitled") {
-        editorTabElement.classList.add("changed")
-    }
 
     const editorElement = QS(`.editor-tab-pane[data-pane="${currentTab}"] .editor`)
     _activateTab(editorTabElement.dataset.tab)
     return editorElement
+}
+
+
+/**
+ *
+ * @param {HTMLElement} editorElement An element inside an editor tab pane
+ * @returns {string|null} The file name the owning tab currently represents. This
+ * tracks moves and renames, unlike the name the editor was created with.
+ */
+export function getTabFileName(editorElement) {
+    const pane = editorElement.closest(".editor-tab-pane")
+    if (!pane) { return null }
+    const tab = QS(`#editor-tabs .tab[data-tab="${pane.dataset.pane}"]`)
+    return tab ? tab.dataset.fn : null
+}
+
+
+/**
+ * The inverse of getTabFileName: finds the element an editor was mounted into,
+ * so a file that changed on the device can be re-rendered in place.
+ *
+ * @param {string} fn The file name (full path) the tab represents
+ * @returns {HTMLElement|null} The editor container, or null if no tab has that name
+ */
+export function getTabEditorElement(fn) {
+    const tab = QS(`#editor-tabs .tab[data-fn="${escapeCSS(fn)}"]`)
+    if (!tab) { return null }
+    return QS(`.editor-tab-pane[data-pane="${tab.dataset.tab}"] .editor`)
 }
 
 
@@ -92,24 +116,40 @@ document.addEventListener("dirRemoved", (event) => {
     })
 })
 
+/* Renaming a folder renames every open file below it, so tabs are matched by
+   path prefix as well as by exact name. */
 document.addEventListener("fileRenamed", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${escapeCSS(event.detail.old)}"]`)
-    editorTab.dataset.fn = event.detail.new
-    editorTab.querySelector(".tab-title").textContent = event.detail.new.split("/").pop()
+    const { old: oldFn, new: newFn } = event.detail
+    for (const tab of QSA(`#editor-tabs [data-fn]`)) {
+        const fn = tab.dataset.fn
+        let renamed
+        if (fn === oldFn) {
+            renamed = newFn
+        } else if (fn.startsWith(oldFn + '/')) {
+            renamed = newFn + fn.slice(oldFn.length)
+        } else {
+            continue
+        }
+        tab.dataset.fn = renamed
+        tab.querySelector(".tab-title").textContent = renamed.split("/").pop()
+    }
 })
 
 document.addEventListener("fileSaved", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${escapeCSS(event.detail.fn)}"] .tab-title`)
-    editorTab.classList.remove("changed")
+    /* A saved file need not have a tab of its own: a disassembled .mpy is
+       displayed under a name that no tab carries. */
+    _tabTitle(event.detail.fn)?.classList.remove("changed")
 })
 
-document.addEventListener("editorLoaded", (event) => {
-    const editorTab = QS(`#editor-tabs [data-fn="${escapeCSS(event.detail.fn)}"] .tab-title`)
-    addUpdateHandler(event.detail.editor, (update) => {
-        if (update.docChanged) {
-            editorTab.classList.add("changed")
-        }
-    })
+/* Whether a file differs from what was opened is decided by the filesystem
+   cache, which compares the two - so the marker also clears on an undo. */
+document.addEventListener("fileDirtyChanged", (event) => {
+    _tabTitle(event.detail.fn)?.classList.toggle("changed", event.detail.dirty)
+})
+
+/* The file changed on the device while unsaved edits were open here. */
+document.addEventListener("fileConflict", (event) => {
+    _tabTitle(event.detail.fn)?.classList.toggle("conflict", event.detail.conflicted)
 })
 
 document.addEventListener("deviceConnected", (_event) => {
@@ -117,8 +157,19 @@ document.addEventListener("deviceConnected", (_event) => {
     _addNewFileButton()
 })
 
+document.addEventListener("deviceDisconnected", (_event) => {
+    /* Creating a file needs a board, so the button would only no-op */
+    connected = false
+    QS("[data-new='new']")?.remove()
+})
+
 
 /** Helper Functions **/
+
+function _tabTitle(fn) {
+    return QS(`#editor-tabs [data-fn="${escapeCSS(fn)}"] .tab-title`)
+}
+
 
 function _closeTab(index) {
     const tabElement = QS(`#editor-tabs .tab[data-tab="${index}"]`)
@@ -149,8 +200,9 @@ function _closeTab(index) {
     if (nextSelectedTab && nextSelectedTab.dataset.tab) {
         _activateTab(nextSelectedTab.dataset.tab)
     } else {
-        createTab("Untitled", "")
-        _activateTab(currentTab)
+        /* Nothing left to activate. The app answers by opening the welcome tab,
+           which it also owns at startup - the tabs know nothing of its content. */
+        document.dispatchEvent(new CustomEvent("allTabsClosed"))
     }
 }
 

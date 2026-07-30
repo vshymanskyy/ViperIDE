@@ -21,9 +21,9 @@ import { WebLinksAddon } from '@xterm/addon-web-links'
 import { FitAddon } from '@xterm/addon-fit'
 
 import { addUpdateHandler, createNewEditor, getEditorFromElement } from './editor.js'
-import { displayOpenFile, createTab } from './editor_tabs.js'
+import { displayOpenFile, createTab, getTabFileName, getTabEditorElement } from './editor_tabs.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
-import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports.js'
+import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
 import { MpRawMode } from './rawmode.js'
 import { getPkgIndexes, rawInstallPkg } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
@@ -35,9 +35,13 @@ import { getSetting, onSettingChange, updateSetting } from './settings.js'
 import { marked, Renderer as MarkedRenderer } from 'marked'
 import { UAParser } from 'ua-parser-js'
 
-import { splitPath, sleep, fetchJSON, getUserUID, getScreenInfo, IdleMonitor,
-         getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, escapeHTML, isRunningStandalone,
-         sizeFmt, indicateActivity, setupTabs, report } from './utils.js'
+import { splitPath, joinPath, sleep, fetchJSON, getUserUID, getScreenInfo, IdleMonitor,
+         getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, escapeCSS, isRunningStandalone,
+         sizeFmt, indicateActivity, setupTabs, report, readDroppedFiles } from './utils.js'
+
+import { TreeView, parentDir, TREE_DRAG_TYPE } from './tree_view.js'
+import * as fsCache from './fs_cache.js'
+import { createZipSync } from './zip.js'
 
 import { initControlClient } from './control_client.js'
 
@@ -46,7 +50,8 @@ import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
 import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug, faGaugeHigh,
-         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark
+         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark,
+         faFolderOpen
        } from '@fortawesome/free-solid-svg-icons'
 import { faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
 
@@ -54,7 +59,8 @@ library.add(faUsb, faBluetoothB)
 library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug, faGaugeHigh,
-         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark)
+         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark,
+         faFolderOpen)
 library.add(faMessage, faCircleDown)
 dom.watch()
 
@@ -80,6 +86,33 @@ let editor, term, port
 let editorFn = ''
 let isInRunMode = false
 let devInfo = null
+let connType = null
+let draftsRestored = false
+
+/*
+ * The single place that reacts to the port going away, however it went. The
+ * filesystem cache forgets everything it read off the board, but open editors
+ * keep their text and their backups: a cable wobble must not cost unsaved work.
+ *
+ * The file tree is deliberately left on screen rather than reset - it is the
+ * last known state of the board, and every action on it already refuses to run
+ * without a port. It is only made inert so nothing looks clickable.
+ */
+function handleDisconnected() {
+    port = null
+    /* Cleared so the next connection re-reads it, and so anything asking who is
+       attached gets an honest answer */
+    devInfo = null
+    connType = null
+    draftsRestored = false
+    fsCache.dropDeviceState()
+
+    for (const t of ['ws', 'ble', 'usb']) {
+        QID(`btn-conn-${t}`).classList.remove('connected')
+    }
+    QID('menu-file-tree').classList.add('inert')
+    document.dispatchEvent(new CustomEvent("deviceDisconnected"))
+}
 
 async function disconnectDevice() {
     if (port) {
@@ -88,12 +121,8 @@ async function disconnectDevice() {
         } catch (err) {
             console.log(err)
         }
-        port = null
     }
-
-    for (const t of ['ws', 'ble', 'usb']) {
-        QID(`btn-conn-${t}`).classList.remove('connected')
-    }
+    handleDisconnected()
 }
 
 let defaultWsURL = 'ws://192.168.1.123:8266'
@@ -224,6 +253,7 @@ export async function connectDevice(type) {
     }
 
     port = new_port
+    connType = type
 
     port.onActivity(indicateActivity)
 
@@ -232,13 +262,12 @@ export async function connectDevice(type) {
     })
 
     port.onDisconnect(() => {
-        QID(`btn-conn-${type}`).classList.remove('connected')
         toastr.warning('Device disconnected')
-        port = null
-        //connectDevice(type)
+        handleDisconnected()
     })
 
     QID(`btn-conn-${type}`).classList.add('connected')
+    QID('menu-file-tree').classList.remove('inert')
 
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
@@ -247,8 +276,7 @@ export async function connectDevice(type) {
 
         const raw = await MpRawMode.begin(port)
         try {
-            devInfo = await raw.getDeviceInfo()
-            Object.assign(devInfo, { connection: type })
+            await _raw_ensureDevInfo(raw)
 
             toastr.success(sanitizeHTML(devInfo.machine + '\n' + devInfo.version), 'Device connected')
             analytics.track('Device Connected', devInfo)
@@ -259,20 +287,11 @@ export async function connectDevice(type) {
                 window.pkg_install_url = null
             }
 
-            let fs_stats = [null, null, null];
-            try {
-                fs_stats = await raw.getFsStats()
-            } catch (err) {
-                console.log(err)
-            }
+            await _raw_updateFileTree(raw)
 
-            const fs_tree = await raw.walkFs()
-
-            _updateFileTree(fs_tree, fs_stats);
-
-            if        (fs_tree.filter(x => x.path === '/main.py').length) {
+            if        (fsCache.has('/main.py')) {
                 await _raw_loadFile(raw, '/main.py')
-            } else if (fs_tree.filter(x => x.path === '/code.py').length) {
+            } else if (fsCache.has('/code.py')) {
                 await _raw_loadFile(raw, '/code.py')
             }
             document.dispatchEvent(new CustomEvent("deviceConnected", {detail: {port: port}}))
@@ -281,10 +300,10 @@ export async function connectDevice(type) {
             if (err.message.includes('Timeout')) {
                 report('Device is not responding', new Error(`Ensure that:\n- You're using a recent version of MicroPython\n- The correct device is selected`))
             } else {
-                report('Error reading board info', err)
+                report('Error reading device info', err)
             }
         } finally {
-            await raw.end()
+            try { await raw.end() } catch (_err) { /* device may have disconnected */ }
         }
         // Print banner. TODO: optimize
         await port.write('\x02')
@@ -298,38 +317,53 @@ export async function connectDevice(type) {
  * File Management
  */
 
+/* Which files are open outlives a re-render, so it is kept here rather than
+   scraped back out of the DOM: collapsing a folder rebuilds the whole tree.
+   Whether a file is changed or conflicted is the cache's to answer. */
+const openFiles = new Set()
+let selectedFn = null
+
 export async function refreshFileTree() {
     if (!port) return;
     const raw = await MpRawMode.begin(port)
     try {
         await _raw_updateFileTree(raw)
     } finally {
-        await raw.end()
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
     }
 }
 
 export async function createNewFile(path) {
     if (!port) return;
-    const fn = prompt(`Creating new file inside ${path}\nPlease enter the name:`)
+    const fn = prompt(`Creating new file inside ${path}\n` +
+                      `Please enter the name.\n` +
+                      `\n` +
+                      `Use "/" to create folders along the way:\n` +
+                      `  folder/myfile.py   - a file in a new folder\n` +
+                      `  folder/            - just the folder`)
     if (fn == null || fn == '') return
     const raw = await MpRawMode.begin(port)
     try {
         if (fn.endsWith('/')) {
-            const full = path + fn.slice(0, -1)
+            const full = joinPath(path, fn.slice(0, -1))
             await raw.makePath(full)
+            fileTreeView.expand(full)
         } else {
-            const full = path + fn
+            const full = joinPath(path, fn)
             if (fn.includes('/')) {
                 // Ensure path exists
                 const [dirname, _] = splitPath(full)
                 await raw.makePath(dirname)
             }
             await raw.touchFile(full)
+            // Known to be empty, and this is what puts it in the listing
+            fsCache.noteWrite(full, new Uint8Array(0))
+            fileTreeView.expand(parentDir(full))
             await _raw_loadFile(raw, full)
         }
         await _raw_updateFileTree(raw)
     } finally {
-        await raw.end()
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
     }
 }
 
@@ -339,24 +373,316 @@ export async function removeFile(path) {
     const raw = await MpRawMode.begin(port)
     try {
         await raw.removeFile(path)
-        await _raw_updateFileTree(raw)
+        fsCache.removed(path)
         document.dispatchEvent(new CustomEvent("fileRemoved", {detail: {path: path}}))
+        await _raw_updateFileTree(raw)
     } finally {
-        await raw.end()
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
     }
 }
 
 export async function removeDir(path) {
     if (!port) return;
-    if (!confirm(`Remove ${path}?`)) return
+    const inside = fsCache.countUnder(path)
+    if (!confirm(inside ? `Remove ${path} and the ${inside} item(s) inside it?`
+                        : `Remove ${path}?`)) return
     const raw = await MpRawMode.begin(port)
     try {
-        await raw.removeDir(path)
-        await _raw_updateFileTree(raw)
+        await raw.removeTree(path)
+        fsCache.removedTree(path)
         document.dispatchEvent(new CustomEvent("dirRemoved", {detail: {path: path}}))
+        await _raw_updateFileTree(raw)
     } finally {
-        await raw.end()
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
     }
+}
+
+/* Moves a file or folder into another folder of the same device */
+export async function moveToDir(src, dstDir) {
+    if (!port) return;
+    const [_dirname, name] = splitPath(src)
+    const dst = joinPath(dstDir, name)
+    if (dst === src) return
+    await _movePath(src, dst, dstDir)
+}
+
+const fileExt = (name) => {
+    const i = name.lastIndexOf('.')
+    return (i > 0) ? name.slice(i) : ''
+}
+
+/* Renames a file or folder in place. A name containing "/" moves it into
+   (or creates) another folder along the way - allowed, but confirmed, since
+   it is easy to type by accident while editing a name in place. */
+export async function renamePath(src, newName) {
+    if (!port) return;
+    const [dirname, oldName] = splitPath(src)
+    if (newName === oldName) return
+
+    const makesPath = newName.includes('/')
+    if (makesPath) {
+        if (!confirm(`"${newName}" contains "/", so this will move it into another folder ` +
+                     `(created if it does not exist yet).\n\nContinue?`)) return
+    }
+
+    if (!fsCache.get(src)?.isDir) {
+        const base = newName.includes('/') ? newName.slice(newName.lastIndexOf('/') + 1) : newName
+        const oldExt = fileExt(oldName), newExt = fileExt(base)
+        if (newExt !== oldExt) {
+            if (!confirm(`This changes the file extension from "${oldExt || '(none)'}" to "${newExt || '(none)'}".\n\nContinue?`)) return
+        }
+    }
+
+    const dst = joinPath(dirname, newName)
+    const [dstDir, _dstName] = splitPath(dst)
+    await _movePath(src, dst, dstDir, { makesPath })
+}
+
+async function _movePath(src, dst, dstDir, { makesPath = false } = {}) {
+    if (fsCache.has(dst)) {
+        toastr.error(`${dst} already exists`)
+        return
+    }
+    const raw = await MpRawMode.begin(port)
+    try {
+        if (makesPath) { await raw.makePath(dstDir) }
+        await raw.movePath(src, dst)
+        // Ahead of the event, so both listeners see an already-migrated cache
+        fsCache.renamed(src, dst)
+        document.dispatchEvent(new CustomEvent("fileRenamed", {detail: {old: src, new: dst}}))
+        fileTreeView.expand(dstDir)
+        await _raw_updateFileTree(raw)
+    } catch (err) {
+        report('Cannot move', err)
+    } finally {
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
+    }
+}
+
+/* Uploads files (and folders, where the browser exposes them) dropped onto the
+   file tree from the desktop */
+async function uploadDroppedFiles(dataTransfer, dstDir) {
+    const dropped = await readDroppedFiles(dataTransfer)
+    if (!dropped.length) return
+    if (!port) {
+        toastr.info('Connect your device first')
+        return
+    }
+
+    const items = dropped.map(item => Object.assign({}, item, { path: joinPath(dstDir, item.path) }))
+    const files = items.filter(item => !item.dir)
+    const clashes = files.filter(item => fsCache.has(item.path))
+    if (clashes.length && !confirm(`${clashes.length} of ${files.length} file(s) already exist in ${dstDir}.\nOverwrite?`)) return
+
+    toastr.info(`Uploading ${files.length} file(s)...`)
+    let uploaded = 0
+    const raw = await MpRawMode.begin(port)
+    try {
+        for (const item of items) {
+            if (item.dir) {
+                await raw.makePath(item.path)
+                continue
+            }
+            const [dirname, _] = splitPath(item.path)
+            if (dirname) { await raw.makePath(dirname) }
+            await raw.writeFile(item.path, new Uint8Array(await item.file.arrayBuffer()))
+            /* Deliberately not cached: telling the cache the path changed is
+               what makes the refresh below notice, so a file that is open in an
+               editor gets reloaded (or flagged) instead of quietly diverging. */
+            fsCache.invalidate(item.path)
+            uploaded++
+        }
+        toastr.success(`Uploaded ${uploaded} file(s)`)
+        analytics.track('Files Uploaded', { count: uploaded })
+    } catch (err) {
+        report('Upload failed', err)
+    } finally {
+        // A failed batch still leaves files on the device, so always refresh
+        try {
+            fileTreeView.expand(dstDir)
+            await _raw_updateFileTree(raw)
+        } catch (_err) {
+            // Device is gone; a stale tree is the least of the problems
+        }
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
+    }
+}
+
+/*
+ * Drag-out downloads.
+ *
+ * Chromium hands a dragged item to the OS by fetching the URL advertised in the
+ * drag's DownloadURL entry. That URL has to be fetchable without this page's
+ * help - the download runs in the browser process and never reaches a service
+ * worker - so the only workable target is a blob: URL, which means the bytes
+ * must already be in the browser when dragstart returns.
+ *
+ * Reading them takes a round trip to the device, which cannot happen inside
+ * dragstart. So a drag arms the download and, unless the file was already read
+ * (opening a file in the editor fills the same cache for free), it is the next
+ * drag that carries the file out. A folder comes out as a .zip, since a drag
+ * can only carry one file; packing it is not a round trip, so a folder whose
+ * every file is already cached is zipped on the spot, inside dragstart.
+ *
+ * Firefox and Safari ignore DownloadURL, so there the drag simply does nothing.
+ */
+
+const downloadsInFlight = new Map()     // path -> Promise
+
+// DownloadURL is a Chromium-only convention. Elsewhere there is nothing to hand
+// the file to, so there is no point reading it off the device.
+const canDragOut = (navigator.userAgentData && navigator.userAgentData.brands)
+    ? navigator.userAgentData.brands.some(b => /Chromium/i.test(b.brand))
+    : /Chrom(e|ium)|Edg\/|OPR\//.test(navigator.userAgent)
+
+function downloadName(path) {
+    const name = path.split('/').pop()
+    if (!isDirPath(path)) return name
+    if (path === '/') {
+        // The root has no name of its own to give the archive
+        const now = new Date();
+        const pad = n => String(n).padStart(2, "0");
+
+        const t =
+            `${String(now.getFullYear()).slice(-2)}` +
+            `${pad(now.getMonth() + 1)}` +
+            `${pad(now.getDate())}-` +
+            `${pad(now.getHours())}` +
+            `${pad(now.getMinutes())}` +
+            `${pad(now.getSeconds())}`;
+        if (devInfo?.uid) {
+            return `viperide-${devInfo.uid}-${t}.zip`
+        } else if (devInfo.machine === "webassembly") {
+            return `viperide-vm-${t}.zip`
+        } else {
+            return `viperide-${devInfo.machine}-${t}.zip`
+        }
+    } else {
+        return `${name}.zip`
+    }
+}
+
+function downloadType(path) {
+    return isDirPath(path) ? 'application/zip' : 'application/octet-stream'
+}
+
+/* Hands the browser a URL for bytes the cache already holds, so a file the IDE
+   has read or written for any reason can be dragged out without a second read */
+function stageDownload(path) {
+    if (fsCache.stagedFor(path)) return
+    const bytes = fsCache.peek(path)
+    if (!bytes) return
+    stageBytes(path, bytes, fsCache.currentGeneration())
+}
+
+function stageBytes(path, bytes, gen) {
+    const type = downloadType(path)
+    fsCache.stage(path, {
+        url: URL.createObjectURL(new Blob([bytes], { type })),
+        name: downloadName(path),
+        type,
+        gen,
+    })
+}
+
+function prepareDownload(node) {
+    if (fsCache.stagedFor(node.path)) return Promise.resolve()
+    if (downloadsInFlight.has(node.path)) return downloadsInFlight.get(node.path)
+    if (!port) return Promise.reject(new Error('No device connected'))
+
+    const task = (async () => {
+        // A refresh landing while the bytes are on the wire makes them useless,
+        // however fresh the result looks by the time it arrives
+        const gen = fsCache.currentGeneration()
+        const raw = await MpRawMode.begin(port)
+        try {
+            stageBytes(node.path, await _raw_readForDownload(raw, node), gen)
+        } finally {
+            downloadsInFlight.delete(node.path)
+            try { await raw.end() } catch (_err) { /* device may have disconnected */ }
+        }
+    })()
+    downloadsInFlight.set(node.path, task)
+    return task
+}
+
+/* What packing a folder involves: one entry per descendant, named relative to
+   the folder's parent, so the folder itself is the top-level entry in the zip.
+   Dragging out the root packs the filesystem with no wrapping folder. `file` is
+   the path to read the entry's bytes from, or null for a directory entry. */
+function zipEntries(node) {
+    const entries = []
+    const base = parentDir(node.path)
+    const strip = (base === '/') ? 1 : base.length + 1
+    const pack = (n) => {
+        const name = n.path.slice(strip)
+        if (n.children) {
+            if (name) { entries.push({ path: name.replace(/\/*$/, '/'), file: null }) }
+            // /dev, /proc and /sys are not files and would only fail to read
+            for (const child of n.children) {
+                if (!child.virtual) { pack(child) }
+            }
+        } else {
+            entries.push({ path: name, file: n.path })
+        }
+    }
+    pack(node)
+    return entries
+}
+
+async function _raw_readForDownload(raw, node) {
+    if (!node.children) {
+        return await fsCache.readFile(raw, node.path)
+    }
+    const entries = []
+    for (const { path, file } of zipEntries(node)) {
+        entries.push({ path, data: file ? await fsCache.readFile(raw, file) : new Uint8Array(0) })
+    }
+    return createZipSync(entries)
+}
+
+/* The folder equivalent of stageDownload(): if every file below it is in the
+   cache - they were opened, or the folder was dragged out before - the zip can
+   be built here and now, and this very drag carries the folder out. */
+function stageFolderFromCache(node) {
+    const entries = []
+    for (const { path, file } of zipEntries(node)) {
+        if (!file) { entries.push({ path, data: new Uint8Array(0) }); continue }
+        const bytes = fsCache.peek(file)
+        if (!bytes) return                       // a device read it is, then
+        entries.push({ path, data: bytes })
+    }
+    stageBytes(node.path, createZipSync(entries), fsCache.currentGeneration())
+}
+
+function fileTreeDragStart(node, dataTransfer) {
+    if (!canDragOut || node.virtual) return      // nothing on the device to hand out
+    if (!fsCache.stagedFor(node.path)) {
+        if (node.children) { stageFolderFromCache(node) } else { stageDownload(node.path) }
+    }
+    // Still nothing to offer: a drag that leaves the window arms the next one,
+    // so a plain move inside the tree never pays for a read it does not need.
+    const entry = fsCache.stagedFor(node.path)
+    if (!entry) return
+    // A colon would be read as the end of the file name
+    dataTransfer.setData('DownloadURL', `${entry.type}:${entry.name.replace(/:/g, '_')}:${entry.url}`)
+    dataTransfer.effectAllowed = 'copyMove'
+}
+
+/* Called when a drag left the window and came back with nothing - the one
+   moment where it is worth explaining that the file is not ready yet. */
+function fileTreeDragMissed(node) {
+    if (!canDragOut || node.virtual) return
+    if (fsCache.stagedFor(node.path)) return    // it was handed over, or Chrome refused it
+    const name = downloadName(node.path)
+    toastr.info(`Reading ${name} from the device...`)
+    prepareDownload(node).then(
+        () => {
+            analytics.track('File Prepared For Download', { dir: !!node.children })
+            toastr.success(`${name} is ready - drag it out again to save it`)
+        },
+        (err) => report(`Cannot read ${name}`, err)
+    )
 }
 
 async function execReplNoFollow(cmd) {
@@ -367,8 +693,45 @@ async function execReplNoFollow(cmd) {
     //await port.write('\x04')            // Ctrl-D: execute
 }
 
+/* /proc, /dev and /sys are windows into the running system, not storage: they
+   cannot be edited, moved, deleted, or packed into a download. */
+const isSpecialPath = (path) => /^\/(proc|dev|sys)(\/|$)/.test(path)
+
+/* The root is a folder that no walk reports as a node of its own */
+const isDirPath = (path) => (path === '/') || !!fsCache.get(path)?.isDir
+
+function fileIcon(name) {
+    /* TODO ••• */
+    const fnuc = name.toUpperCase()
+    if (fnuc.endsWith('.MPY')) {
+        return 'fa-solid fa-cube'
+    } else if (['.CRT', '.PEM', '.DER', '.CER', '.PFX', '.P12'].some(x => fnuc.endsWith(x))) {
+        return 'fa-solid fa-certificate'
+    } else if (fnuc === '???') {
+        return 'fa-solid fa-file-circle-exclamation'
+    } else {
+        return 'fa-solid fa-file'
+    }
+}
+
+function isSelectedFile(path) {
+    return (path === selectedFn) ||
+           [editorFn, `/${editorFn}`, `/flash/${editorFn}`].includes(path)
+}
+
+/* The last walk, kept so markers that change without the filesystem being
+   re-read can be shown without paying for another walk */
+let lastFsTree = null
+let lastFsStats = [null, null, null]
+
+function _rerenderFileTree() {
+    if (lastFsTree) { _updateFileTree(lastFsTree, lastFsStats) }
+}
+
 function _updateFileTree(fs_tree, fs_stats)
 {
+    lastFsTree = fs_tree
+    lastFsStats = fs_stats
     let [fs_used, _fs_free, fs_size] = fs_stats;
 
     function sorted(content) {
@@ -384,95 +747,159 @@ function _updateFileTree(fs_tree, fs_stats)
         return content
     }
 
-    const changed_files = []
-    QSA("#menu-file-tree .changed").forEach((file) => {
-        changed_files.push(file.dataset.fn)
-    })
-    const open_files = []
-    QSA("#menu-file-tree .open").forEach((file) => {
-        open_files.push(file.dataset.fn)
-    })
-
-    // Traverse file tree
-    const fileTree = QID('menu-file-tree')
-    fileTree.innerHTML = `<div>
-        <span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> /</span>
-        <a href="#" class="menu-action" title="Refresh" data-action="refresh"><i class="fa-solid fa-arrows-rotate fa-fw"></i></a>
-        <a href="#" class="menu-action" title="Create" data-action="create" data-path="/"><i class="fa-solid fa-plus fa-fw"></i></a>
-        <span class="menu-action">${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}</span>
-    </div>`
-    function traverse(node, depth) {
-        const offset = '&emsp;'.repeat(depth)
-        for (const n of sorted(node)) {
-            if ('content' in n) {
-                fileTree.insertAdjacentHTML('beforeend', `<div>
-                    ${offset}<span class="folder name"><i class="fa-solid fa-folder fa-fw"></i> ${escapeHTML(n.name)}</span>
-                    <a href="#" class="menu-action" title="Remove" data-action="remove-dir" data-path="${escapeHTML(n.path)}"><i class="fa-solid fa-xmark fa-fw"></i></a>
-                    <a href="#" class="menu-action" title="Create" data-action="create" data-path="${escapeHTML(n.path)}/"><i class="fa-solid fa-plus fa-fw"></i></a>
-                </div>`)
-                traverse(n.content, depth+1)
-            } else {
-                /* TODO ••• */
-                let icon;
-                const fnuc = n.name.toUpperCase();
-                if (fnuc.endsWith('.MPY')) {
-                    icon = '<i class="fa-solid fa-cube fa-fw"></i>'
-                } else if (['.CRT', '.PEM', '.DER', '.CER', '.PFX', '.P12'].some(x => fnuc.endsWith(x))) {
-                    icon = '<i class="fa-solid fa-certificate fa-fw"></i>'
-                } else if (fnuc === '???') {
-                    icon = '<i class="fa-solid fa-file-circle-exclamation fa-fw"></i>'
-                } else {
-                    icon = '<i class="fa-solid fa-file fa-fw"></i>'
-                }
-                let sel = ([editorFn, `/${editorFn}`, `/flash/${editorFn}`].includes(n.path)) ? 'selected' : ''
-                if (n.path.startsWith("/proc/") || n.path.startsWith("/dev/")) {
-                    icon = '<i class="fa-solid fa-gear fa-fw"></i>'
-                    fileTree.insertAdjacentHTML('beforeend', `<div>
-                        ${offset}<span>${icon} ${escapeHTML(n.name)}&nbsp;</span>
-                    </div>`)
-                } else {
-                    fileTree.insertAdjacentHTML('beforeend', `<div>
-                        ${offset}<a href="#" class="name ${sel}" data-fn="${escapeHTML(n.path)}" data-action="open" data-path="${escapeHTML(n.path)}">${icon} ${escapeHTML(n.name)}&nbsp;</a>
-                        <a href="#" class="menu-action" title="Remove" data-action="remove-file" data-path="${escapeHTML(n.path)}"><i class="fa-solid fa-xmark fa-fw"></i></a>
-                        <span class="menu-action">${sizeFmt(n.size)}</span>
-                    </div>`)
-                }
-            }
+    function dirNode(n) {
+        const special = isSpecialPath(n.path)
+        return {
+            name: n.name,
+            path: n.path,
+            icon: 'fa-solid fa-folder',
+            iconOpen: 'fa-solid fa-folder-open',
+            virtual: special,
+            collapsed: special,
+            drag: !special,
+            drop: !special,
+            rename: !special,
+            actions: special ? [] : [
+                { action: 'create', title: 'Create', icon: 'fa-solid fa-plus' },
+                { action: 'remove-dir', title: 'Remove', icon: 'fa-solid fa-xmark' },
+            ],
+            children: treeNodes(n.content),
         }
     }
-    traverse(fs_tree, 1)
 
-    for (let fn of changed_files) {
-        QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("changed")
+    function fileNode(n) {
+        if (isSpecialPath(n.path)) {
+            return { name: n.name, path: n.path, icon: 'fa-solid fa-gear', virtual: true, drop: false, rename: false }
+        }
+        const classes = []
+        if (isSelectedFile(n.path)) { classes.push('selected') }
+        if (openFiles.has(n.path)) { classes.push('open') }
+        if (fsCache.isDirty(n.path)) { classes.push('changed') }
+        if (fsCache.isConflicted(n.path)) { classes.push('conflict') }
+        return {
+            name: n.name,
+            path: n.path,
+            size: n.size,
+            icon: fileIcon(n.name),
+            classes,
+            drag: true,
+            action: 'open',
+            data: { fn: n.path },
+            meta: sizeFmt(n.size),
+            actions: [
+                { action: 'remove-file', title: 'Remove', icon: 'fa-solid fa-xmark' },
+            ],
+        }
     }
-    for (let fn of open_files) {
-        QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("open")
+
+    function treeNodes(content) {
+        return sorted(content).map((n) => ('content' in n) ? dirNode(n) : fileNode(n))
+    }
+
+    /* Something wrote to the device without going through us - a script, a
+       reboot, a paste at the REPL - so what is shown may already be out of date */
+    const staleHint = fsCache.isListingStale() ? ` • ${T('files.stale')}` : ''
+
+    const root = {
+        name: '/',
+        path: '/',
+        icon: 'fa-solid fa-folder',
+        iconOpen: 'fa-solid fa-folder-open',
+        // Draggable so the whole filesystem can be pulled out as one archive,
+        // but there is nowhere to move it to
+        drag: true,
+        move: false,
+        meta: `${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}${staleHint}`,
+        actions: [
+            { action: 'create',  title: 'Create',  icon: 'fa-solid fa-plus' },
+            { action: 'refresh', title: 'Refresh', icon: 'fa-solid fa-arrows-rotate' },
+        ],
+        children: treeNodes(fs_tree),
     }
 
     if (getSetting("advanced-mode")) {
-        fileTree.insertAdjacentHTML('beforeend', `<div>
-            <a href="#" class="name" data-action="open" data-path="~sysinfo.md"><i class="fa-regular fa-message fa-fw"></i> sysinfo.md&nbsp;</a>
-            <span class="menu-action">virtual</span>
-        </div>`)
+        root.children.push({
+            name: 'sysinfo.md',
+            path: '~sysinfo.md',
+            icon: 'fa-regular fa-message',
+            action: 'open',
+            data: { fn: '~sysinfo.md' },
+            meta: 'virtual',
+            virtual: true,           // generated on the fly, not a file on the device
+            rename: false,
+        })
     }
 
+    fileTreeView.setNodes([root])
 }
 
-QID('menu-file-tree').addEventListener('click', (ev) => {
-    const target = ev.target.closest('[data-action]')
-    if (!target) return
-    ev.preventDefault()
-    const path = target.dataset.path
-    switch (target.dataset.action) {
-        case 'refresh':     refreshFileTree(); break
-        case 'create':      createNewFile(path); break
-        case 'remove-dir':  removeDir(path); break
-        case 'remove-file': removeFile(path); break
-        case 'open':        fileClick(path); break
-    }
+const fileTreeView = new TreeView(QID('menu-file-tree'), {
+    onAction(action, node) {
+        if (!node) return
+        switch (action) {
+            case 'refresh':     refreshFileTree(); break
+            case 'create':      createNewFile(node.path); break
+            case 'remove-dir':  removeDir(node.path); break
+            case 'remove-file': removeFile(node.path); break
+            case 'open':        fileClick(node.path); break
+        }
+    },
+    onMove: moveToDir,
+    onDropFiles: uploadDroppedFiles,
+    onDragStart: fileTreeDragStart,
+    onDragMissed: fileTreeDragMissed,
+    onRename: (node, newName) => renamePath(node.path, newName),
 })
 
+/* A move renames every path below it, so the markers and the currently open
+   file have to follow along. */
+document.addEventListener("fileRenamed", (event) => {
+    const { old: oldFn, new: newFn } = event.detail
+    const renamed = (fn) => (fn === oldFn) ? newFn
+                          : fn.startsWith(oldFn + '/') ? newFn + fn.slice(oldFn.length)
+                          : fn
+    for (const fn of [...openFiles]) {
+        if (renamed(fn) !== fn) {
+            openFiles.delete(fn)
+            openFiles.add(renamed(fn))
+        }
+    }
+    editorFn = renamed(editorFn)
+    if (selectedFn) { selectedFn = renamed(selectedFn) }
+})
+
+/* Dropping a file anywhere outside the tree would make the browser navigate to
+   it, silently discarding whatever is open in the IDE. Dropping a dragged tree
+   item back into the page would start a pointless download of it. Run in the
+   capture phase so embedded editors cannot consume the event first. */
+for (const type of ['dragover', 'drop']) {
+    window.addEventListener(type, (ev) => {
+        if (ev.defaultPrevented || !ev.dataTransfer) return
+        if (QID('menu-file-tree').contains(ev.target)) return
+        const types = Array.from(ev.dataTransfer.types)
+        const lowerTypes = types.map(t => t.toLowerCase())
+        if (!types.includes('Files') &&
+            !lowerTypes.includes(TREE_DRAG_TYPE) &&
+            !lowerTypes.includes('downloadurl')) return
+        ev.preventDefault()
+        ev.stopPropagation()
+        if (type === 'dragover') { ev.dataTransfer.dropEffect = 'none' }
+    }, { capture: true })
+}
+
+/*
+ * Every path that changes something on the device ends up here, which makes this
+ * the one place that has to notice a file changing underneath an open editor:
+ * the cache diffs the new listing against the previous one and says what moved.
+ */
 async function _raw_updateFileTree(raw) {
+    try {
+        await _raw_ensureDevInfo(raw)
+    } catch (err) {
+        // A device that will not say who it is can still have its files listed
+        console.log('Cannot read device info', err)
+    }
+
     let fs_stats = [null, null, null];
     try {
         fs_stats = await raw.getFsStats()
@@ -481,20 +908,83 @@ async function _raw_updateFileTree(raw) {
     }
 
     const fs_tree = await raw.walkFs()
+    const delta = fsCache.reconcileListing(fs_tree, isSpecialPath)
 
     _updateFileTree(fs_tree, fs_stats);
+
+    await _raw_reconcileOpenTabs(raw, delta)
+    await _raw_restoreDrafts(raw)
+    return delta
+}
+
+/*
+ * The device is only asked who it is once per connection. It cannot be asked
+ * before raw mode works, which is why this is not simply part of connecting:
+ * with 'Interrupt device' turned off, the first time we know raw mode works is
+ * when a walk succeeds - possibly only after the user interrupts the device by hand.
+ */
+async function _raw_ensureDevInfo(raw) {
+    if (devInfo) return devInfo
+    devInfo = Object.assign(await raw.getDeviceInfo(), { connection: connType })
+    const { ambiguous } = fsCache.setDevice(devInfo, connType)
+    console.log(`Unsaved-file backups are ${ambiguous ? 'shared by boards like this one' : 'per board'}`)
+    return devInfo
 }
 
 export function fileTreeSelect(fn) {
-    for (const el of document.getElementsByClassName('name')) {
+    selectedFn = fn
+    for (const el of QSA('#menu-file-tree .name')) {
         el.classList.remove('selected')
     }
-    const fileElement = QS(`#menu-file-tree [data-fn="${fn}"]`)
-    if (!fileElement) {
-        // might be a meta/unsaved file
-        return
+    // The file might be a meta/unsaved one, with no row of its own
+    fileTreeRow(fn)?.classList.add('selected')
+}
+
+/* The clickable name element of a file row, which carries its markers */
+function fileTreeRow(fn) {
+    return QS(`#menu-file-tree [data-fn="${escapeCSS(fn)}"]`)
+}
+
+/* Toggles a row marker. Only 'open' is tracked here - whether a file is changed
+   or conflicted is answered by the cache when the tree is rebuilt. */
+function markFile(fn, marker, on) {
+    if (marker === 'open') {
+        if (on) { openFiles.add(fn) } else { openFiles.delete(fn) }
     }
-    fileElement.classList.add('selected')
+    fileTreeRow(fn)?.classList.toggle(marker, on)
+}
+
+/* Publishes a change in dirtiness to everything that shows it: the tree row and
+   the tab. Both used to keep their own idea of it and could disagree. */
+function setDirty(fn, dirty) {
+    markFile(fn, 'changed', dirty)
+    document.dispatchEvent(new CustomEvent("fileDirtyChanged", {detail: {fn, dirty}}))
+    if (!fsCache.persistenceEnabled()) { warnBackupsDisabled() }
+}
+
+function setConflict(fn, conflicted) {
+    fsCache.setConflict(fn, conflicted)
+    markFile(fn, 'conflict', conflicted)
+    document.dispatchEvent(new CustomEvent("fileConflict", {detail: {fn, conflicted}}))
+}
+
+let backupsWarned = false
+function warnBackupsDisabled() {
+    if (backupsWarned) return
+    backupsWarned = true
+    toastr.warning('Unsaved changes are no longer backed up. Browser storage is full or unavailable.')
+}
+
+/* Coalesces a burst of calls into one, running on both the leading and the
+   trailing edge: the leading edge keeps a marker responsive, while the trailing
+   edge is what catches the end of continuous typing. */
+function makeCoalesced(ms) {
+    let timer = null, latest = null
+    return (fn) => {
+        latest = fn
+        if (timer) { clearTimeout(timer) } else { fn() }
+        timer = setTimeout(() => { timer = null; latest() }, ms)
+    }
 }
 
 export async function fileClick(fn) {
@@ -504,7 +994,7 @@ export async function fileClick(fn) {
     try {
         await _raw_loadFile(raw, fn)
     } finally {
-        await raw.end()
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
     }
 
     fileTreeSelect(fn)
@@ -548,24 +1038,176 @@ async function _raw_loadFile(raw, fn) {
         autoHideSideMenu()
         return
     } else {
-        content = await raw.readFile(fn)
-        try {
-            content = (new TextDecoder('utf-8', { fatal: true })).decode(content)
-        } catch (_err) {
-            // Not valid UTF-8, treat as binary and let _loadContent handle it.
-        }
+        content = await fsCache.readFile(raw, fn)
+        // The file is on the wire anyway; keep it ready to be dragged out
+        stageDownload(fn)
+        content = decodeText(content) ?? content
     }
     await _loadContent(fn, content, createTab(fn))
 }
 
+/*
+ * Brings open editors back in line after files changed underneath them - an
+ * upload, a package install, a script, or a write over the MCP bridge.
+ *
+ * A buffer with unsaved edits is never touched and never prompted about. It is
+ * flagged instead, and the user resolves it by saving (their version wins) or by
+ * closing and reopening the file (the device version wins). A dialog here would
+ * be worse than useless: the MCP bridge answers confirm() with yes for the
+ * duration of a call, so an agent writing a file would silently destroy the
+ * edits it collided with.
+ */
+async function _raw_reconcileOpenTabs(raw, delta) {
+    const gone = new Set(delta.gone)
+    const reloaded = [], conflicted = []
+
+    for (const fn of [...delta.changed, ...delta.gone]) {
+        if (!fsCache.kindOf(fn)) continue           // not open, so nothing to bring in line
+        if (fsCache.isDirty(fn) || gone.has(fn)) { conflicted.push(fn); continue }
+        try {
+            _reloadView(fn, await fsCache.readFile(raw, fn))
+            reloaded.push(fn)
+        } catch (_err) {
+            conflicted.push(fn)                    // cannot be read now; leave the buffer alone
+        }
+    }
+
+    if (reloaded.length) {
+        toastr.info(`Reloaded ${reloaded.length} open file(s) from the device`)
+    }
+    for (const fn of conflicted) { setConflict(fn, true) }
+    if (conflicted.length) {
+        toastr.warning(sanitizeHTML(conflicted.join('\n')),
+                       'Changed on the device - your unsaved edits were kept')
+    }
+}
+
+/* Replaces what a tab is showing with what is now on the device. Only ever
+   called for a buffer with nothing to lose. */
+function _reloadView(fn, bytes) {
+    const editorElement = getTabEditorElement(fn)
+    if (!editorElement) return
+    const kind = fsCache.kindOf(fn)
+
+    if (kind === 'hex') {
+        hexViewer(bytes.buffer, editorElement)
+        fsCache.rebaseView(fn, '')
+        return
+    }
+
+    const text = decodeText(bytes)
+    if (text === null) {
+        // It used to be text and is now binary: the view is the wrong shape for it
+        setConflict(fn, true)
+        return
+    }
+
+    if (kind === 'markdown') {
+        editorElement.innerHTML = `<div class="marked-viewer">` + marked(text) + `</div>`
+        fsCache.rebaseView(fn, text)
+        return
+    }
+
+    const view = getEditorFromElement(editorElement)
+    if (!view) return
+    let shown = text
+    if (fn.endsWith('.json') && getSetting('expand-minify-json')) {
+        try {
+            shown = JSON.stringify(JSON.parse(text), null, 2)
+        } catch (_err) {
+            // Malformed on the device; show it as it is
+        }
+    }
+    // Replacing the whole document would otherwise jump the view to the top
+    const cursor = view.state.selection.main.head
+    view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: shown },
+        selection: { anchor: Math.min(cursor, shown.length) },
+    })
+    fsCache.rebaseView(fn, shown)
+    // The dispatch above counts as a document change, so say plainly it is clean
+    setDirty(fn, false)
+}
+
+/*
+ * Reopens what was left unsaved when the browser was last closed. Nothing is
+ * written to the device: the files come back as tabs with unsaved changes, so
+ * saving or discarding them stays the user's decision.
+ */
+async function _raw_restoreDrafts(raw) {
+    if (draftsRestored) return
+    draftsRestored = true
+
+    const drafts = fsCache.takeRestorableDrafts()
+    if (!drafts.length) return
+
+    /* Devices that report no unique id share a bucket with every device like them,
+       so the work may not be from this one. */
+    if (fsCache.isAmbiguousBucket()) {
+        const when = new Date(Math.max(...drafts.map(d => d.ts || 0))).toLocaleString()
+        const what = drafts.map(d => `  ${d.path}`).join('\n')
+        if (!confirm(`${drafts.length} unsaved file(s) from ${when}:\n\n${what}\n\n` +
+                     `This device does not report a unique id, so these may belong to ` +
+                     `another ${fsCache.bucketLabel() || 'device'} like it.\n\nRestore them?`)) {
+            return
+        }
+    }
+
+    let restored = 0
+    for (const draft of drafts) {
+        try {
+            if (!displayOpenFile(draft.path)) {
+                try {
+                    await _raw_loadFile(raw, draft.path)
+                } catch (_err) {
+                    // Gone from the device; saving it later puts it back
+                    await _loadContent(draft.path, '', createTab(draft.path))
+                }
+            }
+            // Against the baseline just established: an identical draft is moot,
+            // and setDraft drops the backup for it
+            if (!fsCache.setDraft(draft.path, draft.text)) { continue }
+
+            const view = getEditorFromElement(getTabEditorElement(draft.path))
+            if (!view) continue
+            view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: draft.text } })
+            setDirty(draft.path, true)
+            restored++
+        } catch (err) {
+            console.log(`Cannot restore ${draft.path}`, err)
+        }
+    }
+    if (restored) {
+        toastr.info(`Restored ${restored} unsaved file(s) from your last session`)
+        analytics.track('Drafts Restored', { count: restored })
+    }
+}
+
+/* Device bytes as text, or null if they are not valid UTF-8 and so have to be
+   treated as binary. */
+function decodeText(bytes) {
+    if (typeof bytes === 'string') { return bytes }
+    try {
+        return (new TextDecoder('utf-8', { fatal: true })).decode(bytes)
+    } catch (_err) {
+        return null
+    }
+}
+
 async function _loadContent(fn, content, editorElement) {
+    /* The name the tab carries, which is what the cache is keyed on. Disassembly
+       renames `fn` below, and a move renames the tab later, so neither the
+       original argument nor the editor's own name can be relied on. */
+    const tabFn = fn
     const willDisasm = fn.endsWith('.mpy') && QID('advanced-mode').checked
 
     if (content instanceof Uint8Array && !willDisasm) {
         hexViewer(content.buffer, editorElement)
+        fsCache.openView(tabFn, { baseline: '', kind: 'hex', readOnly: true })
         editor = null
     } else if (fn.endsWith('.md') && getSetting('render-markdown')) {
         editorElement.innerHTML = `<div class="marked-viewer">` + marked(content) + `</div>`
+        fsCache.openView(tabFn, { baseline: content, kind: 'markdown', readOnly: true })
         editor = null
     } else {
         let readOnly = false
@@ -588,11 +1230,18 @@ async function _loadContent(fn, content, editorElement) {
             devInfo,
             readOnly,
         })
+        /* The text as handed to the editor, which is not the bytes on the device
+           for prettified JSON or a disassembly. Comparing against this is what
+           makes an undo clear the marker again. */
+        fsCache.openView(tabFn, { baseline: content, kind: 'text', readOnly })
         document.dispatchEvent(new CustomEvent("editorLoaded", {detail: {editor: editor, fn: fn}}))
+
+        const scheduleSync = makeCoalesced(1000)
         addUpdateHandler(editor, (update) => {
-            if (update.docChanged) {
-                QS(`#menu-file-tree [data-fn="${fn}"]`).classList.add("changed")
-            }
+            if (!update.docChanged) return
+            // The tab knows the current name; this one goes stale on a move
+            const key = getTabFileName(editorElement) || tabFn
+            scheduleSync(() => setDirty(key, fsCache.setDraft(key, update.state.doc.toString())))
         })
 
         editorFn = fn
@@ -609,15 +1258,14 @@ export async function saveCurrentFile() {
         return
     }
 
-    if (editorFn == "Untitled") {
-        const fn = prompt(`Creating new file inside /\nPlease enter the name:`)
-        if (fn == null || fn == '') return
-        editorFn = fn
-        document.dispatchEvent(new CustomEvent("fileRenamed", {detail: {old: "Untitled", new: fn}}))
-    }
+    /* Pinned before anything is awaited: refreshing the tree can open tabs -
+       restoring a backup does exactly that - which moves editorFn along with the
+       active tab. Everything below is about the file as it was when Save ran. */
+    const savedFn = editorFn
+    const savedText = editor.state.doc.toString()
 
-    let content = editor.state.doc.toString()
-    if (editorFn.endsWith('.json') && getSetting('expand-minify-json')) {
+    let content = savedText
+    if (savedFn.endsWith('.json') && getSetting('expand-minify-json')) {
         try {
             // Minify JSON
             content = JSON.stringify(JSON.parse(content))
@@ -625,31 +1273,75 @@ export async function saveCurrentFile() {
             toastr.error('JSON is malformed')
             return
         }
-    } else if (editorFn.endsWith('.py')) {
-        const content = editor.state.doc.toString()
-        const backtrace = await validatePython(editorFn, content)
+    } else if (savedFn.endsWith('.py')) {
+        const backtrace = await validatePython(savedFn, savedText, devInfo)
         if (backtrace) {
             console.log(backtrace)
             toastr.warning(sanitizeHTML(backtrace.summary), backtrace.type)
         }
     }
+
     const raw = await MpRawMode.begin(port)
     try {
-        await raw.writeFile(editorFn, content)
+        /* The one write that goes through the cache rather than around it. It
+           records the new size too, so the refresh below finds nothing changed
+           and does not offer to reload the file over what was just written. */
+        await fsCache.writeFile(raw, savedFn, content)
+        // The buffer, not `content`: for JSON the two differ by the minifying
+        fsCache.rebaseView(savedFn, savedText)
+        stageDownload(savedFn)
         await _raw_updateFileTree(raw)
     } finally {
-        await raw.end()
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
     }
     // Success
     analytics.track('File Saved')
     toastr.success('File Saved')
 
-    document.dispatchEvent(new CustomEvent("fileSaved", {detail: {fn: editorFn}}))
-    QS(`#menu-file-tree [data-fn="${editorFn}"]`).classList.remove("changed")
+    document.dispatchEvent(new CustomEvent("fileSaved", {detail: {fn: savedFn}}))
+    setDirty(savedFn, false)
+    setConflict(savedFn, false)
+}
+
+/* The tab shown when nothing else is open: at startup, and again once the last
+   tab is closed. It has no file behind it on the device, so it is never saved
+   and never reconciled against a board. */
+async function openWelcomeTab() {
+    const fn = 'README.md'
+    const content = `
+# ViperIDE - MicroPython Web IDE
+
+Connect your device and start creating! 🤖👨‍💻🕹️
+
+You can also open a [virtual device](${VIPER_IDE_BASE_URL}/?vm=1) and explore some examples.
+
+Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
+`
+    await _loadContent(fn, content, createTab(fn))
 }
 
 export function clearTerminal() {
     term.clear()
+}
+
+/*
+ * Something ran on the device and may have written anything, so everything read
+ * off it is now suspect. Re-walking here would mean a second raw-mode handshake
+ * and a full recursive listing right as the prompt comes back, so by default the
+ * tree is only marked stale and the next refresh sorts it out.
+ */
+async function deviceRanCode({ mayRefresh = false } = {}) {
+    fsCache.deviceMayHaveChanged()
+    /* Not after a reset: the device is on its way back up and would not answer */
+    if (mayRefresh && getSetting('refresh-after-run')) {
+        try {
+            await refreshFileTree()
+            return
+        } catch (err) {
+            console.log('Cannot refresh after run', err)
+        }
+    }
+    _rerenderFileTree()
 }
 
 export async function reboot(mode = 'hard') {
@@ -667,6 +1359,8 @@ export async function reboot(mode = 'hard') {
     } finally {
         release()
     }
+    // A reset re-runs boot.py and main.py, which can write anything
+    await deviceRanCode()
 }
 
 export async function runCurrentFile() {
@@ -706,10 +1400,11 @@ export async function runCurrentFile() {
         }
     } finally {
         port.emit = false
-        await raw.end()
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
         QID('btn-run-icon').classList.replace('fa-circle-stop', 'fa-circle-play')
         isInRunMode = false
         term.write('\r\n>>> ')
+        await deviceRanCode({ mayRefresh: true })
     }
     // Success
     analytics.track('Script Run')
@@ -720,46 +1415,58 @@ export async function runCurrentFile() {
  */
 
 export async function loadAllPkgIndexes() {
-    const pkgList = QID('menu-pkg-list')
-    pkgList.innerHTML = ''
-    for (const i of await getPkgIndexes()) {
-        pkgList.insertAdjacentHTML('beforeend', `<div class="title-lines">${i.name}</div>`)
-        for (const pkg of i.index.packages) {
-            let offset = ''
-            let icon = ''
-            if (pkg.name.includes('-')) {
-                const parent = pkg.name.split('-').slice(0, -1).join('-')
-                const exists = i.index.packages.some(pkg => (pkg.name === parent))
-                if (exists) {
-                    offset = '&emsp;'
-                }
-            }
+    const nodes = []
+    for (const index of await getPkgIndexes()) {
+        nodes.push({ type: 'separator', name: index.name })
+
+        const byName = new Map()
+        for (const pkg of index.index.packages) {
             const keywords = pkg.keywords ? pkg.keywords.split(',').map(x => x.trim()) : [];
             if (keywords.includes('__hidden__')) {
                 continue
             }
-            if (keywords.includes('native')) {
-                icon = ' <i class="fa-solid fa-gauge-high" title="Efficient native module"></i>'
+            byName.set(pkg.name, {
+                name: pkg.name,
+                // Indexes may list the same package name, so the key is qualified
+                path: `${index.name}/${pkg.name}`,
+                pkg: pkg.name,
+                icon: 'fa-solid fa-cube',
+                suffix: keywords.includes('native')
+                    ? ' <i class="fa-solid fa-gauge-high" title="Efficient native module"></i>' : '', // TODO: add tooltip for this icon
+                actions: [
+                    { action: 'install', title: `Install ${pkg.name}`, label: pkg.version, icon: 'fa-regular fa-circle-down' },
+                ],
+            })
+        }
+
+        // A package named `foo-bar` is a sub-package of `foo`, when that exists
+        for (const [name, node] of byName) {
+            let parent = null
+            for (let base = name; base.includes('-'); ) {
+                base = base.split('-').slice(0, -1).join('-')
+                if (byName.has(base)) { parent = byName.get(base); break }
             }
-            pkgList.insertAdjacentHTML('beforeend', `<div>
-                ${offset}<span><i class="fa-solid fa-cube fa-fw"></i> ${escapeHTML(pkg.name)}${icon}</span>
-                <a href="#" class="menu-action" data-action="install" data-pkg="${escapeHTML(pkg.name)}">${escapeHTML(pkg.version)} <i class="fa-regular fa-circle-down"></i></a>
-            </div>`)
+            if (parent) {
+                parent.children = parent.children || []
+                parent.children.push(node)
+            } else {
+                nodes.push(node)
+            }
         }
     }
+    pkgTreeView.setNodes(nodes)
 }
 
-QID('menu-pkg-list').addEventListener('click', (ev) => {
-    const target = ev.target.closest('[data-action="install"]')
-    if (!target) return
-    ev.preventDefault()
-    installPkg(target.dataset.pkg)
+const pkgTreeView = new TreeView(QID('menu-pkg-list'), {
+    onAction(action, node) {
+        if (action === 'install' && node) { installPkg(node.pkg) }
+    },
 })
 
 async function _raw_installPkg(raw, pkg, { version=null } = {}) {
     analytics.track('Package Install', { name: pkg })
     toastr.info(`Installing ${pkg}...`)
-    const dev_info = await raw.getDeviceInfo()
+    const dev_info = await _raw_ensureDevInfo(raw)
     const pkg_info = await rawInstallPkg(raw, pkg, {
         version,
         dev: dev_info,
@@ -774,7 +1481,7 @@ async function _raw_installPkg(raw, pkg, { version=null } = {}) {
 
 export async function installPkg(pkg, { version=null } = {}) {
     if (!port) {
-        toastr.info('Connect yout board first')
+        toastr.info('Connect yout device first')
         return
     }
     const raw = await MpRawMode.begin(port)
@@ -790,7 +1497,7 @@ export async function installPkg(pkg, { version=null } = {}) {
 
 export async function installPkgFromUrl() {
     if (!port) {
-        toastr.info('Connect yout board first')
+        toastr.info('Connect yout device first')
         return
     }
     const url = prompt('Enter package name or URL:')
@@ -957,6 +1664,7 @@ export function applyTranslation() {
         QS('label[for=expand-minify-json]').innerText = T('settings.expand-minify-json')
         QS('label[for=use-word-wrap]').innerText = T('settings.use-word-wrap')
         QS('label[for=render-markdown]').innerText = T('settings.render-markdown')
+        QS('label[for=refresh-after-run]').innerText = T('settings.refresh-after-run')
         QS('label[for=use-natural-sort]').innerText = T('settings.use-natural-sort')
 
         QS('label[for=lang]').innerText = T('settings.lang')
@@ -981,10 +1689,24 @@ export function applyTranslation() {
     })
 }
 
+const offlineReadyMessage = 'VIPER_IDE_OFFLINE_CACHE_READY'
+let offlineReadyToastShown = false
+
+function showOfflineReadyToast(version) {
+    if (offlineReadyToastShown) return
+    offlineReadyToastShown = true
+    toastr.success(`ViperIDE ${version} can now be opened and used even if your device is offline or in airplane mode`, "Ready to be used offline")
+}
+
 (async () => {
     const urlParams = new URLSearchParams(window.location.search)
 
     if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === offlineReadyMessage) {
+                showOfflineReadyToast(event.data?.version)
+            }
+        })
         try {
             await navigator.serviceWorker.register('./app_worker.js');
         } catch (err) {
@@ -1089,17 +1811,7 @@ export function applyTranslation() {
     toastr.options.preventDuplicates = true;
 
     if (!urlParams.get('vm')) {
-        const fn = 'README.md'
-        const content = `
-# ViperIDE - MicroPython Web IDE
-
-Connect your device and start creating! 🤖👨‍💻🕹️
-
-You can also open a [virtual device](${VIPER_IDE_BASE_URL}/?vm=1) and explore some examples.
-
-Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
-`
-        await _loadContent(fn, content, createTab(fn))
+        await openWelcomeTab()
     }
 
     const xtermTheme = {
@@ -1139,6 +1851,15 @@ Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
             // Allow injecting input in run mode
             await port.write(data)
         } else {
+            /* Submitting a line at the REPL can write files just as easily as
+               running a script can, and there is no way to tell from here
+               whether it did. Plain typing only fills the board's line buffer,
+               so waiting for the newline keeps the cache useful. */
+            if (/[\r\n]/.test(data)) {
+                const wasStale = fsCache.isListingStale()
+                fsCache.deviceMayHaveChanged()
+                if (!wasStale) { _rerenderFileTree() }
+            }
             const release = await port.mutex.acquire()
             try {
                 await port.write(data)
@@ -1187,17 +1908,20 @@ Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
         fileTreeSelect(event.detail.fn)
         editor = getEditorFromElement(event.detail.editorElement)
         editorFn = event.detail.fn
-        const fileElement = QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`)
-        if (fileElement) {
-            fileElement.classList.add("open")
-        }
+        markFile(event.detail.fn, 'open', true)
     })
     document.addEventListener("tabClosed", (event) => {
-        const fileElement = QS(`#menu-file-tree [data-fn="${event.detail.fn}"]`)
-        if (fileElement) {
-            fileElement.classList.remove("open")
-            fileElement.classList.remove("changed")
-        }
+        markFile(event.detail.fn, 'open', false)
+        markFile(event.detail.fn, 'changed', false)
+        markFile(event.detail.fn, 'conflict', false)
+        /* Closing already asked about discarding unsaved changes, so the backup
+           has to go with them */
+        fsCache.closeView(event.detail.fn)
+    })
+    /* Closing the last tab would leave the editor area blank and `editor`
+       pointing at a view that is no longer in the document */
+    document.addEventListener("allTabsClosed", (_event) => {
+        openWelcomeTab()
     })
 
     setTimeout(() => {
@@ -1225,7 +1949,7 @@ Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
 
     if ((urlID = urlParams.get('install'))) {
         window.pkg_install_url = urlID
-        toastr.info('Warning: your files may be overwritten!', `Connect your board to install ${urlID}`)
+        toastr.info('Warning: your files may be overwritten!', `Connect your device to install ${urlID}`)
     }
 
     if (typeof webrepl_url !== 'undefined') {
@@ -1238,7 +1962,7 @@ Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
         initControlClient({
             connectDevice, disconnectDevice, createNewFile,
             removeFile, removeDir, fileClick, saveCurrentFile, runCurrentFile,
-            reboot, clearTerminal, installPkg, MpRawMode,
+            reboot, clearTerminal, installPkg, MpRawMode, refreshFileTree,
             getPort: () => port,
             getEditor: () => editor,
             getEditorFn: () => editorFn,

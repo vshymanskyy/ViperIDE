@@ -18,9 +18,14 @@
   - Run file without saving
 - **File Manager**
   - Add, remove files and directories
-  - Create multiple levels of directories at once (use multiple "/" in the name)
+  - Removing a directory takes everything inside it
+  - Create files and multiple levels of directories at once (use "/" in the name)
+  - Expand / collapse directories
+  - Move files and directories by dragging them within the tree
+  - Upload by dropping files and folders from the desktop
+  - Download by dragging a file/folder out of the browser onto the desktop.  
+    In most cases you'll need to drag it twice - first to initiate reading data off the device, the next one to save the file.
   - Root FS stats display
-  - File upload / download - ⌛ *planned*
 - **Package Manager**
   - Official `micropython-lib` index
 - **MicroPython compiler**
@@ -44,8 +49,8 @@
 
 ## Supported boards
 
-- Espressif ESP8266, ESP32, ESP32S3, ESP32C3, ESP32C6
-- Raspberry Pi Pico W (RP2040)
+- Espressif ESP8266, ESP32, ESP32S2, ESP32S3, ESP32C3, ESP32C5, ESP32C6
+- Raspberry Pi Pico W (RP2040, RP2350)
 - Adafruit Feather STM32F405 Express
 - Adafruit Feather M0 Basic Proto (ATSAMD21G18)
 - WeAct Studio Blackpill v3.1 (STM32F411CE)

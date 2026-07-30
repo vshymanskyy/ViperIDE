@@ -102,7 +102,7 @@ const linkCommentExtensions = [
  */
 
 const specialCommentDecorator = new MatchDecorator({
-  regexp: /(NOTE|OPTIMIZE|TODO|WARNING|WARN|HACK|XXX|FIXME|BUG):?/g,
+  regexp: /(NOTE|OPTIMIZE|TODO|WARNING|WARN|HACK|XXX|FIXME):?/g,
   decorate: (add, from, to, _match) => add(from, to, Decoration.mark({ class: "special-comment" })),
 });
 
@@ -158,10 +158,15 @@ const modePEM = StreamLanguage.define(simpleMode({
  *   key = value    # inline comment
  */
 
-// Nothing in an INI file spans lines, so a line start always begins a fresh
-// section or key. Re-syncing here keeps a dangling `key =` from swallowing
-// the rest of the file as its value.
-const iniLineStart = {sol: true, regex: /\s*/, token: null, next: 'start'}
+// An unindented line always begins a fresh section or key; re-syncing here
+// keeps a dangling `key =` from swallowing the rest of the file as its value.
+// An indented line, however, continues the previous value across multiple
+// lines - a configparser convention used by tools such as platformio.ini:
+//
+//   build_flags =
+//     -Wall
+//     -Wextra
+const iniLineStart = {sol: true, regex: /(?=\S)/, token: null, next: 'start'}
 
 const iniComment = {regex: /(?:[;#]|\/\/).*/, token: 'comment'}
 

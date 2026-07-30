@@ -1,0 +1,6 @@
+{
+    "spec": "test/suites/*.js",
+    "require": "./test/setup.js",
+    "timeout": 120000,
+    "slow": 2000
+}

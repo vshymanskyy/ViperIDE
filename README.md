@@ -43,6 +43,6 @@
 - [Xterm.js](https://xtermjs.org) - REPL Terminal, MIT
 - [PeerJS](https://peerjs.com) - P2P/WebRTC connections, MIT
 - [MicroPython](https://github.com/micropython/micropython) - Virtual Machine, MIT
-- [mpy-cross](https://github.com/micropython/micropython/tree/master/mpy-cross) - Code validation, MIT
+- [mpy-cross-wasm](https://github.com/vshymanskyy/mpy-cross-wasm) - Code validation and `.mpy` compilation, MIT
 - [mpy-tool](https://github.com/micropython/micropython/blob/master/tools/mpy-tool.py) - MPY bytecode disassembler - MIT
 - [python-minifier](https://github.com/dflook/python-minifier) - Code minifier, MIT

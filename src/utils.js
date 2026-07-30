@@ -167,6 +167,14 @@ export function splitPath(path) {
     return [ directoryPath, filename ]
 }
 
+// Joins a device directory with a relative name, tolerating a trailing slash on
+// the directory and a leading one on the name.
+export function joinPath(dir, name) {
+    dir = String(dir || '/').replace(/\/+$/, '')
+    name = String(name).replace(/^\/+/, '')
+    return `${dir}/${name}`
+}
+
 /*
  * UI Helpers
  */
@@ -207,6 +215,68 @@ export function escapeCSS(s) {
     return String(s).replace(/["\\]|[^\x20-\x7e]/gu,
         (c) => (c === '"' || c === '\\') ? '\\' + c
                                          : '\\' + c.codePointAt(0).toString(16) + ' ')
+}
+
+/*
+ * Flattens a drop into a list of { path, file } entries, where path is relative
+ * to the drop target. Dropped folders are walked recursively; they appear as
+ * { path, dir: true } before their contents, so empty ones survive the upload.
+ *
+ * webkitGetAsEntry() is only valid while the drop event is being dispatched, so
+ * the entry list is captured synchronously before the first await.
+ */
+export function readDroppedFiles(dataTransfer) {
+    const entries = []
+    const collected = []
+
+    for (const item of Array.from(dataTransfer.items || [])) {
+        if (item.kind !== 'file') continue
+        const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null
+        if (entry) {
+            entries.push(entry)
+        } else {
+            const file = item.getAsFile()
+            if (file) { collected.push({ path: file.name, file }) }
+        }
+    }
+
+    if (!entries.length && !collected.length) {
+        for (const file of Array.from(dataTransfer.files || [])) {
+            collected.push({ path: file.name, file })
+        }
+    }
+
+    if (!entries.length) {
+        return Promise.resolve(collected)
+    }
+
+    return (async () => {
+        for (const entry of entries) {
+            await walkFileEntry(entry, '', collected)
+        }
+        return collected
+    })()
+}
+
+async function walkFileEntry(entry, prefix, out) {
+    const path = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (entry.isFile) {
+        out.push({ path, file: await new Promise((res, rej) => entry.file(res, rej)) })
+    } else if (entry.isDirectory) {
+        out.push({ path, dir: true })
+        const reader = entry.createReader()
+        const children = []
+        // readEntries() yields the directory in batches and signals the end with
+        // an empty one; the whole listing has to be drained before recursing.
+        for (;;) {
+            const batch = await new Promise((res, rej) => reader.readEntries(res, rej))
+            if (!batch.length) break
+            children.push(...batch)
+        }
+        for (const child of children) {
+            await walkFileEntry(child, path, out)
+        }
+    }
 }
 
 export function isRunningStandalone() {

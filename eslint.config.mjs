@@ -5,6 +5,7 @@ export default [
   { ignores: ["build/", "src/websocket_relay.js", "mcp/"] },
   { languageOptions: { globals: globals.browser }},
   { files: ["*.mjs"], languageOptions: { globals: globals.node }},
+  { files: ["test/**/*.js"], languageOptions: { globals: { ...globals.node, ...globals.mocha }}},
   pluginJs.configs.recommended,
   {
     rules: {
@@ -21,7 +22,6 @@ export default [
     languageOptions: {
       globals: {
         analytics:          "readonly",
-        loadMicroPython:    "readonly",
         VIPER_IDE_VERSION:  "readonly",
         VIPER_IDE_BUILD:    "readonly",
         VIPER_IDE_BASE_URL: "readonly",

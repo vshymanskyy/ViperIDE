@@ -8,13 +8,25 @@
 
 // Renders a JS string as a single-quoted Python string literal, so it can be safely
 // spliced into generated Python source (filenames/paths may contain ' or \).
-function pyStr(s) {
-    return "'" + String(s)
-        .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
-        .replace(/\r/g, '\\r')
-        .replace(/\n/g, '\\n')
-        + "'"
+function pyStr(s) {  // reprStr
+  //const quote = s.includes("'") && !s.includes('"') ? '"' : "'";
+  const quote = "'";
+  const NONPRINTABLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}\p{Zs}]/u;
+  let out = quote;
+  for (const ch of String(s)) {
+    if (ch === '\\') out += '\\\\';
+    else if (ch === quote) out += '\\' + quote;
+    else if (ch === '\n') out += '\\n';
+    else if (ch === '\r') out += '\\r';
+    else if (ch === '\t') out += '\\t';
+    else if (ch !== ' ' && NONPRINTABLE.test(ch)) {
+      const cp = ch.codePointAt(0);
+      if (cp < 0x100) out += '\\x' + cp.toString(16).padStart(2, '0');
+      else if (cp < 0x10000) out += '\\u' + cp.toString(16).padStart(4, '0');
+      else out += '\\U' + cp.toString(16).padStart(8, '0');
+    } else out += ch;
+  }
+  return out + quote;
 }
 
 export class MpRawMode {
@@ -194,14 +206,16 @@ os.rename(${pyStr(dest)},${pyStr(fn)})
         const rsp = await this.exec(`
 try: u=os.uname()
 except: u=('','','','',sys.platform)
+try: import machine; id=machine.unique_id()
+except: id=b''
 try: v=sys.version.split(';')[1].strip()
 except: v='MicroPython '+u[2]
 mpy=getattr(sys.implementation, '_mpy', 0)
 sp=':'.join(sys.path)
-d=[u[4],u[2],u[0],v,(mpy>>10)&0x0F,mpy&0xFF,(mpy>>8)&3,sp]
+d=[u[4],id.hex(),u[2],u[0],v,(mpy>>10)&0x0F,mpy&0xFF,(mpy>>8)&3,sp]
 print('|'.join(str(x) for x in d))
 `)
-        let [machine, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path] = rsp.trim().split('|')
+        let [machine, uid, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path] = rsp.trim().split('|')
         sys_path = sys_path.split(':')
         // See https://docs.micropython.org/en/latest/reference/mpyfiles.html
         try {
@@ -212,7 +226,7 @@ print('|'.join(str(x) for x in d))
         mpy_ver = parseInt(mpy_ver, 10)
         mpy_sub = parseInt(mpy_sub, 10)
         if (!mpy_ver) { mpy_ver = 'py' }
-        return { machine, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path }
+        return { machine, uid, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path }
     }
 
 
@@ -257,6 +271,37 @@ except OSError as e:
   raise Exception('Directory not empty')
  else:
   raise
+`)
+    }
+
+    /* Removes a file, or a directory with everything inside it */
+    async removeTree(path) {
+        await this.exec(`
+def rmtree(p):
+ try: s=os.stat(p)
+ except OSError: return
+ if s[0] & 0x4000:
+  for n in os.listdir(p):
+   if n in ('.','..'): continue
+   rmtree(p+'/'+n)
+  os.rmdir(p)
+ else:
+  os.remove(p)
+rmtree(${pyStr(path)})
+`)
+    }
+
+    /* Renames a file or directory. Refuses to clobber an existing destination:
+       os.rename() silently replaces files on some ports and fails on others. */
+    async movePath(src, dst) {
+        await this.exec(`
+try:
+ os.stat(${pyStr(dst)})
+ x=1
+except OSError:
+ x=0
+if x: raise Exception('Already exists: '+${pyStr(dst)})
+os.rename(${pyStr(src)},${pyStr(dst)})
 `)
     }
 
@@ -326,7 +371,8 @@ gc.collect()
 mu = gc.mem_alloc()
 mf = gc.mem_free()
 ms = mu + mf
-uname=os.uname()
+try: name=os.uname().machine
+except: name=sys.implementation._machine
 p=print
 def size_fmt(size):
  suffixes = ['B','KiB','MiB','GiB','TiB']
@@ -336,7 +382,7 @@ def size_fmt(size):
   size //= 1024
  return "%d%s" % (size, suffixes[i])
 p('## Machine')
-p('- Name: \`'+uname.machine+'\`')
+p('- Name: \`'+name+'\`')
 try:
  gc.collect()
  import microcontroller as uc
