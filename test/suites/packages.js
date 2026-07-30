@@ -180,8 +180,16 @@ print(base64.b64encode(b'ViperIDE').decode())
     it('installing an unknown package fails cleanly', async () => {
         await withLib(ctx.port, async (raw) => {
             const err = await assert.rejects(
-                () => pm.rawInstallPkg(raw, 'this-package-does-not-exist-zzz', { dev }))
+                () => pm.rawInstallPkg(raw, 'this-package-name-does-not-exist-zzz', { dev }))
             assert.include(err.message, 'Cannot find')
+        })
+    })
+
+    it('installing a package from wrong url fails cleanly', async () => {
+        await withLib(ctx.port, async (raw) => {
+            const err = await assert.rejects(
+                () => pm.rawInstallPkg(raw, 'https://this-url-does-not-exist-zzz', { dev }))
+            assert.include(err.message, 'fetch failed')
         })
     })
 

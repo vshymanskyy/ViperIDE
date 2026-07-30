@@ -66,7 +66,7 @@ function rewriteUrl(url, { base=null, branch=null } = {}) {
         // OK, use it as is
     } else {
         if (!base) {
-            throw new Error(`${url} cannot be relative in this context`)
+            throw new Error(`Cannot find ${url}`)
         }
         base = base.replace(/\/[^/]*\.[^/]*$/, '')      // Strip filename, if any
         url = base + '/' + url
