@@ -143,55 +143,151 @@ const modePEM = StreamLanguage.define(simpleMode({
     end: [
         {regex: /.+/, token: 'comment'}
     ],
-    // The meta property contains global information about the mode
-    meta: {
-        lineComment: '#'
+    // Global information about the mode
+    languageData: {
+        name: 'pem',
+        commentTokens: { line: '#' },
     }
 }))
 
+/*
+ * INI / INF configuration files:
+ *
+ *   ; comment
+ *   [section]
+ *   key = value    # inline comment
+ */
+
+// Nothing in an INI file spans lines, so a line start always begins a fresh
+// section or key. Re-syncing here keeps a dangling `key =` from swallowing
+// the rest of the file as its value.
+const iniLineStart = {sol: true, regex: /\s*/, token: null, next: 'start'}
+
+const iniComment = {regex: /(?:[;#]|\/\/).*/, token: 'comment'}
+
 const modeINI = StreamLanguage.define(simpleMode({
     start: [
-        {regex: /\/\/.*/,       token: 'comment'},
-        {regex: /#.*/,         token: 'comment'},
-        {regex: /;.*/,         token: 'comment'},
-        {regex: /\[[^\]]+\]/,   token: 'keyword'},
-        {regex: /[^\s=,]+/,   token: 'variable', next: 'property'}
+        {regex: /\s+/,                            token: null},
+        iniComment,
+        {regex: /\[[^\]]*\]/,                     token: 'keyword'},
+        // A key, up to the `=` or `:` that follows it. Keys may contain spaces,
+        // and only a key that is actually assigned to enters the `property` state
+        {regex: /[^\s=:;#][^=:;#]*?(?=\s*[=:])/,  token: 'property', next: 'property'},
+        {regex: /\S+/,                            token: 'variable'},
     ],
     property: [
-        {regex: /\s*=\s*/,   token: 'def', next: 'value'},
-        {regex: /.*/,   token: null,  next: 'start'}
+        iniLineStart,
+        {regex: /\s*[=:]\s*/,                     token: 'operator', next: 'value'},
     ],
     value: [
-        {regex: /true|false/i,          token: 'atom',   next: 'start'},
-        {regex: /[-+]?0x[a-fA-F0-9]+$/, token: 'number', next: 'start'},
-        {regex: /[-+]?\d+$/,            token: 'number', next: 'start'},
-        {regex: /.*/,                   token: 'string', next: 'start'}
-    ]
+        iniLineStart,
+        // An inline comment needs leading whitespace, so that `#` and `;` stay
+        // usable inside values such as paths and passwords
+        {regex: /\s+(?:[;#]|\/\/).*/,                              token: 'comment'},
+        {regex: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/,             token: 'string'},
+        // Atoms and numbers only count as such when they make up the whole value,
+        // which ends at a comma, an inline comment, or the end of the line
+        {regex: /(?:true|false|yes|no|on|off)(?=\s*(?:,|[;#]|$))/i, token: 'atom'},
+        {regex: /[-+]?(?:0[xX][0-9a-fA-F]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)(?=\s*(?:,|[;#]|$))/,
+                                                                   token: 'number'},
+        {regex: /[\s,]+/,                                          token: null},
+        {regex: /[^\s,]+/,                                         token: 'string'},
+    ],
+    languageData: {
+        name: 'ini',
+        commentTokens: { line: ';' },
+    },
 }))
 
+/*
+ * MicroPython .mpy disassembly, as emitted by `mpy-tool.py -d`:
+ *
+ *   mpy_source_file: /tmp/file.mpy
+ *   header: 4d:06:2f:1f
+ *   qstr_table[35]:
+ *       <one raw qstr per line, may contain anything>
+ *   obj_table: []
+ *   simple_name: <module>
+ *     raw bytecode: 42 a8:02:02:0c:48:0a
+ *     prelude: (6, 2, 0, 0, 0, 0)
+ *     10:0d       LOAD_CONST_STRING *
+ *     d9          BINARY_OP 2 __eq__
+ *     children: [load_model]
+ */
+
+// Line starts re-sync the tokenizer regardless of the state the previous line left it in
+const mpyDisLineStart = [
+    // Module level fields
+    {sol: true, regex: /qstr_table\[\d+\]:/,                           token: 'keyword', next: 'qstrs'},
+    {sol: true, regex: /(?:mpy_source_file|source_file|simple_name):/, token: 'keyword', next: 'name'},
+    {sol: true, regex: /header:/,                                      token: 'keyword', next: 'data'},
+    {sol: true, regex: /(?:arch_flags|arch|obj_table):/,               token: 'keyword', next: 'value'},
+    // Raw code fields
+    {sol: true, regex: / +(?:raw bytecode|raw data|line info):/,       token: 'keyword', next: 'data'},
+    {sol: true, regex: / +(?:prelude|args|children):/,                 token: 'keyword', next: 'value'},
+    // Encoded bytes of an instruction, or a continuation line of a native code dump
+    {sol: true, regex: / +[0-9a-f]{2}(?::[0-9a-f]{2})*(?= |$)/,        token: 'comment', next: 'opcode'},
+]
+
 const modeMPY_DIS = StreamLanguage.define(simpleMode({
-  start: [
-    // Keywords
-    {regex: /(?:mpy_source_file|source_file|header|qstr_table|obj_table|simple_name|raw bytecode|raw data|prelude|args|line info|children|hex dump|disasm)/, token: "keyword"},
+    start: mpyDisLineStart,
 
-    // Opcode names
-    {regex: /\b(?:[A-Z][A-Z_]*[A-Z])\b/, token: "def"},
+    // Raw qstr strings, listed one per line until the next module level field
+    qstrs: [
+        {sol: true, regex: /obj_table:/,                                   token: 'keyword', next: 'value'},
+        {sol: true, regex: /(?:mpy_source_file|source_file|simple_name):/, token: 'keyword', next: 'name'},
+        {regex: /.+/, token: 'string'},
+    ],
 
-    // Hex bytes
-    {regex: /\b(?:[0-9a-fA-F]{2}(?:\s[0-9a-fA-F]{2})*)\b/, token: "number"},
+    // A file path or a scope name
+    name: [
+        ...mpyDisLineStart,
+        {regex: / +/, token: null},
+        {regex: /.+/,  token: 'className'},
+    ],
 
-    // Arguments
-    {regex: /\b0x[0-9a-fA-F]+\b|\b\d+\b/, token: "number"},
+    // Byte blobs: "42 a8:02:02", "4d:06:2f:1f", "b'\x80\x0c'"
+    data: [
+        ...mpyDisLineStart,
+        {regex: / +/,                            token: null},
+        {regex: /[0-9a-f]{2}(?::[0-9a-f]{2})+/,  token: 'comment'},
+        {regex: /b?'(?:[^'\\]|\\.)*'/,           token: 'comment'},
+        {regex: /\d+/,                           token: 'number'},    // leading byte count
+        {regex: /\S+/,                           token: 'comment'},   // "..." and single bytes
+    ],
 
-    // String literals
-    {regex: /b?'[^']*'|b?"[^"]*"/, token: "string"},
+    // Tuples and lists: "(6, 2, 0, 0, 0, 0)", "['builder', 'f']", "[load_model]"
+    value: [
+        ...mpyDisLineStart,
+        {regex: /[\s,[\]()]+/,                                    token: null},
+        {regex: /b?'(?:[^'\\]|\\.)*'|b?"(?:[^"\\]|\\.)*"/,        token: 'string'},
+        {regex: /-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)\b/,           token: 'number'},
+        {regex: /[^\s,[\]()]+/,                                   token: 'className'},
+    ],
 
-    // Comments
-    {regex: /;.*$/, token: "comment"},
+    opcode: [
+        ...mpyDisLineStart,
+        {regex: / +/,                          token: null},
+        {regex: /LOAD_CONST_STRING\b/,         token: 'propertyName', next: 'text'},
+        {regex: /[A-Za-z_][A-Za-z0-9_]*/,      token: 'propertyName', next: 'operand'},
+    ],
 
-    // Anything else
-    //{regex: /\s+/, token: "whitespace"},
-  ]
+    // Instruction argument: a jump offset, a child index, or a raw qstr
+    operand: [
+        ...mpyDisLineStart,
+        {regex: / +/,                                       token: null},
+        {regex: /-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)\b/,     token: 'number'},
+        {regex: /__[A-Za-z0-9_]+__|<[^>]*>/,                token: 'operator'},   // unary/binary op names
+        {regex: /b?'(?:[^'\\]|\\.)*'|b?"(?:[^"\\]|\\.)*"/,  token: 'string'},     // LOAD_CONST_OBJ
+        {regex: /.+/,                                       token: 'atom'},       // qstr: a name, unquoted
+    ],
+
+    // LOAD_CONST_STRING argument: a raw qstr, unquoted and possibly spanning lines
+    text: [
+        ...mpyDisLineStart,
+        {regex: / +/, token: null},
+        {regex: /.+/, token: 'string'},
+    ],
 }))
 
 const modeTOML = StreamLanguage.define(toml)
@@ -204,7 +300,7 @@ let devInfo
 
 const mpyCrossLinter = linter(async (view) => {
   const content = view.state.doc.toString()
-  const backtrace = await validatePython('<stdin>', content, devInfo)
+  const backtrace = await validatePython('stdin.py', content, devInfo)
 
   const diagnostics = []
   if (backtrace) {
@@ -305,6 +401,7 @@ const extraTheme = EditorView.theme({
 
 export async function createNewEditor(editorElement, fn, content, options) {
     let mode = []
+    let { wordWrap, readOnly } = options
     if (fn.endsWith('.py')) {
         const ruff = await getRuffWorkspace()
         mode = [
@@ -315,6 +412,11 @@ export async function createNewEditor(editorElement, fn, content, options) {
         ]
     } else if (fn.endsWith('.mpy.dis')) {
         mode = [ modeMPY_DIS ]
+        /* A disassembly is derived, not stored: there is nothing to save it back
+           to. Its byte dumps run to hundreds of characters, so wrap regardless of
+           the global setting. */
+        wordWrap = true
+        readOnly = true
     } else if (fn.endsWith('.json')) {
         mode = [
             modeJSON(),
@@ -330,12 +432,14 @@ export async function createNewEditor(editorElement, fn, content, options) {
         mode = [ modeMD() ]
     }
 
-    if (options.wordWrap) {
+    if (wordWrap) {
         mode.push(EditorView.lineWrapping)
     }
 
-    if (options.readOnly) {
+    if (readOnly) {
+        // `readOnly` is what saving checks; `editable` also drops the caret
         mode.push(EditorState.readOnly.of(true))
+        mode.push(EditorView.editable.of(false))
     }
 
     devInfo = options.devInfo
