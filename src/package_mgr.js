@@ -135,14 +135,16 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
         [ name, version ] = splitPkgName(name)
     }
 
+    const version_spec = version || 'latest'
+
     if (!pkg_info) {
-        try {
+        //try {
             let index_pkg;
             [index, index_pkg] = await findPkg(name)
             if (index_pkg) {  // Found in index
                 if (index.index.v === 2) {
                     const mpy_majour = prefer_source ? 'py' : dev.mpy_ver
-                    pkg_json = rewriteUrl(`${index.url}/package/${mpy_majour}/${name}/${version || 'latest'}.json`)
+                    pkg_json = rewriteUrl(`${index.url}/package/${mpy_majour}/${name}/${version_spec}.json`)
                     pkg_info = await fetchJSON(pkg_json)
                 } else if (index.index.v === '3.viper-ide') {
                     for (const pkg_ver of index_pkg.versions) {
@@ -152,15 +154,30 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
                     if (!pkg_info) {
                         throw new Error('Not found')
                     }
+                    // Check if the arch compatibility is satisfied
+                    if ('arch' in pkg_info) {
+                        // Check if matches any in the list
+                        if (!pkg_info.arch.some(x => x === dev.mpy_arch)) {
+                            throw new Error(`${name}@${version_spec} requires architecture: ${pkg_info.arch.join(', ')}`)
+                        }
+                    }
+                    // Check if ABI compatibility is satisfied
+                    if ('mpy' in pkg_info) {
+                        // Check if matches any in the list
+                        const dev_abi = `${dev.mpy_ver}.${dev.mpy_sub}`
+                        if (!pkg_info.mpy.some(x => x === dev_abi)) {
+                            throw new Error(`${name}@${version_spec} requires MPY ABI: ${pkg_info.mpy.join(', ')}`)
+                        }
+                    }
                 } else {
                     throw new Error(`Package index version ${index.index.v} is not supported`)
                 }
             } else {  // Not in index => URL?
                 [ pkg_info, pkg_json ] = await loadPkgInfo(name, { base: index.url, version })
             }
-        } catch (err) {
-            throw new Error(`Cannot find ${name}@${version}`, { cause: err })
-        }
+        //} catch (err) {
+        //    throw new Error(`Cannot find ${name}@${version}`, { cause: err })
+        //}
     }
 
     if (!pkg_info.name) {

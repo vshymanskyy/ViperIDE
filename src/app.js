@@ -1033,6 +1033,11 @@ async function _raw_loadFile(raw, fn) {
     let content
     if (fn == '~sysinfo.md') {
         content = await raw.readSysInfoMD()
+        if (displayOpenFile(fn)) {
+            _reloadView(fn, content)
+            autoHideSideMenu()
+            return
+        }
     } else if (displayOpenFile(fn)) {
         console.debug(`File ${fn} already opened. Switched to tab`)
         autoHideSideMenu()

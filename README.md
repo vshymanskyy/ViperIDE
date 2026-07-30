@@ -29,9 +29,13 @@
   - Package management system
 - ... read more about [features and device support](./docs/Features.md)
 
+## MCP server
+
+[Read More](https://notes.alelec.net/posts/claude-meets-micropython)
+
 ## Links
 
-[ViperIDE Online ](https://viper-ide.org)  
+[ViperIDE Online](https://viper-ide.org)  
 [Feedback](./docs/Feedback.md)  
 [Documentation](./docs/)  
 [Discussion](https://github.com/orgs/micropython/discussions/15219)  
@@ -42,7 +46,7 @@
 - [Ruff](https://docs.astral.sh/ruff) - Python linter and formatter, MIT
 - [Xterm.js](https://xtermjs.org) - REPL Terminal, MIT
 - [PeerJS](https://peerjs.com) - P2P/WebRTC connections, MIT
-- [MicroPython](https://github.com/micropython/micropython) - Virtual Machine, MIT
+- [MicroPython/PyScript](https://www.npmjs.com/package/@micropython/micropython-webassembly-pyscript) - Virtual Machine, MIT
 - [mpy-cross-wasm](https://github.com/vshymanskyy/mpy-cross-wasm) - Code validation and `.mpy` compilation, MIT
 - [mpy-tool](https://github.com/micropython/micropython/blob/master/tools/mpy-tool.py) - MPY bytecode disassembler - MIT
 - [python-minifier](https://github.com/dflook/python-minifier) - Code minifier, MIT
