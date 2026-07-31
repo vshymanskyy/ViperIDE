@@ -1,7 +1,7 @@
 {
   "name": "ViperIDE",
   "version": "0.5.6",
-  "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile",
+  "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile. Built-in editor, file explorer, REPL, compiler, linter and device connectivity tools for embedded and web projects.",
   "main": "index.js",
   "scripts": {
     "build": "rollup --config",

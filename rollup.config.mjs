@@ -18,7 +18,10 @@ if (!BASE_URL) {
 }
 
 const copyHtml = (src, dst) => {
-  fs.writeFileSync(dst, fs.readFileSync(src, 'utf8').replaceAll('${VIPER_IDE_BASE_URL}', BASE_URL))
+  let data = fs.readFileSync(src, 'utf8').
+      replaceAll('${VIPER_IDE_BASE_URL}', BASE_URL).
+      replaceAll('${VIPER_IDE_DESCR}', pkg.description)
+  fs.writeFileSync(dst, data)
 }
 
 // The MicroPython WASM package ships a single .mjs that doubles as a Node CLI

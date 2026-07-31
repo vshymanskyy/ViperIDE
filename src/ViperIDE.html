@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${VIPER_IDE_DESCR}">
+    <meta property="og:description" content="${VIPER_IDE_DESCR}">
     <title>ViperIDE</title>
     <link rel="icon" type="image/png" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
     <link rel="apple-touch-icon" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
@@ -90,7 +92,7 @@
                 <div id="menu-settings-list">
                     <div><input type="checkbox" id="advanced-mode"/><label for="advanced-mode">🔬 Advanced mode</label> (<a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Advanced-Mode.md" target="_blank">?</a>)</div>
                     <div class="title-lines" id="menu-line-conn">connection</div>
-                    <div><input type="checkbox" id="interrupt-device" checked/><label for="interrupt-device">Interrupt device</label></div>
+                    <div><input type="checkbox" id="interrupt-running-code"/><label for="interrupt-running-code">Interrupt running code</label></div>
                     <div><input type="checkbox" id="force-serial-poly"/><label for="force-serial-poly">Force WebSerial polyfill</label></div>
                     <div class="title-lines" id="menu-line-editor">editor</div>
                     <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Auto expand/minify JSON</label></div>
