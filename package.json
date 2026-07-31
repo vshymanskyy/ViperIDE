@@ -10,6 +10,7 @@
     "test": "npx mocha"
   },
   "dependencies": {
+    "@amplitude/unified": "^1.1.28",
     "@astral-sh/ruff-wasm-web": "0.16.0",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-markdown": "^6.5.1",

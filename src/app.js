@@ -34,6 +34,7 @@ import { getSetting, onSettingChange, updateSetting } from './settings.js'
 
 import { marked, Renderer as MarkedRenderer } from 'marked'
 import { UAParser } from 'ua-parser-js'
+import * as amplitude from '@amplitude/unified'
 
 import { splitPath, joinPath, sleep, fetchJSON, getUserUID, getScreenInfo, IdleMonitor,
          getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, escapeCSS, isRunningStandalone,
@@ -1733,13 +1734,23 @@ function showOfflineReadyToast(version) {
         applyTranslation()
     })
 
-    try {
-        if (typeof window.analytics.identify === 'undefined' ||
-            typeof window.analytics.track === 'undefined'
-        ) {
-            throw new Error()
-        }
+    amplitude.initAll('ee23cab1415ee70b31a694db17aebcb8', { analytics: { autocapture: true } })
 
+    window.analytics = {
+        track: (eventName, properties) => amplitude.track(eventName, properties),
+        identify: (userId, traits) => {
+            amplitude.setUserId(userId)
+            if (traits) {
+                const id = new amplitude.Identify()
+                for (const [key, value] of Object.entries(traits)) {
+                    id.set(key, value)
+                }
+                amplitude.identify(id)
+            }
+        }
+    }
+
+    try {
         const ua = new UAParser()
         const geo = await fetchJSON('https://freeipapi.com/api/json')
         const scr = getScreenInfo()
@@ -1785,7 +1796,7 @@ function showOfflineReadyToast(version) {
             referrer: document.referrer,
         })
 
-        const idleMonitor = new IdleMonitor(3*60*1000);
+        const idleMonitor = new IdleMonitor(3*60*1000)
 
         idleMonitor.setIdleCallback(() => {
             analytics.track('User Idle')
@@ -1796,9 +1807,7 @@ function showOfflineReadyToast(version) {
         })
 
     } catch (_err) {
-        window.analytics = {
-            track: function() {}
-        }
+        // analytics user enrichment failed; base tracking via amplitude still active
     }
 
     onSettingChange('zoom', function(newValue) {
