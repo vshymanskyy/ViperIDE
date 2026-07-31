@@ -1734,7 +1734,9 @@ function showOfflineReadyToast(version) {
         applyTranslation()
     })
 
-    amplitude.initAll('ee23cab1415ee70b31a694db17aebcb8', { analytics: { autocapture: true } })
+    amplitude.initAll('ee23cab1415ee70b31a694db17aebcb8', {
+        analytics: { autocapture: false }
+    })
 
     window.analytics = {
         track: (eventName, properties) => amplitude.track(eventName, properties),

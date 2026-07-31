@@ -61,7 +61,8 @@ function rewriteUrl(url, { base=null, branch=null } = {}) {
         url = 'https://raw.githubusercontent.com/' + url[0] + '/' + url[1] + '/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
     } else if (url.startsWith('gitlab:')) {
         url = url.slice(7).split('/')
-        url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
+        //url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
+        url = 'https://cors.sh/https://gitlab.com/' + url[0] + '/' + url[1] + '/-/raw/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
     } else if (url.startsWith('https://')) {
         // OK, use it as is
     } else {
@@ -199,7 +200,7 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
     if ('urls' in pkg_info) {
         const vars = {
-            ARCH:   dev.mpy_arch,
+            ARCH:   dev.mpy_arch || 'none',
             MPY:    dev.mpy_ver + '.' + dev.mpy_sub,
             MPY_MAJ: '' + dev.mpy_ver,
         }
