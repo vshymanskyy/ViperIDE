@@ -32,9 +32,9 @@ ViperIDE loads its WebAssembly runtimes, virtual filesystem archives and `manife
 - In JavaScript, as the `VIPER_IDE_BASE_URL` constant (replaced by Rollup)
 - In HTML, as the `${VIPER_IDE_BASE_URL}` placeholder (replaced while copying the files into `build/`)
 
-`build.py` defaults it to the production URL `https://viper-ide.org` and passes it on to Rollup.
+`build.py` defaults it to `http://localhost:10001` and passes it on to Rollup. CI workflows set `VIPER_IDE_BASE_URL=https://viper-ide.org` explicitly for production builds.
 
-**For local development, point it at the development server:**
+**To override it manually, set `VIPER_IDE_BASE_URL`:**
 
 ```sh
 export VIPER_IDE_BASE_URL=http://localhost:10001
@@ -44,7 +44,7 @@ export VIPER_IDE_BASE_URL=http://localhost:10001
 $env:VIPER_IDE_BASE_URL = "http://localhost:10001"
 ```
 
-Without it, a locally served IDE keeps fetching its assets from the production site.
+Without an override, a locally served IDE fetches its assets from the local development server.
 
 ## Run Locally
 
@@ -53,7 +53,7 @@ The development server is provided by Rollup watch mode. It serves the `build/` 
 Run the full build from the repository root:
 
 ```sh
-VIPER_IDE_BASE_URL=http://localhost:10001 python3 build.py
+python3 build.py
 ```
 
 The script:
@@ -62,7 +62,7 @@ The script:
 - Copies static HTML and assets
 - Generates `build/translations.json` from `src/lang/*.json`
 - Generates `build/manifest.json` with the version from `package.json`
-- Resolves the base URL from `VIPER_IDE_BASE_URL`, defaulting to `https://viper-ide.org`
+- Resolves the base URL from `VIPER_IDE_BASE_URL`, defaulting to `http://localhost:10001`
 - Vendors `python-minifier` from PyPI into `src/tools_vfs/lib/python_minifier`
 - Builds reproducible virtual filesystem archives into `build/assets/`
 - Runs ESLint
@@ -75,7 +75,7 @@ The generated site is in `build/`.
 Start the watcher:
 
 ```sh
-VIPER_IDE_BASE_URL=http://localhost:10001 npm start
+npm start
 ```
 
 

@@ -7,8 +7,8 @@ from shutil import copyfile as cp, copytree, rmtree
 
 # Base URL the IDE is deployed at. It is substituted into the JS (as the
 # VIPER_IDE_BASE_URL constant) and into the HTML at build time.
-# Override it for local development, i.e. VIPER_IDE_BASE_URL=http://localhost:10001
-BASE_URL = os.environ.get("VIPER_IDE_BASE_URL", "https://viper-ide.org")
+# CI workflows set VIPER_IDE_BASE_URL explicitly for production builds.
+BASE_URL = os.environ.get("VIPER_IDE_BASE_URL", "http://localhost:10001")
 
 def run(cmd):
     subprocess.run(cmd, shell=isinstance(cmd, str), check=True)

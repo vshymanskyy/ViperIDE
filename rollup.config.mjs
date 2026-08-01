@@ -10,12 +10,9 @@ import fs from 'fs'
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 
-// build.py defaults this to the production URL and passes it via the environment.
-// When running Rollup directly, it has to be set explicitly.
-const BASE_URL = process.env.VIPER_IDE_BASE_URL
-if (!BASE_URL) {
-  throw new Error('VIPER_IDE_BASE_URL is not set, i.e. VIPER_IDE_BASE_URL=http://localhost:10001 npm start')
-}
+// build.py passes this via the environment. When running Rollup directly,
+// default to the local development server.
+const BASE_URL = process.env.VIPER_IDE_BASE_URL || 'http://localhost:10001'
 
 const copyHtml = (src, dst) => {
   let data = fs.readFileSync(src, 'utf8').
