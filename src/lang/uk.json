@@ -25,14 +25,13 @@
         "files": {
             "no-files": "немає файлів",
             "connect": "підключити",
-            "used": "зайнято",
-            "stale": "список міг змінитися"
+            "used": "зайнято"
         },
         "settings": {
             "conn": "підключення",
             "editor": "редактор",
             "other": "решта",
-            "interrupt-device": "Переривати виконання",
+            "interrupt-running-code": "Переривати виконання",
             "force-serial-poly": "Застосувати WebSerial polyfill",
             "expand-minify-json": "Авто-стиснення JSON",
             "use-word-wrap": "Перенос слів",
@@ -40,7 +39,8 @@
             "refresh-after-run": "Оновлювати файли після запуску",
             "use-natural-sort": "Природне сортування",
             "lang": "Мова",
-            "zoom": "Масштаб"
+            "zoom": "Масштаб",
+            "install-package-source": "Не компілювати .py → .mpy"
         },
         "about": {
             "cta": "Якщо вам подобається ViperIDE, подаруйте йому <a id='gh-star'>зірку на GitHub</a> ⭐ і поширюйте відгук в соціальних мережах 📢",

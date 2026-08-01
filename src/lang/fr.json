@@ -25,14 +25,13 @@
         "files": {
             "no-files": "pas de fichiers",
             "connect": "connecter",
-            "used": "utilisé",
-            "stale": "la liste a peut-être changé"
+            "used": "utilisé"
         },
         "settings": {
             "conn": "connexion",
             "editor": "éditeur",
             "other": "autre",
-            "interrupt-device": "Interrompre l'exécution",
+            "interrupt-running-code": "Interrompre l'exécution",
             "force-serial-poly": "Imposer l'utilisation de WebSerial polyfill",
             "expand-minify-json": "Minification automatique de JSON",
             "use-word-wrap": "Retour à la ligne",
@@ -40,7 +39,8 @@
             "refresh-after-run": "Actualiser les fichiers après l'exécution",
             "use-natural-sort": "Tri naturel",
             "lang": "Langue",
-            "zoom": "Zoom"
+            "zoom": "Zoom",
+            "install-package-source": "Ignorer la compilation .py → .mpy"
         },
         "about": {
             "cta": "Si vous aimez ViperIDE, veuillez <a id='gh-star'>lui donner une étoile sur GitHub</a> ⭐ et en parler sur les réseaux sociaux 📢",

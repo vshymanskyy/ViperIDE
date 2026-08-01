@@ -25,14 +25,13 @@
         "files": {
             "no-files": "geen bestanden",
             "connect": "verbinden",
-            "used": "gebruikt",
-            "stale": "bestandslijst mogelijk gewijzigd"
+            "used": "gebruikt"
         },
         "settings": {
             "conn": "verbinding",
             "editor": "editor",
             "other": "overige",
-            "interrupt-device": "Uitvoering onderbreken",
+            "interrupt-running-code": "Uitvoering onderbreken",
             "force-serial-poly": "Gebruik van WebSerial polyfill afdwingen",
             "expand-minify-json": "Automatische minimalisering van JSON",
             "use-word-wrap": "Woorden afbreken",
@@ -40,7 +39,8 @@
             "refresh-after-run": "Bestanden vernieuwen na uitvoeren",
             "use-natural-sort": "Natuurlijke sortering",
             "lang": "Taal",
-            "zoom": "Zoom"
+            "zoom": "Zoom",
+            "install-package-source": "Compileren van .py → .mpy overslaan"
         },
         "about": {
             "cta": "Als je ViperIDE leuk vindt, geef het dan alsjeblieft een <a id='gh-star'>ster op GitHub</a> ⭐ en vertel het verder op sociale media 📢",

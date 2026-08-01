@@ -25,14 +25,13 @@
         "files": {
             "no-files": "tidak ada file",
             "connect": "hubungkan",
-            "used": "digunakan",
-            "stale": "daftar file mungkin telah berubah"
+            "used": "digunakan"
         },
         "settings": {
             "conn": "koneksi",
             "editor": "editor",
             "other": "lainnya",
-            "interrupt-device": "Hentikan eksekusi",
+            "interrupt-running-code": "Hentikan eksekusi",
             "force-serial-poly": "Paksa penggunaan WebSerial polyfill",
             "expand-minify-json": "Minifikasi otomatis JSON",
             "use-word-wrap": "Bungkus kata",
@@ -40,7 +39,8 @@
             "refresh-after-run": "Segarkan file setelah dijalankan",
             "use-natural-sort": "Penyortiran alami",
             "lang": "Bahasa",
-            "zoom": "Zoom"
+            "zoom": "Zoom",
+            "install-package-source": "Lewati kompilasi .py → .mpy"
         },
         "about": {
             "cta": "Jika Anda menyukai ViperIDE, silakan <a id='gh-star'>beri bintang di GitHub</a> ⭐ dan sebarkan berita di media sosial 📢",

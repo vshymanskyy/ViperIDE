@@ -25,14 +25,13 @@
         "files": {
             "no-files": "κανένα αρχείο",
             "connect": "σύνδεση",
-            "used": "χρησιμοποιημένο",
-            "stale": "η λίστα αρχείων ενδέχεται να έχει αλλάξει"
+            "used": "χρησιμοποιημένο"
         },
         "settings": {
             "conn": "σύνδεση",
             "editor": "επεξεργαστής",
             "other": "άλλο",
-            "interrupt-device": "Διακοπή εκτέλεσης",
+            "interrupt-running-code": "Διακοπή εκτέλεσης",
             "force-serial-poly": "Επιβολή χρήσης WebSerial polyfill",
             "expand-minify-json": "Αυτόματη σμίκρυνση JSON",
             "use-word-wrap": "Αναδίπλωση λέξεων",
@@ -40,7 +39,8 @@
             "refresh-after-run": "Ανανέωση αρχείων μετά την εκτέλεση",
             "use-natural-sort": "Φυσική ταξινόμηση",
             "lang": "Γλώσσα",
-            "zoom": "Ζουμ"
+            "zoom": "Ζουμ",
+            "install-package-source": "Παράλειψη μεταγλώττισης .py → .mpy"
         },
         "about": {
             "cta": "Αν σας αρέσει το ViperIDE, παρακαλώ <a id='gh-star'>δώστε του ένα αστέρι στο GitHub</a> ⭐ και διαδώστε το στα κοινωνικά μέσα 📢",

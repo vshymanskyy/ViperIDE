@@ -25,14 +25,13 @@
         "files": {
             "no-files": "fără fișiere",
             "connect": "conectare",
-            "used": "folosit",
-            "stale": "lista de fișiere s-ar putea să se fi schimbat"
+            "used": "folosit"
         },
         "settings": {
             "conn": "conexiune",
             "editor": "editor",
             "other": "alte",
-            "interrupt-device": "Întrerupe execuția",
+            "interrupt-running-code": "Întrerupe execuția",
             "force-serial-poly": "Forțează utilizarea WebSerial polyfill",
             "expand-minify-json": "Minificarea automată a JSON",
             "use-word-wrap": "Împachetarea cuvintelor",
@@ -40,7 +39,8 @@
             "refresh-after-run": "Reîmprospătează fișierele după rulare",
             "use-natural-sort": "Sortare naturală",
             "lang": "Limbă",
-            "zoom": "Zoom"
+            "zoom": "Zoom",
+            "install-package-source": "Omite compilarea .py → .mpy"
         },
         "about": {
             "cta": "Dacă vă place ViperIDE, vă rugăm <a id='gh-star'>dați-i o stea pe GitHub</a> ⭐ și răspândiți vestea pe rețelele sociale 📢",

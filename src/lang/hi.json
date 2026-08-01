@@ -25,14 +25,13 @@
         "files": {
             "no-files": "कोई फाइल नहीं",
             "connect": "कनेक्ट करें",
-            "used": "प्रयुक्त",
-            "stale": "फ़ाइल सूची बदल गई हो सकती है"
+            "used": "प्रयुक्त"
         },
         "settings": {
             "conn": "कनेक्शन",
             "editor": "संपादक",
             "other": "अन्य",
-            "interrupt-device": "प्रोग्राम रुकावट",
+            "interrupt-running-code": "प्रोग्राम रुकावट",
             "force-serial-poly": "WebSerial polyfill का उपयोग करें",
             "expand-minify-json": "JSON का स्वचालित-संपीड़न",
             "use-word-wrap": "शब्द आवरण",
@@ -40,7 +39,8 @@
             "refresh-after-run": "चलाने के बाद फ़ाइलें ताज़ा करें",
             "use-natural-sort": "प्राकृतिक छंटाई",
             "lang": "भाषा",
-            "zoom": "ज़ूम"
+            "zoom": "ज़ूम",
+            "install-package-source": ".py → .mpy संकलन छोड़ें"
         },
         "about": {
             "cta": "यदि आपको ViperIDE पसंद है, कृपया <a id='gh-star'>GitHub पर इसे एक स्टार दें</a> ⭐ और इसे सोशल मीडिया पर फैलाएं 📢",

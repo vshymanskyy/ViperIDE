@@ -25,14 +25,13 @@
         "files": {
             "no-files": "inga filer",
             "connect": "ansluta",
-            "used": "används",
-            "stale": "fillistan kan ha ändrats"
+            "used": "används"
         },
         "settings": {
             "conn": "anslutning",
             "editor": "redaktör",
             "other": "andra",
-            "interrupt-device": "Avbryt körning",
+            "interrupt-running-code": "Avbryt körning",
             "force-serial-poly": "Tvinga användning av WebSerial polyfill",
             "expand-minify-json": "Automatisk minimisering av JSON",
             "use-word-wrap": "Ordbrytning",
@@ -40,7 +39,8 @@
             "refresh-after-run": "Uppdatera filer efter körning",
             "use-natural-sort": "Naturlig sortering",
             "lang": "Språk",
-            "zoom": "Zoom"
+            "zoom": "Zoom",
+            "install-package-source": "Hoppa över kompileringen .py → .mpy"
         },
         "about": {
             "cta": "Om du gillar ViperIDE, vänligen <a id='gh-star'>ge det en stjärna på GitHub</a> ⭐ och sprid ordet på sociala medier 📢",

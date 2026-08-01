@@ -25,14 +25,13 @@
         "files": {
             "no-files": "אין קבצים",
             "connect": "חבר",
-            "used": "בשימוש",
-            "stale": "ייתכן שרשימת הקבצים השתנתה"
+            "used": "בשימוש"
         },
         "settings": {
             "conn": "חיבור",
             "editor": "עורך",
             "other": "אחרים",
-            "interrupt-device": "להפסיק את הביצוע",
+            "interrupt-running-code": "להפסיק את הביצוע",
             "force-serial-poly": "הכרח שימוש ב-WebSerial polyfill",
             "expand-minify-json": "מיניפיקציה אוטומטית של JSON",
             "use-word-wrap": "גלישת מילים",
@@ -40,7 +39,8 @@
             "refresh-after-run": "רענון קבצים לאחר הרצה",
             "use-natural-sort": "מיון טבעי",
             "lang": "שפה",
-            "zoom": "זום"
+            "zoom": "זום",
+            "install-package-source": "דלג על הידור .py → .mpy"
         },
         "about": {
             "cta": "אם אתה אוהב את ViperIDE, אנא <a id='gh-star'>תן לו כוכב ב-GitHub</a> ⭐ והפיץ את המילה ברשתות החברתיות 📢",

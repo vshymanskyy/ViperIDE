@@ -25,14 +25,13 @@
         "files": {
             "no-files": "没有文件",
             "connect": "连接",
-            "used": "已使用",
-            "stale": "文件列表可能已更改"
+            "used": "已使用"
         },
         "settings": {
             "conn": "连接",
             "editor": "编辑器",
             "other": "其他",
-            "interrupt-device": "中断执行",
+            "interrupt-running-code": "中断执行",
             "force-serial-poly": "强制使用 WebSerial polyfill",
             "expand-minify-json": "JSON 自动缩小",
             "use-word-wrap": "自动换行",
@@ -40,7 +39,8 @@
             "refresh-after-run": "运行后刷新文件",
             "use-natural-sort": "自然排序",
             "lang": "语言",
-            "zoom": "缩放"
+            "zoom": "缩放",
+            "install-package-source": "跳过 .py → .mpy 编译"
         },
         "about": {
             "cta": "如果您喜欢 ViperIDE，请<a id='gh-star'>在 GitHub 上给它一颗星</a> ⭐ 并在社交媒体上传播信息 📢",

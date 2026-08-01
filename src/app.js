@@ -272,7 +272,7 @@ export async function connectDevice(type) {
 
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
-    if (getSetting('interrupt-device')) {
+    if (getSetting('interrupt-running-code')) {
         // TODO: detect WDT and disable it temporarily
 
         const raw = await MpRawMode.begin(port)
@@ -1665,7 +1665,7 @@ export function applyTranslation() {
         QS('#menu-line-editor').innerText = T('settings.editor')
         QS('#menu-line-other').innerText = T('settings.other')
 
-        QS('label[for=interrupt-device]').innerText = T('settings.interrupt-device')
+        QS('label[for=interrupt-running-code]').innerText = T('settings.interrupt-running-code')
         QS('label[for=force-serial-poly]').innerText = T('settings.force-serial-poly')
         QS('label[for=expand-minify-json]').innerText = T('settings.expand-minify-json')
         QS('label[for=use-word-wrap]').innerText = T('settings.use-word-wrap')
