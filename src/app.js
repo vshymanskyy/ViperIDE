@@ -1754,7 +1754,6 @@ function showOfflineReadyToast(version) {
 
     try {
         const ua = new UAParser()
-        const geo = await fetchJSON('https://freeipapi.com/api/json')
         const scr = getScreenInfo()
 
         let tz
@@ -1764,14 +1763,13 @@ function showOfflineReadyToast(version) {
             tz = (new Date()).getTimezoneOffset()
         }
 
-        //console.log(geo)
         //console.log(ua.getResult())
         //console.log(scr)
 
         const userUID = getUserUID()
 
         analytics.identify(userUID, {
-            email: userUID.split('-').pop() + '@vip.er',
+            //email: userUID.split('-').pop() + '@vip.er',
             version: VIPER_IDE_VERSION,
             build: getBuildDate(),
             browser: ua.getBrowser().name,
@@ -1785,11 +1783,11 @@ function showOfflineReadyToast(version) {
             dpr: scr.dpr,
             dpi: QID('dpi-ruler').offsetHeight,
             lang: currentLang,
-            location: geo.latitude + ',' + geo.longitude,
-            continent: geo.continent,
-            country: geo.countryName,
-            region: geo.regionName,
-            city: geo.cityName,
+            //location: geo.latitude + ',' + geo.longitude,
+            //continent: geo.continent,
+            //country: geo.countryName,
+            //region: geo.regionName,
+            //city: geo.cityName,
             tz: tz,
         })
 
