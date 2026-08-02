@@ -28,7 +28,7 @@ import { MpRawMode } from './rawmode.js'
 import { getPkgIndexes, rawInstallPkg } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
-import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettifyPython } from './python_utils.js'
+import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettifyPython, compilePython } from './python_utils.js'
 import { MicroPythonWASM } from './emulator.js'
 import { getSetting, onSettingChange, updateSetting } from './settings.js'
 
@@ -187,6 +187,7 @@ async function prepareNewPort(type) {
             new_port = new WebRTCTransport(id.value())
         } else if (url.startsWith('vm://')) {
             new_port = new MicroPythonWASM()
+            analytics.track('Run MPY VM')
         } else {
             toastr.error('Unknown link type')
         }
@@ -285,6 +286,7 @@ export async function connectDevice(type) {
 
             if (window.pkg_install_url) {
                 await _raw_installPkg(raw, window.pkg_install_url)
+                analytics.track('Quick Install Completed', { url: window.pkg_install_url })
                 window.pkg_install_url = null
             }
 
@@ -1014,6 +1016,7 @@ export async function pyMinify() {
       changes: { from: 0, to: editor.state.doc.length, insert: res }
     })
 
+    analytics.track('Run Python-Minify')
     toastr.info(`Minified ${input.length} to ${res.length}`)
 }
 
@@ -1028,6 +1031,97 @@ export async function pyPrettify() {
     editor.dispatch({
       changes: { from: 0, to: editor.state.doc.length, insert: res }
     })
+
+    analytics.track('Run Ruff Format')
+}
+
+/* Saves the source as usual, then cross-compiles the same content and stores
+   the resulting .mpy alongside it - two writes, so the source on the device
+   always matches what was compiled. */
+export async function saveAndCompile() {
+    if (!port) return;
+    if (!editor) return;
+    if (!editorFn.endsWith('.py')) {
+        toastr.info(`Please open a Python file`)
+        return
+    }
+
+    const savedFn = editorFn
+    const savedText = editor.state.doc.toString()
+
+    await saveCurrentFile()
+
+    const mpy = await compilePython(savedFn, savedText, devInfo)
+    const mpyFn = savedFn.replace(/\.py$/, '.mpy')
+
+    const raw = await MpRawMode.begin(port)
+    try {
+        await fsCache.writeFile(raw, mpyFn, mpy)
+        await _raw_updateFileTree(raw)
+    } finally {
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
+    }
+
+    analytics.track('File Compiled')
+    toastr.success(`Compiled to ${mpyFn}`)
+}
+
+/*
+ * Disassembles the currently open file in place, without writing anything to the
+ * device or to the file being edited. A `.py` file is cross-compiled first; a
+ * `.mpy` file shown in the hex viewer is already compiled and is disassembled
+ * as-is.
+ */
+export async function showDisassembly() {
+    let fn, dis
+
+    if (editor && editorFn.endsWith('.py')) {
+        fn = editorFn
+        const mpy = await compilePython(fn, editor.state.doc.toString(), devInfo)
+        dis = await disassembleMPY(mpy)
+    } else if (!editor && editorFn.endsWith('.mpy')) {
+        fn = editorFn
+        let bytes = fsCache.peek(fn)
+        if (!bytes) {
+            if (!port) {
+                toastr.warning('Device disconnected')
+                return
+            }
+            const raw = await MpRawMode.begin(port)
+            try {
+                bytes = await fsCache.readFile(raw, fn)
+            } finally {
+                try { await raw.end() } catch (_err) { /* device may have disconnected */ }
+            }
+        }
+        dis = await disassembleMPY(bytes)
+    } else {
+        toastr.info(`Please open a Python or .mpy file`)
+        return
+    }
+    analytics.track('Run MPY Disassembler')
+
+    // ".mpy.dis" is what createNewEditor() recognizes for syntax highlighting
+    const disFn = (fn.endsWith('.mpy') ? fn : fn.replace(/\.py$/, '.mpy')) + '.dis'
+    if (displayOpenFile(disFn)) {
+        const view = getEditorFromElement(getTabEditorElement(disFn))
+        if (view) {
+            view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: dis } })
+        }
+        fsCache.rebaseView(disFn, dis)
+        return
+    }
+
+    const editorElement = createTab(disFn)
+    editor = await createNewEditor(editorElement, disFn, dis, {
+        wordWrap: getSetting('use-word-wrap'),
+        devInfo,
+        readOnly: true,
+    })
+    fsCache.openView(disFn, { baseline: dis, kind: 'text', readOnly: true })
+    document.dispatchEvent(new CustomEvent("editorLoaded", {detail: {editor: editor, fn: disFn}}))
+    editorFn = disFn
+    autoHideSideMenu()
 }
 
 async function _raw_loadFile(raw, fn) {
@@ -1228,6 +1322,7 @@ async function _loadContent(fn, content, editorElement) {
             content = await disassembleMPY(content)
             fn = fn + '.dis'
             readOnly = true
+            analytics.track('Run MPY Disassembler')
         }
 
         editorElement.innerHTML = '' // Clear existing content
@@ -1641,6 +1736,10 @@ export function applyTranslation() {
         }
         QID('btn-save').setAttribute('title',     T('tool.save') + ` [${metaKey}+S]`)
         QID('btn-run').setAttribute('title',      T('tool.run') + ' [F5]')
+        QID('py-prettify').setAttribute('title',      '[Alt+Shift+F]')
+        QID('py-minify').setAttribute('title',        '[Alt+Shift+M]')
+        QID('py-save-compile').setAttribute('title',  `[${metaKey}+Shift+S]`)
+        QID('py-disassemble').setAttribute('title',   '[Alt+Shift+D]')
         QID('btn-conn-ws').setAttribute('title',  T('tool.conn.ws'))
         QID('btn-conn-ble').setAttribute('title', T('tool.conn.ble'))
         QID('btn-conn-usb').setAttribute('title', T('tool.conn.usb'))
@@ -1903,10 +2002,29 @@ function showOfflineReadyToast(version) {
     window.addEventListener('keydown', (ev) => {
         // ctrlKey for Windows/Linux, metaKey for Mac
         if (ev.ctrlKey || ev.metaKey) {
-            if (ev.code == 'KeyS') {
+            if (ev.shiftKey) {
+                if (ev.code == 'KeyS') {
+                    saveAndCompile()
+                } else {
+                    return
+                }
+            } else if (ev.code == 'KeyS') {
                 saveCurrentFile()
             } else if (ev.code == 'KeyD') {
                 reboot('soft')
+            } else {
+                return
+            }
+        } else if (ev.altKey && ev.shiftKey) {
+            // Alt+Shift, not Ctrl/Cmd: avoids both CodeMirror's own Mod-Shift-*
+            // keymap (eg. Mod-Shift-M opens the lint panel) and browser-reserved
+            // Ctrl/Cmd+Shift+* shortcuts
+            if (ev.code == 'KeyF') {
+                pyPrettify()
+            } else if (ev.code == 'KeyM') {
+                pyMinify()
+            } else if (ev.code == 'KeyD') {
+                showDisassembly()
             } else {
                 return
             }
@@ -1964,6 +2082,7 @@ function showOfflineReadyToast(version) {
     if ((urlID = urlParams.get('install'))) {
         window.pkg_install_url = urlID
         toastr.info('Warning: your files may be overwritten!', `Connect your device to install ${urlID}`)
+        analytics.track('Quick Install Opened', { id: urlID })
     }
 
     if (typeof webrepl_url !== 'undefined') {
