@@ -87,13 +87,18 @@ export class WebRTCTransport extends Transport {
         console.log('My P2P ID:', this.peer.id)
     }
 
+    /* Both listeners check that this connection is still the current one: PeerJS has
+       no way to take them off again, so a replaced connection would otherwise keep
+       feeding the terminal and report its own death as the live one's. */
     _setup_conn(conn) {
         conn.on('data', (data) => {
+            if (this.connection !== conn) { return }
             const decoder = new TextDecoder()
             this.receiveCallback(decoder.decode(data))
             this.activityCallback()
         })
         conn.on('close', () => {
+            if (this.connection !== conn) { return }
             this.disconnectCallback()
         })
         this.connection = conn

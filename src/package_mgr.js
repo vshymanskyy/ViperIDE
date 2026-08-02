@@ -7,7 +7,7 @@
  */
 
 import { fetchJSON, fetchArrayBuffer, splitPath } from './utils.js'
-import { compilePython } from './python_utils.js'
+//import { compilePython } from './python_utils.js'
 
 const MIP_INDEXES = [{
     name: 'featured',
@@ -218,6 +218,11 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
                 if (!prefer_source && fn.endsWith('.py')) {
                     try {
+                        // mpy-cross is a browser wasm bundle, and python_utils.js is the
+                        // only thing here that needs a page - keep it out of the module
+                        // graph so this one stays loadable anywhere. Where it cannot be
+                        // had, the import throws and the .py source is installed as is.
+                        const { compilePython } = await import('./python_utils.js')
                         content = await compilePython(fn, content, dev)
                         fn = fn.replace(/\.py$/, '.mpy')
                     } catch (_err) {

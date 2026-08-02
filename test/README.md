@@ -87,22 +87,21 @@ back altered, content that does not round-trip) fail.
 
 ## How it works
 
-`src/rawmode.js`, `src/fs_cache.js` and `src/zip.js` have no imports and are used
-directly. `src/package_mgr.js` is the one module that cannot be: it imports
-`src/utils.js`, which pulls in toastr and touches `window`/`document` at module scope,
-and `src/python_utils.js`, which pulls in the mpy-cross and ruff wasm bundles. That is
-what `test/shim.js` is for — it reads the source, swaps *only* those two imports for
-Node equivalents, and loads the result as a `data:` module. If an import in `src/` is
-added or renamed, the shim throws with the offending line instead of silently providing
-an undefined name. Give those two modules a Node-loadable form and `shim.js` goes away.
+The point of this suite is to exercise the *real* ViperIDE code that talks to a board, so
+every module under test is imported straight from `src/` — nothing here re-implements or
+rewrites one. That works because the browser-only half of the code is kept in its own
+modules: `src/utils.js` has no imports at all and `src/utils_browser.js` holds everything
+that needs a page. Anything a suite imports has to stay on the portable side of that line.
 
-`mpy-cross` is a browser wasm bundle, so the shimmed `compilePython()` always throws —
-which `package_mgr.js` already treats as "install the `.py` source instead". Precompiled
-`.mpy` files served by an index are still installed as `.mpy`, so that path stays covered.
+`src/package_mgr.js` is the one with a foot in both: `mpy-cross` is a browser wasm bundle,
+so it reaches `src/python_utils.js` through a dynamic import at the point of use. Under
+Node that import throws, which `package_mgr.js` already treats as "install the `.py`
+source instead". Precompiled `.mpy` files served by an index are still installed as
+`.mpy`, so that path stays covered.
 
-Transports are split under `src/transports/`. Browser transports export from
-`src/transports/index.js`; the serial, WebREPL and wasm transports this suite connects
-with come from `src/transports/node.mjs`.
+Transports are split under `src/transports/`. The base class and the WebREPL transport are
+shared with the browser; `src/transports/node.mjs` is the barrel this suite connects
+through, adding the serial and wasm-VM transports that only exist under Node.
 
 ## Layout
 
@@ -110,7 +109,6 @@ with come from `src/transports/node.mjs`.
 test/
   setup.js            options, the target, ctx, skip(), the Chai extensions, root hooks
   board.js            escaping-proof board-side helpers used to set up and verify tests
-  shim.js             loads src/package_mgr.js under Node
   suites/*.js         the tests
 ```
 

@@ -5,7 +5,7 @@
  * Pure Node.js MicroPython WASM transport.
  */
 
-import { Transport } from './node_base.mjs'
+import { Transport } from './base.js'
 
 const MP_PACKAGE = '@micropython/micropython-webassembly-pyscript'
 

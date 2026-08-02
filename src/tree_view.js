@@ -289,7 +289,7 @@ export class TreeView {
 
         const input = document.createElement('input')
         input.type = 'text'
-        input.className = 'tree-rename-input'
+        input.className = 'tree-rename-input' + (node.children ? ' folder-rename-input' : '')
         input.spellcheck = false
         input.autocomplete = 'off'
         input.autocapitalize = 'off'

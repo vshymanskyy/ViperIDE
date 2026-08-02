@@ -25,6 +25,7 @@ import { displayOpenFile, createTab, getTabFileName, getTabEditorElement } from 
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
 import { MpRawMode } from './rawmode.js'
+import { ReplMonitor } from './repl_monitor.js'
 import { getPkgIndexes, rawInstallPkg } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
@@ -36,9 +37,10 @@ import { marked, Renderer as MarkedRenderer } from 'marked'
 import { UAParser } from 'ua-parser-js'
 import * as amplitude from '@amplitude/unified'
 
-import { splitPath, joinPath, sleep, fetchJSON, getUserUID, getScreenInfo, IdleMonitor,
-         getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML, escapeCSS, isRunningStandalone,
-         sizeFmt, indicateActivity, setupTabs, report, readDroppedFiles } from './utils.js'
+import { splitPath, joinPath, sleep, fetchJSON, escapeCSS, sizeFmt, report } from './utils.js'
+import { getUserUID, getScreenInfo, IdleMonitor, getCssPropertyValue, QSA, QS, QID, iOS,
+         sanitizeHTML, isRunningStandalone, indicateActivity, setupTabs,
+         readDroppedFiles } from './utils_browser.js'
 
 import { TreeView, parentDir, TREE_DRAG_TYPE } from './tree_view.js'
 import * as fsCache from './fs_cache.js'
@@ -79,6 +81,15 @@ function getBuildDate() {
 
 const T = i18next.t.bind(i18next)
 
+const isLocalhost = (() => {
+    const host = window.location.hostname
+    return host === 'localhost' ||
+           host.endsWith('.localhost') ||
+           host === '127.0.0.1' ||
+           host === '[::1]' ||
+           host === '::1'
+})()
+
 /*
  * Device Management
  */
@@ -91,39 +102,271 @@ let connType = null
 let draftsRestored = false
 
 /*
- * The single place that reacts to the port going away, however it went. The
- * filesystem cache forgets everything it read off the board, but open editors
- * keep their text and their backups: a cable wobble must not cost unsaved work.
+ * What the device is currently good for:
+ *
+ *   'disconnected'  - no device, or the user asked to let it go
+ *   'busy-initial'  - just connected and not answering; it may be running code,
+ *                     or it may not be a MicroPython board at all
+ *   'busy-running'  - a confirmed board that is running code
+ *   'ready'         - sitting at the REPL, everything enabled
+ *   'reconnecting'  - the connection dropped and is being brought back
+ *
+ * The terminal works in every connected state; the panels that go through raw
+ * mode do not, because entering raw mode interrupts whatever the board is doing.
+ */
+let deviceState = 'disconnected'
+/* Survives a transient drop, so a reconnect does not repeat the welcome toast
+   or re-open main.py over whatever the user is editing */
+let sessionInitialized = false
+let probeInFlight = false
+let reconnectToken = 0
+/* True while the user is letting the device go, so the disconnect callback that
+   the teardown itself triggers is not mistaken for the device dropping out */
+let intentionalDisconnect = false
+
+const isBusyState = () => deviceState === 'busy-initial' || deviceState === 'busy-running'
+const portReady = () => !!port && deviceState === 'ready'
+
+/*
+ * The only place that turns device state into UI: connection buttons, panel
+ * availability, the Run/Stop button and the resets.
+ *
+ * Running a script from the editor is a busy board too - it just happens to be
+ * busy at ViperIDE's own request - so it blocks the same panels. It is tracked
+ * apart from deviceState because the session stays 'ready' throughout: the board
+ * is answering, and raw mode is held rather than lost.
+ */
+function updateDeviceUI() {
+    for (const t of ['ws', 'ble', 'usb']) {
+        const btn = QID(`btn-conn-${t}`)
+        const mine = (t === connType)
+        btn.classList.toggle('connected', mine && (deviceState === 'ready' || isBusyState()))
+        btn.classList.toggle('reconnecting', mine && deviceState === 'reconnecting')
+    }
+
+    /* Raw-mode panels are blocked while the board cannot answer. When simply
+       disconnected, only the file tree is dimmed - and left clickable, since
+       its placeholder doubles as a connect link. */
+    const busy = isBusyState() || isInRunMode
+    const panelsBlocked = busy || deviceState === 'reconnecting'
+    for (const id of ['menu-files', 'menu-pkg', 'menu-tools']) {
+        const el = QID(id)
+        el.classList.toggle('inert', panelsBlocked || (id === 'menu-files' && deviceState === 'disconnected'))
+        el.toggleAttribute('inert', panelsBlocked)
+    }
+
+    /* While anything is running, Run doubles as Stop */
+    QID('btn-run-icon').classList.toggle('fa-circle-stop', busy)
+    QID('btn-run-icon').classList.toggle('fa-circle-play', !busy)
+
+    for (const id of ['btn-reset-soft', 'btn-reset-hard']) {
+        QID(id).disabled = (deviceState === 'reconnecting')
+    }
+}
+
+function setDeviceState(newState) {
+    const prev = deviceState
+    deviceState = newState
+    updateDeviceUI()
+
+    if (newState === 'busy-initial' && prev !== 'busy-initial') {
+        toastr.info('You can interrupt it with ⏹ Stop,<br/>or Ctrl-C in the terminal', 'Device is busy (running code?)')
+        /* The terminal is the only thing that works right now, and the hint above
+           asks for a keystroke - so put the cursor where it is expected. Not on a
+           phone, where taking focus means the on-screen keyboard covers the view. */
+        term?.focus()
+    }
+
+    replMonitor.setWatchPrompt(isBusyState())
+}
+
+function setRunMode(on) {
+    isInRunMode = on
+    updateDeviceUI()
+}
+
+/*
+ * The single place that ends a device session, however it went. The filesystem
+ * cache forgets everything it read off the board, but open editors keep their
+ * text and their backups: losing a device must not cost unsaved work.
  *
  * The file tree is deliberately left on screen rather than reset - it is the
  * last known state of the board, and every action on it already refuses to run
- * without a port. It is only made inert so nothing looks clickable.
+ * without a ready port. It is only made inert so nothing looks clickable.
  */
-function handleDisconnected() {
+function teardownSession() {
+    stopReconnectLoop()
+    /* Whether the user gave up on it or the device is simply gone, nothing is
+       being waited for any more */
+    hideReconnectingToast()
+    if (port) { port.abortReads() }
     port = null
     /* Cleared so the next connection re-reads it, and so anything asking who is
        attached gets an honest answer */
     devInfo = null
     connType = null
     draftsRestored = false
+    sessionInitialized = false
+    replMonitor.reset()
     fsCache.dropDeviceState()
 
-    for (const t of ['ws', 'ble', 'usb']) {
-        QID(`btn-conn-${t}`).classList.remove('connected')
-    }
-    QID('menu-files').classList.add('inert')
+    setDeviceState('disconnected')
     document.dispatchEvent(new CustomEvent("deviceDisconnected"))
 }
 
-async function disconnectDevice() {
-    if (port) {
-        try {
-            await port.disconnect()
-        } catch (err) {
-            console.log(err)
-        }
+/*
+ * The notice stays up for exactly as long as it is true, and is taken down again
+ * once the device is back. Announcing the reconnection on top of that would be
+ * telling the same story twice, and one of the two would still be on screen.
+ */
+let reconnectingToast = null
+
+function showReconnectingToast() {
+    if (reconnectingToast) { return }
+    reconnectingToast = toastr.warning('Connection lost, reconnecting…', undefined, {
+        timeOut: 0,
+        extendedTimeOut: 0,
+    })
+}
+
+function hideReconnectingToast() {
+    if (!reconnectingToast) { return }
+    toastr.clear(reconnectingToast)
+    reconnectingToast = null
+}
+
+/*
+ * The connection died but the transport can bring the same device back without
+ * asking anyone. Session state (devInfo, the cache, open tabs) is deliberately
+ * kept: as far as the user is concerned this is a hiccup, not a goodbye.
+ */
+function handleTransientDrop() {
+    showReconnectingToast()
+    /* Frees anything stuck reading from the dead port, so its transaction ends
+       and the mutex is available by the time the device is back */
+    port.abortReads()
+    setDeviceState('reconnecting')
+    startReconnectLoop()
+}
+
+function handlePortDisconnect() {
+    /* Transports can report the same death more than once; a drop that is already
+       being handled - or was asked for - is not news */
+    if (!port || intentionalDisconnect || deviceState === 'reconnecting') return
+    if (port.canReopen) {
+        handleTransientDrop()
+    } else {
+        toastr.warning('Device disconnected')
+        teardownSession()
     }
-    handleDisconnected()
+}
+
+async function disconnectDevice() {
+    stopReconnectLoop()
+    intentionalDisconnect = true
+    try {
+        if (port) {
+            try {
+                await port.disconnect()
+            } catch (err) {
+                console.log(err)
+            }
+        }
+        teardownSession()
+    } finally {
+        intentionalDisconnect = false
+    }
+}
+
+/*
+ * Retries the same device every half second, forever - a board sitting in the
+ * bootloader or held in reset comes back whenever it comes back. Only the user
+ * stops this, by clicking the connection button. reopen() is used rather than a
+ * fresh connect: it needs no permission prompt, and disconnect() is never called
+ * here because WebSerial's revokes the permission itself.
+ */
+async function startReconnectLoop() {
+    const p = port
+    const token = ++reconnectToken
+    while (token === reconnectToken) {
+        try {
+            await p.reopen()
+        } catch (_err) {
+            await sleep(500)
+            continue
+        }
+        if (token !== reconnectToken) {
+            /* The user let the device go while reopen was in flight */
+            try { await p.disconnect() } catch (_err) { /* already gone */ }
+            return
+        }
+        hideReconnectingToast()
+        /* Out of 'reconnecting' before probing: to the init code that state means
+           "a newer drop took this session over", and it would abandon it. It also
+           puts the terminal back in business right away - the board decides
+           between busy and ready from here. */
+        setDeviceState(devInfo ? 'busy-running' : 'busy-initial')
+        await initDeviceSession()
+        return
+    }
+}
+
+function stopReconnectLoop() {
+    reconnectToken++
+}
+
+/*
+ * Fed everything the terminal sees: raw-mode transactions swap the receive
+ * callback away, so only free-running board output passes through here.
+ */
+const replMonitor = new ReplMonitor({
+    onSoftReset: onSoftResetDetected,
+    onPromptSettled: onPromptSettled,
+})
+
+/*
+ * The board said 'soft reboot' on its own channel. boot.py and main.py have run
+ * (or are still running), so the listing is suspect either way - and the board
+ * may have gone busy, or come back from it.
+ */
+async function onSoftResetDetected() {
+    fsCache.deviceMayHaveChanged()
+    _rerenderFileTree()
+
+    if (probeInFlight || !port || isInRunMode || port.inTransaction) return
+    probeInFlight = true
+    try {
+        /* A moment for main.py to either finish or settle into running */
+        await sleep(300)
+        if (!port || deviceState === 'reconnecting' || port.inTransaction) return
+        const responding = await MpRawMode.probeRepl(port)
+        if (!port || deviceState === 'reconnecting') return
+        if (responding) {
+            if (isBusyState()) { await completeDeviceInit() }
+        } else {
+            setDeviceState(devInfo ? 'busy-running' : 'busy-initial')
+        }
+    } finally {
+        probeInFlight = false
+    }
+}
+
+/*
+ * A busy board showed a prompt and then stayed quiet on it: the program exited,
+ * or the user interrupted it. One cheap probe confirms it is really listening -
+ * a false alarm costs the program a single Enter on stdin.
+ */
+async function onPromptSettled() {
+    if (probeInFlight || !port || !isBusyState() || isInRunMode || port.inTransaction) return
+    probeInFlight = true
+    try {
+        const responding = await MpRawMode.probeRepl(port, 1500)
+        if (responding && port && deviceState !== 'reconnecting' && isBusyState()) {
+            await completeDeviceInit()
+        }
+    } finally {
+        probeInFlight = false
+    }
 }
 
 let defaultWsURL = 'ws://192.168.1.123:8266'
@@ -175,7 +418,7 @@ async function prepareNewPort(type) {
             new_port.onPasswordRequest(async () => {
                 /* A board that rebooted asks again, and a dialog nobody opened would
                    be a strange way to find out. The board says if it is wrong. */
-                // TODO: if (reconnecting && defaultWsPass) { return defaultWsPass }
+                if (deviceState === 'reconnecting' && defaultWsPass) { return defaultWsPass }
                 const pass = prompt('WebREPL password:', defaultWsPass)
                 if (pass == null) { return }
                 if (pass.length < 4) {
@@ -240,9 +483,20 @@ async function prepareNewPort(type) {
     return new_port
 }
 
+function wirePort(new_port) {
+    new_port.onActivity(indicateActivity)
+    new_port.onReceive((data) => {
+        term.write(data)
+        replMonitor.feed(data)
+    })
+    new_port.onDisconnect(handlePortDisconnect)
+}
+
 export async function connectDevice(type) {
     if (port) {
-        if (!confirm('Disconnect current device?')) { return }
+        const msg = (deviceState === 'reconnecting') ? 'Stop reconnecting and disconnect?'
+                                                     : 'Disconnect current device?'
+        if (!confirm(msg)) { return }
         await disconnectDevice()
         return
     }
@@ -259,30 +513,51 @@ export async function connectDevice(type) {
 
     port = new_port
     connType = type
-
-    port.onActivity(indicateActivity)
-
-    port.onReceive((data) => {
-        term.write(data)
-    })
-
-    port.onDisconnect(() => {
-        toastr.warning('Device disconnected')
-        handleDisconnected()
-    })
-
-    QID(`btn-conn-${type}`).classList.add('connected')
-    QID('menu-files').classList.remove('inert')
+    wirePort(port)
 
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
-    if (getSetting('interrupt-running-code')) {
-        // TODO: detect WDT and disable it temporarily
+    await initDeviceSession()
+}
 
-        const raw = await MpRawMode.begin(port)
-        try {
-            await _raw_ensureDevInfo(raw)
+/*
+ * Shared by the initial connection and every successful reconnect: ask - without
+ * disturbing anything - whether the board is listening, and either bring the
+ * session fully up or settle into a busy state for the ReplMonitor to resolve
+ * once a prompt shows up. Interrupting a board that did not answer is opt-in.
+ */
+async function initDeviceSession() {
+    let responding = false
+    try {
+        responding = await MpRawMode.probeRepl(port)
+    } catch (_err) {
+        /* A probe that failed outright gets the same answer as one that timed out */
+    }
+    if (!port || deviceState === 'reconnecting') return
 
+    if (responding || getSetting('interrupt-running-code')) {
+        await completeDeviceInit()
+    } else {
+        setDeviceState(devInfo ? 'busy-running' : 'busy-initial')
+    }
+}
+
+/*
+ * Brings a listening board all the way up: raw mode (which interrupts whatever
+ * may still be running), device info, file tree. The first pass of a session
+ * additionally greets the user and auto-opens main.py - a reconnect, or a busy
+ * board waking up, skips the ceremony and lands straight back in 'ready'.
+ */
+async function completeDeviceInit() {
+    // TODO: detect WDT and disable it temporarily
+    const firstTime = !sessionInitialized
+    let ok = false
+    let raw = null
+    try {
+        raw = await MpRawMode.begin(port)
+        await _raw_ensureDevInfo(raw)
+
+        if (firstTime) {
             toastr.success(sanitizeHTML(devInfo.machine + '\n' + devInfo.version), 'Device connected')
             analytics.track('Device Connected', devInfo)
             console.log('Device info', devInfo)
@@ -292,30 +567,48 @@ export async function connectDevice(type) {
                 analytics.track('Quick Install Completed', { url: window.pkg_install_url })
                 window.pkg_install_url = null
             }
+        }
 
-            await _raw_updateFileTree(raw)
+        await _raw_updateFileTree(raw)
 
+        if (firstTime) {
             if        (fsCache.has('/main.py')) {
                 await _raw_loadFile(raw, '/main.py')
             } else if (fsCache.has('/code.py')) {
                 await _raw_loadFile(raw, '/code.py')
             }
-            document.dispatchEvent(new CustomEvent("deviceConnected", {detail: {port: port}}))
-
-        } catch (err) {
-            if (err.message.includes('Timeout')) {
-                report('Device is not responding', new Error(`Ensure that:\n- You're using a recent version of MicroPython\n- The correct device is selected`))
-            } else {
-                report('Error reading device info', err)
-            }
-        } finally {
+        }
+        sessionInitialized = true
+        ok = true
+    } catch (err) {
+        if (deviceState === 'reconnecting') {
+            /* The port dropped out from under the init - the reconnect already
+               owns the story, an error toast on top would only confuse */
+        } else if (err.message.includes('Timeout') || err.message.includes('not responding')) {
+            report('Device is not responding', new Error(`Ensure that:\n- You're using a recent version of MicroPython\n- The correct device is selected`))
+        } else {
+            report('Error reading device info', err)
+        }
+    } finally {
+        if (raw) {
             try { await raw.end() } catch (_err) { /* device may have disconnected */ }
         }
-        // Print banner. TODO: optimize
+    }
+
+    if (!port || deviceState === 'reconnecting') return
+
+    if (ok) {
+        if (firstTime) {
+            document.dispatchEvent(new CustomEvent("deviceConnected", {detail: {port: port}}))
+        }
+        /* Print banner. TODO: optimize
+           Ctrl-B answers with the same greeting a board gives after restarting,
+           so the monitor is told to expect one rather than read it as news. */
+        replMonitor.expectBanner()
         await port.write('\x02')
+        setDeviceState('ready')
     } else {
-        toastr.success('Device connected')
-        analytics.track('Device Connected')
+        setDeviceState(devInfo ? 'busy-running' : 'busy-initial')
     }
 }
 
@@ -330,7 +623,7 @@ const openFiles = new Set()
 let selectedFn = null
 
 export async function refreshFileTree() {
-    if (!port) return;
+    if (!portReady()) return;
     const raw = await MpRawMode.begin(port)
     try {
         await _raw_updateFileTree(raw)
@@ -340,7 +633,7 @@ export async function refreshFileTree() {
 }
 
 export async function createNewFile(path) {
-    if (!port) return;
+    if (!portReady()) return;
     const fn = prompt(`Creating new file inside ${path}\n` +
                       `Please enter the name.\n` +
                       `\n` +
@@ -374,7 +667,7 @@ export async function createNewFile(path) {
 }
 
 export async function removeFile(path) {
-    if (!port) return;
+    if (!portReady()) return;
     if (!confirm(`Remove ${path}?`)) return
     const raw = await MpRawMode.begin(port)
     try {
@@ -388,7 +681,7 @@ export async function removeFile(path) {
 }
 
 export async function removeDir(path) {
-    if (!port) return;
+    if (!portReady()) return;
     const inside = fsCache.countUnder(path)
     if (!confirm(inside ? `Remove ${path} and the ${inside} item(s) inside it?`
                         : `Remove ${path}?`)) return
@@ -405,7 +698,7 @@ export async function removeDir(path) {
 
 /* Moves a file or folder into another folder of the same device */
 export async function moveToDir(src, dstDir) {
-    if (!port) return;
+    if (!portReady()) return;
     const [_dirname, name] = splitPath(src)
     const dst = joinPath(dstDir, name)
     if (dst === src) return
@@ -421,7 +714,7 @@ const fileExt = (name) => {
    (or creates) another folder along the way - allowed, but confirmed, since
    it is easy to type by accident while editing a name in place. */
 export async function renamePath(src, newName) {
-    if (!port) return;
+    if (!portReady()) return;
     const [dirname, oldName] = splitPath(src)
     if (newName === oldName) return
 
@@ -470,7 +763,7 @@ async function _movePath(src, dst, dstDir, { makesPath = false } = {}) {
 async function uploadDroppedFiles(dataTransfer, dstDir) {
     const dropped = await readDroppedFiles(dataTransfer)
     if (!dropped.length) return
-    if (!port) {
+    if (!portReady()) {
         toastr.info('Connect your device first')
         return
     }
@@ -594,7 +887,7 @@ function stageBytes(path, bytes, gen) {
 function prepareDownload(node) {
     if (fsCache.stagedFor(node.path)) return Promise.resolve()
     if (downloadsInFlight.has(node.path)) return downloadsInFlight.get(node.path)
-    if (!port) return Promise.reject(new Error('No device connected'))
+    if (!portReady()) return Promise.reject(new Error('No device connected'))
 
     const task = (async () => {
         // A refresh landing while the bytes are on the wire makes them useless,
@@ -816,10 +1109,9 @@ function _updateFileTree(fs_tree, fs_stats)
         drag: true,
         move: false,
         meta: `${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}`,
-        classes: listingStale ? ['conflict'] : [],
         actions: [
             { action: 'create',  title: 'Create',  icon: 'fa-solid fa-plus' },
-            { action: 'refresh', title: 'Refresh', icon: 'fa-solid fa-arrows-rotate' },
+            { action: 'refresh', title: 'Refresh', icon: `fa-solid fa-arrows-rotate${listingStale ? ' fs-stale' : ''}` },
         ],
         children: treeNodes(fs_tree),
     }
@@ -931,8 +1223,11 @@ async function _raw_updateFileTree(raw) {
  * works is after the running code ended or was interrupted by hand.
  */
 async function _raw_ensureDevInfo(raw) {
-    if (devInfo) return devInfo
+    if (devInfo) {
+        return devInfo
+    }
     devInfo = Object.assign(await raw.getDeviceInfo(), { connection: connType })
+    port?.setDeviceInfo(devInfo)
     const { ambiguous } = fsCache.setDevice(devInfo, connType)
     console.log(`Unsaved-file backups are ${ambiguous ? 'shared by boards like this one' : 'per board'}`)
     return devInfo
@@ -995,7 +1290,7 @@ function makeCoalesced(ms) {
 }
 
 export async function fileClick(fn) {
-    if (!port) return;
+    if (!portReady()) return;
 
     const raw = await MpRawMode.begin(port)
     try {
@@ -1043,7 +1338,7 @@ export async function pyPrettify() {
    the resulting .mpy alongside it - two writes, so the source on the device
    always matches what was compiled. */
 export async function saveAndCompile() {
-    if (!port) return;
+    if (!portReady()) return;
     if (!editor) return;
     if (!editorFn.endsWith('.py')) {
         toastr.info(`Please open a Python file`)
@@ -1087,7 +1382,7 @@ export async function showDisassembly() {
         fn = editorFn
         let bytes = fsCache.peek(fn)
         if (!bytes) {
-            if (!port) {
+            if (!portReady()) {
                 toastr.warning('Device disconnected')
                 return
             }
@@ -1355,7 +1650,7 @@ async function _loadContent(fn, content, editorElement) {
 }
 
 export async function saveCurrentFile() {
-    if (!port) return;
+    if (!portReady()) return;
     if (!editor) return;
 
     if (editor.state.readOnly) {
@@ -1450,7 +1745,9 @@ async function deviceRanCode({ mayRefresh = false } = {}) {
 }
 
 export async function reboot(mode = 'hard') {
-    if (!port) return;
+    /* Deliberately allowed while busy - a soft reset is one way out of it -
+       but not while the port itself is gone */
+    if (!port || deviceState === 'reconnecting') return;
 
     const release = await port.startTransaction()
     try {
@@ -1469,10 +1766,12 @@ export async function reboot(mode = 'hard') {
 }
 
 export async function runCurrentFile() {
-    if (!port) return;
+    if (!port || deviceState === 'reconnecting') return;
 
-    if (isInRunMode) {
-        await port.write('\r\x03\x03')   // Ctrl-C twice: interrupt any running program
+    if (isInRunMode || isBusyState()) {
+        /* Ctrl-C twice: interrupt any running program. When busy, the ReplMonitor
+           notices the prompt coming back and finishes the wake-up. */
+        await port.write('\r\x03\x03')
         return
     }
 
@@ -1487,8 +1786,7 @@ export async function runCurrentFile() {
     const timeout = -1
     const raw = await MpRawMode.begin(port, soft_reboot)
     try {
-        QID('btn-run-icon').classList.replace('fa-circle-play', 'fa-circle-stop')
-        isInRunMode = true
+        setRunMode(true)
         const emit = true
         await sleep(10)
         await raw.exec(editor.state.doc.toString(), timeout, emit)
@@ -1506,8 +1804,7 @@ export async function runCurrentFile() {
     } finally {
         port.emit = false
         try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-        QID('btn-run-icon').classList.replace('fa-circle-stop', 'fa-circle-play')
-        isInRunMode = false
+        setRunMode(false)
         term.write('\r\n>>> ')
         await deviceRanCode({ mayRefresh: true })
     }
@@ -1585,7 +1882,7 @@ async function _raw_installPkg(raw, pkg, { version=null } = {}) {
 }
 
 export async function installPkg(pkg, { version=null } = {}) {
-    if (!port) {
+    if (!portReady()) {
         toastr.info('Connect yout device first')
         return
     }
@@ -1601,7 +1898,7 @@ export async function installPkg(pkg, { version=null } = {}) {
 }
 
 export async function installPkgFromUrl() {
-    if (!port) {
+    if (!portReady()) {
         toastr.info('Connect yout device first')
         return
     }
@@ -1838,80 +2135,87 @@ function showOfflineReadyToast(version) {
         applyTranslation()
     })
 
-    amplitude.initAll('ee23cab1415ee70b31a694db17aebcb8', {
-        analytics: { autocapture: false }
-    })
+    if (isLocalhost) {
+        window.analytics = {
+            track: function() {},
+            identify: function() {},
+        }
+    } else {
+        amplitude.initAll('ee23cab1415ee70b31a694db17aebcb8', {
+            analytics: { autocapture: false }
+        })
 
-    window.analytics = {
-        track: (eventName, properties) => amplitude.track(eventName, properties),
-        identify: (userId, traits) => {
-            amplitude.setUserId(userId)
-            if (traits) {
-                const id = new amplitude.Identify()
-                for (const [key, value] of Object.entries(traits)) {
-                    id.set(key, value)
+        window.analytics = {
+            track: (eventName, properties) => amplitude.track(eventName, properties),
+            identify: (userId, traits) => {
+                amplitude.setUserId(userId)
+                if (traits) {
+                    const id = new amplitude.Identify()
+                    for (const [key, value] of Object.entries(traits)) {
+                        id.set(key, value)
+                    }
+                    amplitude.identify(id)
                 }
-                amplitude.identify(id)
             }
         }
-    }
 
-    try {
-        const ua = new UAParser()
-        const scr = getScreenInfo()
-
-        let tz
         try {
-            tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-        } catch (_e) {
-            tz = (new Date()).getTimezoneOffset()
+            const ua = new UAParser()
+            const scr = getScreenInfo()
+
+            let tz
+            try {
+                tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+            } catch (_e) {
+                tz = (new Date()).getTimezoneOffset()
+            }
+
+            //console.log(ua.getResult())
+            //console.log(scr)
+
+            const userUID = getUserUID()
+
+            analytics.identify(userUID, {
+                //email: userUID.split('-').pop() + '@vip.er',
+                version: VIPER_IDE_VERSION,
+                build: getBuildDate(),
+                browser: ua.getBrowser().name,
+                browser_version: ua.getBrowser().version,
+                os: ua.getOS().name,
+                os_version: ua.getOS().version,
+                cpu: ua.getCPU().architecture,
+                pwa: isRunningStandalone(),
+                screen: scr.width + 'x' + scr.height,
+                orientation: scr.orientation,
+                dpr: scr.dpr,
+                dpi: QID('dpi-ruler').offsetHeight,
+                lang: currentLang,
+                //location: geo.latitude + ',' + geo.longitude,
+                //continent: geo.continent,
+                //country: geo.countryName,
+                //region: geo.regionName,
+                //city: geo.cityName,
+                tz: tz,
+            })
+
+            analytics.track('Visit', {
+                url: window.location.href,
+                referrer: document.referrer,
+            })
+
+            const idleMonitor = new IdleMonitor(3*60*1000)
+
+            idleMonitor.setIdleCallback(() => {
+                analytics.track('User Idle')
+            })
+
+            idleMonitor.setActiveCallback(() => {
+                analytics.track('User Active')
+            })
+
+        } catch (_err) {
+            // analytics user enrichment failed; base tracking via amplitude still active
         }
-
-        //console.log(ua.getResult())
-        //console.log(scr)
-
-        const userUID = getUserUID()
-
-        analytics.identify(userUID, {
-            //email: userUID.split('-').pop() + '@vip.er',
-            version: VIPER_IDE_VERSION,
-            build: getBuildDate(),
-            browser: ua.getBrowser().name,
-            browser_version: ua.getBrowser().version,
-            os: ua.getOS().name,
-            os_version: ua.getOS().version,
-            cpu: ua.getCPU().architecture,
-            pwa: isRunningStandalone(),
-            screen: scr.width + 'x' + scr.height,
-            orientation: scr.orientation,
-            dpr: scr.dpr,
-            dpi: QID('dpi-ruler').offsetHeight,
-            lang: currentLang,
-            //location: geo.latitude + ',' + geo.longitude,
-            //continent: geo.continent,
-            //country: geo.countryName,
-            //region: geo.regionName,
-            //city: geo.cityName,
-            tz: tz,
-        })
-
-        analytics.track('Visit', {
-            url: window.location.href,
-            referrer: document.referrer,
-        })
-
-        const idleMonitor = new IdleMonitor(3*60*1000)
-
-        idleMonitor.setIdleCallback(() => {
-            analytics.track('User Idle')
-        })
-
-        idleMonitor.setActiveCallback(() => {
-            analytics.track('User Active')
-        })
-
-    } catch (_err) {
-        // analytics user enrichment failed; base tracking via amplitude still active
     }
 
     onSettingChange('zoom', function(newValue) {
@@ -1964,7 +2268,9 @@ function showOfflineReadyToast(version) {
     })
     term.open(QID('xterm'))
     term.onData(async (data) => {
-        if (!port) return;
+        /* Typing into a port that is being brought back would only produce
+           write-error toasts */
+        if (!port || deviceState === 'reconnecting') return;
         if (isInRunMode) {
             // Allow injecting input in run mode
             await port.write(data)
@@ -2136,7 +2442,7 @@ async function checkForUpdates() {
         return
     }
     if (current_version.localeCompare(manifest.version, undefined, {numeric: true, sensitivity: "base"}) < 0) {
-        toastr.info(`New ViperIDE version ${manifest.version} is available`)
+        toastr.info("New version available.<br/>Refresh the page to update.", `ViperIDE ${manifest.version}`)
         QID('viper-ide-version').innerHTML = `${current_version} (<a href="javascript:app.updateApp()">update</a>)`
 
         // Automatically show about page

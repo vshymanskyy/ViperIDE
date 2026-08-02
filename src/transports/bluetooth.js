@@ -10,6 +10,7 @@ const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
 const NUS_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'       // Write or Write Without Response
 const NUS_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'       // Notify
 const NUS_TX_LIMIT = 20
+const NUS_TX_LIMIT_FAST = 241
 
 const ADA_NUS_SERVICE = 'adaf0001-4369-7263-7569-74507974686e'
 const ADA_NUS_TX = 'adaf0002-4369-7263-7569-74507974686e'   // Write or Write Without Response
@@ -23,6 +24,20 @@ const CH9143_TX = '0000fff2-0000-1000-8000-00805f9b34fb'    // Write or Write Wi
 const CH9143_RX = '0000fff1-0000-1000-8000-00805f9b34fb'    // Notify
 const CH9143_CTRL = '0000fff3-0000-1000-8000-00805f9b34fb'  // Read / Write
 const CH9143_TX_LIMIT = 20
+
+function isFastNusDevice(deviceInfo) {
+    const id = [
+        deviceInfo?.machine,
+        deviceInfo?.sysname,
+        deviceInfo?.version,
+    ].filter(Boolean).join(' ').toLowerCase()
+    return /esp32|nrf52/.test(id)
+}
+
+function isGattDisconnectedError(err) {
+    return err?.name === 'NetworkError' &&
+           /GATT Server is disconnected|Cannot perform GATT operations|device\.gatt\.connect/i.test(err.message || '')
+}
 
 export class WebBluetooth extends Transport {
     constructor() {
@@ -38,9 +53,28 @@ export class WebBluetooth extends Transport {
         super.writeChunk = 20
         this.decoderStream = null
         this.reader = null
+        this.rxListener = null
         /* The device object outlives the GATT link, and reconnecting to it needs no
            picker - only requestDevice() does. */
         this.canReopen = true
+    }
+
+    setDeviceInfo(deviceInfo) {
+        if (this.service.uuid === NUS_SERVICE) {
+            if (isFastNusDevice(deviceInfo)) {
+                if (super.writeChunk !== NUS_TX_LIMIT_FAST) {
+                    console.log('Fast NUS device - increasing write chunk size')
+                    super.writeChunk = NUS_TX_LIMIT_FAST
+                }
+            }
+        }
+    }
+
+    handleWriteError(err) {
+        if (!isGattDisconnectedError(err)) { return false }
+        this.abortReads()
+        this.disconnectCallback()
+        return true
     }
 
     async requestAccess() {
@@ -119,22 +153,41 @@ export class WebBluetooth extends Transport {
             throw new Error('No compatible NUS service found')
         }
 
-        this.decoderStream = new TextDecoderStream()
-        this.reader = this.decoderStream.readable.getReader()
-        const writer = this.decoderStream.writable.getWriter()
+        const decoderStream = new TextDecoderStream()
+        const reader = decoderStream.readable.getReader()
+        const writer = decoderStream.writable.getWriter()
 
+        this.decoderStream = decoderStream
+        this.reader = reader
+
+        /* Notifications arrive on the characteristic, which a reconnection replaces -
+           but the listener would outlive it and keep feeding a stream nobody reads.
+           Kept here so _dropStream() can take it off again. */
+        const onRxValue = (ev) => {
+            /* The stream is aborted before the listener comes off, so a notification
+               already in flight has nowhere to go. That is not an error. */
+            writer.write(ev.target.value).catch(() => {})
+        }
+        this.rxListener = { char: this.rx, fn: onRxValue }
+        this.rx.addEventListener('characteristicvaluechanged', onRxValue)
+
+        /* Reads go through this connection's own reader, never this.reader: a loop
+           still winding down from a previous link must not touch the current one. */
         const processStream = async () => {
-            while (this.device.gatt.connected) {
-                const { value, done } = await this.reader.read()
-                if (done) break
-                this.receiveCallback(value)
-                this.activityCallback()
+            try {
+                while (true) {
+                    const { value, done } = await reader.read()
+                    if (done) break
+                    this.receiveCallback(value)
+                    this.activityCallback()
+                }
+            } catch (_err) {
+                /* The link went away mid-read; the device reports that itself */
+            } finally {
+                try { reader.releaseLock() } catch (_err) { /* already gone */ }
             }
         }
 
-        this.rx.addEventListener('characteristicvaluechanged', (ev) => {
-            writer.write(ev.target.value)
-        })
         await this.rx.startNotifications()
         processStream()
     }
@@ -151,6 +204,12 @@ export class WebBluetooth extends Transport {
     }
 
     async _dropStream() {
+        if (this.rxListener) {
+            try {
+                this.rxListener.char.removeEventListener('characteristicvaluechanged', this.rxListener.fn)
+            } catch (_err) { /* the characteristic went with the link */ }
+            this.rxListener = null
+        }
         if (this.reader) {
             try { await this.reader.cancel() } catch (_err) { /* link already gone */ }
             try { this.reader.releaseLock() } catch (_err) { /* already released */ }

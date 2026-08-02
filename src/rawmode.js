@@ -6,37 +6,21 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
-// Renders a JS string as a single-quoted Python string literal, so it can be safely
-// spliced into generated Python source (filenames/paths may contain ' or \).
-function pyStr(s) {  // reprStr
-  //const quote = s.includes("'") && !s.includes('"') ? '"' : "'";
-  const quote = "'";
-  const NONPRINTABLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}\p{Zs}]/u;
-  let out = quote;
-  for (const ch of String(s)) {
-    if (ch === '\\') out += '\\\\';
-    else if (ch === quote) out += '\\' + quote;
-    else if (ch === '\n') out += '\\n';
-    else if (ch === '\r') out += '\\r';
-    else if (ch === '\t') out += '\\t';
-    else if (ch !== ' ' && NONPRINTABLE.test(ch)) {
-      const cp = ch.codePointAt(0);
-      if (cp < 0x100) out += '\\x' + cp.toString(16).padStart(2, '0');
-      else if (cp < 0x10000) out += '\\u' + cp.toString(16).padStart(4, '0');
-      else out += '\\U' + cp.toString(16).padStart(8, '0');
-    } else out += ch;
-  }
-  return out + quote;
-}
+import { sleep } from './utils.js'
+import { reprStr as pyStr } from './python_utils.js'
 
 /*
  * What a board prints when the interpreter restarts: MicroPython says
  * 'MPY: soft reboot', CircuitPython just 'soft reboot'. Anchored to a line of its own -
  * a false positive only costs one extra probe, but not none at all.
+ *
+ * The friendly-REPL greeting counts too. A board reset by its own button, or by
+ * machine.reset() over a serial bridge that outlives it, comes back without ever
+ * saying 'soft reboot' - but it always introduces itself. Ctrl-B prints the same
+ * greeting on request, so whoever asks for it has to expect one back.
  */
-export const SOFT_RESET_BANNER = /(^|[\r\n])(MPY: )?soft reboot\r?\n/
+export const SOFT_RESET_BANNER =
+    /(^|[\r\n])((MPY: )?soft reboot|Type "help\(\)" for more information\.)\r?\n/
 
 export class MpRawMode {
     constructor(port) {
@@ -64,25 +48,36 @@ export class MpRawMode {
      * arrives, so a program printing in a loop would keep the probe waiting forever.
      * This deadline is hard.
      */
-    static async probeRepl(port, timeout=3000) {
+    static async probeRepl(port, timeout=1500) {
         const release = await port.startTransaction()
+        const wasEmitting = port.emit
         try {
             // The space is important, newline is not enough sometimes
             await port.write(' \r')
             const endTime = Date.now() + timeout
+            /* A board at the prompt answers within a poll or two, and what comes
+               back is the echo of the Enter above - ours, not the user's, so it is
+               kept off the terminal. A board that keeps the probe waiting is a
+               board that is running, and everything it prints belongs on the
+               terminal as it arrives rather than in one lump seconds later. */
+            const showFrom = Date.now() + 300
             while (Date.now() < endTime) {
                 if (port.receivedData.includes('>>> ')) {
-                    await port.flushInput()   // the prompt we asked for is not board output
                     return true
+                }
+                if (!port.emit && Date.now() > showFrom) {
+                    port.emit = true
+                    if (port.prevRecvCbk) { port.prevRecvCbk(port.receivedData) }
                 }
                 await sleep(100)
             }
-            /* Whatever the program printed meanwhile is deliberately left in the
-               buffer: the transaction hands it to the terminal on release, so the
-               user sees it - and a prompt that arrived just too late still gets
-               noticed downstream. */
             return false
         } finally {
+            /* Anything shown has already reached the terminal, and the prompt the
+               probe asked for is not board output: either way the buffer must not
+               be handed over when the transaction ends. */
+            try { await port.flushInput() } catch (_err) { /* transaction is gone */ }
+            port.emit = wasEmitting
             release()
         }
     }

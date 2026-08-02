@@ -164,20 +164,35 @@ button:disabled {
     cursor: default;
 }
 
-/* Inactive panels should feel visually detached from the active UI, while still
-   keeping their content readable. */
-:where([inert], .inert) {
+/*
+ * Inactive panels should feel visually detached from the active UI, while still
+ * keeping their content readable.
+ *
+ * Only opacities change, and both of them are declared on either side of the
+ * switch: a pseudo-element that comes and goes along with the selector has nothing
+ * to fade, and a property that exists in one state only cannot be transitioned
+ * back. The stacking context is set up here rather than with the state, so
+ * becoming inert does not rebuild it mid-transition.
+ */
+#menu-files,
+#menu-pkg,
+#menu-tools {
     position: relative;
     isolation: isolate;
-    overflow: hidden;
+    opacity: 1;
+    transition: opacity var(--animation);
 }
 
-:where([inert], .inert)::before {
+#menu-files::before,
+#menu-pkg::before,
+#menu-tools::before {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 0;
+    opacity: 0;
+    transition: opacity var(--animation);
     background-image: repeating-linear-gradient(
         135deg,
         rgba(255, 255, 255, 0.08) 0,
@@ -190,18 +205,20 @@ button:disabled {
     mix-blend-mode: screen;
 }
 
-:where([inert], .inert) > * {
+/* The hatching is painted behind the content it covers */
+#menu-files > *,
+#menu-pkg > *,
+#menu-tools > * {
     position: relative;
     z-index: 1;
 }
 
-#menu-files[inert],
-#menu-files.inert,
-#menu-pkg[inert],
-#menu-pkg.inert,
-#menu-tools[inert],
-#menu-tools.inert {
+:is(#menu-files, #menu-pkg, #menu-tools):is([inert], .inert) {
     opacity: 0.4;
+}
+
+:is(#menu-files, #menu-pkg, #menu-tools):is([inert], .inert)::before {
+    opacity: 1;
 }
 
 select {

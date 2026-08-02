@@ -1,4 +1,4 @@
-import { QID } from './utils.js'
+import { QID } from './utils_browser.js'
 
 
 const settingsElement = QID("menu-settings")

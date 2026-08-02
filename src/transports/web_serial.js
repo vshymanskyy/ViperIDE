@@ -40,18 +40,29 @@ export class WebSerial extends Transport {
         await this.port.open({ baudRate: 115200 })
 
         const decoderStream = new TextDecoderStream()
-        this.readableStreamClosed = this.port.readable.pipeTo(decoderStream.writable)
+        const streamClosed = this.port.readable.pipeTo(decoderStream.writable)
         /* A device that is unplugged errors its readable rather than ending it, and
            this promise is only awaited while tearing down: marked handled here so it
            cannot surface as an unhandled rejection in the meantime. */
-        this.readableStreamClosed.catch(() => {})
-        this.reader = decoderStream.readable.getReader()
-        this.writer = this.port.writable.getWriter()
+        streamClosed.catch(() => {})
+        const reader = decoderStream.readable.getReader()
+        const writer = this.port.writable.getWriter()
 
+        this.readableStreamClosed = streamClosed
+        this.reader = reader
+        this.writer = writer
+
+        /*
+         * Everything below works off the reader this connection created, never off
+         * this.reader: a reconnection replaces that field, and a loop still winding
+         * down from the previous one would otherwise release the lock the new one is
+         * reading through - leaving a port that can be written to but never answers.
+         */
         const processStream = async () => {
             try {
                 while (true) {
-                    const { value, done } = await this.reader.read()
+                    const { value, done } = await reader.read()
+                    console.log(done, value)
                     if (done) { break }
                     this.receiveCallback(value)
                     this.activityCallback()
@@ -60,8 +71,11 @@ export class WebSerial extends Transport {
                 /* The device went away mid-read. Reading does not end cleanly then -
                    it throws - which is just as much a disconnect as `done` is. */
             } finally {
-                try { this.reader.releaseLock() } catch (_err) { /* already gone */ }
-                this.disconnectCallback()
+                try { reader.releaseLock() } catch (_err) { /* already gone */ }
+                /* Only the current stream speaks for the device. An older one ending
+                   means a teardown or a reconnection has already happened, and saying
+                   the device is gone would undo it. */
+                if (this.reader === reader) { this.disconnectCallback() }
             }
         }
         processStream()
@@ -89,7 +103,12 @@ export class WebSerial extends Transport {
         await this._teardown()
         try {
             await this.connect()
+            return
         } catch (err) {
+            /* An attempt that got as far as opening the port leaves a reader and a
+               half-built stream behind, and a second connect() on top of those is how
+               two loops end up fighting over one port. */
+            await this._teardown()
             /* Chrome hands back the same SerialPort object when a device re-enumerates,
                but the polyfill's USBDevice does not survive it. The permission is still
                granted either way, so the port can be picked out of the granted list
@@ -97,8 +116,8 @@ export class WebSerial extends Transport {
             const granted = await this._findGranted()
             if (!granted) { throw err }
             this.port = granted
-            await this.connect()
         }
+        await this.connect()
     }
 
     async _findGranted() {

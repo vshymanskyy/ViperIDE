@@ -5,29 +5,10 @@
  * Pure Node.js serial transport.
  */
 
-import { Transport } from './node_base.mjs'
-
-const ROOT = new URL('../..', import.meta.url)
-
-async function loadSerialPort() {
-    // Prefer a top-level install, fall back to the one the MCP server depends on.
-    try {
-        return (await import('serialport')).SerialPort
-    } catch (_err) { /* not installed at the root */ }
-
-    try {
-        const { createRequire } = await import('node:module')
-        const { pathToFileURL } = await import('node:url')
-        const require = createRequire(new URL('mcp/package.json', ROOT))
-        const mod = await import(pathToFileURL(require.resolve('serialport')).href)
-        return mod.SerialPort || mod.default?.SerialPort
-    } catch (_err) { /* not installed for the MCP server either */ }
-    throw new Error('The serial target needs node-serialport: npm install --no-save serialport')
-}
+import { Transport } from './base.js'
+import { SerialPort } from 'serialport'
 
 export async function makeSerialTransport(devicePath, baudRate = 115200) {
-    const SerialPort = await loadSerialPort()
-
     class NodeSerial extends Transport {
         constructor(devPath, baud) {
             super()
@@ -76,6 +57,5 @@ export async function makeSerialTransport(devicePath, baudRate = 115200) {
 }
 
 export async function listSerialPorts() {
-    const SerialPort = await loadSerialPort()
     return await SerialPort.list()
 }

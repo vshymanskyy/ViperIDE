@@ -377,6 +377,7 @@ async function connectDevice(type) {
     try {
         const devinfo = await raw.getDeviceInfo()
         Object.assign(devinfo, { connection: type })
+        port.setDeviceInfo(devinfo)
         log(JSON.stringify(devinfo) + '\n')
 
         if (QID('test-fs').checked) {

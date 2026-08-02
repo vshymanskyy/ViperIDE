@@ -13,11 +13,10 @@
 import { ctx, skip, skipSuite } from '../setup.js'
 import { assert } from 'chai'
 import { withRaw, statPath, exists, listNames, listTree, mkdirp, rmTree, pyPath } from '../board.js'
-import { loadPackageMgr } from '../shim.js'
+import * as pm from '../../src/package_mgr.js'
 
 const decoder = new TextDecoder('utf-8')
 
-let pm = null       // the shimmed src/package_mgr.js
 let libPath = null  // scratch "lib" the packages are installed into
 let dev = null      // device descriptor handed to rawInstallPkg
 
@@ -53,7 +52,6 @@ describe('Packages', () => {
         }
         if (unreachable) { skipSuite(this, unreachable) }
 
-        pm = await loadPackageMgr()
         libPath = `${ctx.root}/lib`
         // rawInstallPkg picks the first sys.path entry ending in /lib.
         dev = { ...ctx.dev, sys_path: [libPath] }

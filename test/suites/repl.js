@@ -186,18 +186,42 @@ for i in range(5):
             await ctx.port.write('\x03')
             await ctx.port.readUntil('>>> ', 5000)
             await ctx.port.flushInput()
-            await ctx.port.write(code + '\r\n')
+            /* A compound statement puts the friendly REPL into continuation mode and
+               there it stays until a blank line closes the block. A board left waiting
+               for more input looks enough like a busy one to fool a probe, so the tests
+               below would pass without anything ever running. */
+            await ctx.port.write(code + '\r\n\r\n')
             await sleep(500)
+            assert.notMatch(ctx.port.receivedData, /(?:>>>|\.\.\.) $/,
+                `the board is still at the prompt - ${JSON.stringify(code)} never started`)
         } finally {
             release()
         }
+    }
+
+    /* Collects everything handed to the terminal while fn runs. */
+    async function captureOutput(fn) {
+        const seen = []
+        const prevCbk = ctx.port.receiveCallback
+        ctx.port.onReceive((data) => { seen.push(data) })
+        try {
+            await fn()
+        } finally {
+            ctx.port.onReceive(prevCbk)
+        }
+        return seen.join('')
     }
 
     it('probeRepl sees an idle prompt', async () => {
         // Leaving raw mode puts the board back at the friendly REPL
         await withRaw(ctx.port, raw => raw.exec(`pass`))
 
-        assert.isTrue(await MpRawMode.probeRepl(ctx.port))
+        // A board that answers is quiet on the terminal: the prompt that comes back
+        // is an echo of the probe's own Enter, not something the user asked for
+        const shown = await captureOutput(async () => {
+            assert.isTrue(await MpRawMode.probeRepl(ctx.port))
+        })
+        assert.strictEqual(shown, '', 'the probe echoed itself to the terminal')
 
         // The Enter it sent must not have left anything behind for the next session
         await withRaw(ctx.port, async (raw) => {
@@ -233,6 +257,32 @@ for i in range(5):
         })
     })
 
+    /*
+     * A probe holds the transaction for as long as it waits, which is exactly when a
+     * busy board has the most to say. Once it is clear the board is not answering,
+     * the terminal must keep up rather than stop and catch up all at once - and
+     * nothing may reach it twice when the transaction ends.
+     */
+    it('probeRepl keeps feeding the terminal while it waits', async () => {
+        if (!ctx.caps.interrupt) { skip('the wasm REPL cannot run and answer at the same time') }
+
+        // Numbered output, so a line shown twice can be told from a line printed twice
+        await startAtRepl('i=0\r\nwhile 1: print(i); i+=1')
+
+        const shown = await captureOutput(async () => {
+            assert.isFalse(await MpRawMode.probeRepl(ctx.port, 1500))
+        })
+
+        const nums = shown.split(/\r?\n/).map(l => l.trim()).filter(l => /^\d+$/.test(l))
+        assert(nums.length > 0, 'the terminal saw nothing while the probe waited')
+        assert.strictEqual(new Set(nums).size, nums.length,
+            'output reached the terminal twice')
+
+        await withRaw(ctx.port, async (raw) => {
+            assert.strictEqual(lines(await raw.exec(`print('recovered')`)), 'recovered')
+        })
+    })
+
     it('soft reboot resets the interpreter state', async () => {
         if (!ctx.caps.softReboot) { skip('soft reboot is not supported by this target') }
 
@@ -248,9 +298,9 @@ for i in range(5):
      * under it, so the banner has to be exactly what it watches for - and the board has
      * to answer a probe once it is back. This is the sequence the app performs.
      *
-     * Assumes a board that is not busy after a reboot, as the rest of the suite does:
-     * one with a main.py of its own would be found busy here, which is precisely what
-     * the app then reports.
+     * A board with a main.py of its own comes back running it rather than stopping at
+     * the prompt. That is not a failure - it is precisely what the app then reports as
+     * busy - so the probe is only held to its answer on a board that is idle after boot.
      */
     it('a soft reboot announces itself and hands the board back', async () => {
         if (!ctx.caps.softReboot) { skip('soft reboot is not supported by this target') }
@@ -270,7 +320,13 @@ for i in range(5):
 
         // What the app does next: a moment for boot.py and main.py, then a probe
         await sleep(300)
-        assert.isTrue(await MpRawMode.probeRepl(ctx.port, 3000))
+        if (await MpRawMode.probeRepl(ctx.port, 3000)) { return }
+
+        /* Not at the prompt. A board that is off running its own main.py says so by
+           printing; one that has gone quiet never came back at all. */
+        const chatter = await captureOutput(() => sleep(1000))
+        assert(chatter, 'the board did not come back to the prompt after a soft reboot')
+        skip('the board runs its own main.py after boot')
     })
 
     it('exec reports a timeout when the board takes too long', async () => {

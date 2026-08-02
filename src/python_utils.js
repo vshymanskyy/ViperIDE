@@ -291,3 +291,101 @@ f.close()
     return vm.FS.readFile("/tmp/file.mpy.dis", { encoding: 'utf8' })
 }
 
+// Renders a string as a quoted Python string literal
+export function reprStr(s, quote) {
+  quote = quote || (s.includes("'") && !s.includes('"') ? '"' : "'");
+  if (quote !== "'" && quote !== '"') {
+    throw new Error("reprStr: quote must be ' or \"");
+  }
+  const NONPRINTABLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}\p{Zs}]/u;
+  let out = quote;
+  for (const ch of String(s)) {
+    if (ch === '\\') out += '\\\\';
+    else if (ch === quote) out += '\\' + quote;
+    else if (ch === '\n') out += '\\n';
+    else if (ch === '\r') out += '\\r';
+    else if (ch === '\t') out += '\\t';
+    else if (ch !== ' ' && NONPRINTABLE.test(ch)) {
+      const cp = ch.codePointAt(0);
+      if (cp < 0x100) out += '\\x' + cp.toString(16).padStart(2, '0');
+      else if (cp < 0x10000) out += '\\u' + cp.toString(16).padStart(4, '0');
+      else out += '\\U' + cp.toString(16).padStart(8, '0');
+    } else out += ch;
+  }
+  return out + quote;
+}
+
+// Shortest round-trip digits, re-laid-out with CPython's thresholds
+// (scientific notation when exp < -4 or exp >= 16).
+export function reprFloat(n) {
+  if (Number.isNaN(n)) return 'nan';
+  if (n === Infinity) return 'inf';
+  if (n === -Infinity) return '-inf';
+
+  const sign = n < 0 || Object.is(n, -0) ? '-' : '';
+  const [, d0, rest = '', e] = Math.abs(n)
+    .toExponential()
+    .match(/^(\d)(?:\.(\d+))?e([+-]\d+)$/);
+  const digits = d0 + rest;
+  const exp = Number(e);
+
+  if (exp < -4 || exp >= 16) {
+    const mant = rest ? `${d0}.${rest}` : d0;
+    const esign = exp < 0 ? '-' : '+';
+    return sign + mant + 'e' + esign + String(Math.abs(exp)).padStart(2, '0');
+  }
+  if (exp < 0) return sign + '0.' + '0'.repeat(-exp - 1) + digits;
+  const int = digits.slice(0, exp + 1).padEnd(exp + 1, '0');
+  const frac = digits.slice(exp + 1) || '0';
+  return sign + int + '.' + frac;
+}
+
+export function repr(value) {
+  const seen = new Set();
+
+  const go = (v) => {
+    if (v === null || v === undefined) return 'None';
+
+    switch (typeof v) {
+      case 'boolean':
+        return v ? 'True' : 'False';
+      case 'bigint':
+        return v.toString();
+      case 'string':
+        return reprStr(v);
+      case 'number':
+        if (!Number.isInteger(v) || Object.is(v, -0)) return reprFloat(v);
+        // String() would give "1e+21" for big values; ints never use exponents
+        return Math.abs(v) < 1e21 ? String(v) : BigInt(v).toString();
+      case 'function':
+        return `<function ${v.name || '<lambda>'}>`;
+      case 'symbol':
+        return v.toString();
+    }
+
+    if (seen.has(v)) return Array.isArray(v) ? '[...]' : '{...}';
+    seen.add(v);
+    try {
+      if (Array.isArray(v)) return '[' + v.map(go).join(', ') + ']';
+      if (v instanceof Set)
+        return v.size === 0 ? 'set()' : '{' + [...v].map(go).join(', ') + '}';
+      if (v instanceof Map)
+        return '{' + [...v].map(([k, val]) => `${go(k)}: ${go(val)}`).join(', ') + '}';
+
+      const proto = Object.getPrototypeOf(v);
+      if (proto === Object.prototype || proto === null)
+        return (
+          '{' +
+          Object.entries(v)
+            .map(([k, val]) => `${reprStr(k)}: ${go(val)}`)
+            .join(', ') +
+          '}'
+        );
+      return `<${v.constructor?.name ?? 'object'} object>`;
+    } finally {
+      seen.delete(v);
+    }
+  };
+
+  return go(value);
+}

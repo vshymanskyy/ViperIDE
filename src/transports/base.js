@@ -27,6 +27,17 @@ export class Transport {
            what needs asking is asked once - but only the transport can say whether
            what it holds outlives the device going away. */
         this.canReopen = false
+        this._readsAborted = false
+    }
+
+    /*
+     * Makes every pending read throw promptly. A port that died mid-read would
+     * otherwise hold its transaction (and the mutex behind it) forever - most
+     * notably a Run with no timeout. The next transaction clears it: it can only
+     * start once the aborted one has seen the flag and let the mutex go.
+     */
+    abortReads() {
+        this._readsAborted = true
     }
 
     async requestAccess() {
@@ -39,6 +50,14 @@ export class Transport {
 
     async getInfo() {
         return this.info
+    }
+
+    setDeviceInfo(_deviceInfo) {
+        // skip
+    }
+
+    handleWriteError(_err) {
+        return false
     }
 
     async disconnect() {
@@ -66,7 +85,9 @@ export class Transport {
                 offset += this.writeChunk
             }
         } catch (err) {
-            report("Write error", err) // TODO
+            if (!this.handleWriteError(err)) {
+                report("Write error", err) // TODO
+            }
         }
     }
 
@@ -88,6 +109,7 @@ export class Transport {
 
     async startTransaction() {
         const release = await this.mutex.acquire()
+        this._readsAborted = false
         this.prevRecvCbk = this.receiveCallback
         this.inTransaction = true
         this.receivedData = ''
@@ -127,6 +149,9 @@ export class Transport {
         }
         let endTime = Date.now() + timeout
         while (timeout <= 0 || (Date.now() < endTime)) {
+            if (this._readsAborted) {
+                throw new Error('Timeout: transport closed')
+            }
             if (this.receivedData.length >= n) {
                 const res = this.receivedData.substring(0, n)
                 this.receivedData = this.receivedData.substring(n)
@@ -147,6 +172,9 @@ export class Transport {
         }
         let endTime = Date.now() + timeout
         while (timeout <= 0 || (Date.now() < endTime)) {
+            if (this._readsAborted) {
+                throw new Error('Timeout: transport closed')
+            }
             const idx = this.receivedData.indexOf(ending) + ending.length
             if (idx >= ending.length) {
                 const res = this.receivedData.substring(0, idx)

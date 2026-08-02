@@ -100,7 +100,7 @@ body.loaded {
    unsaved marker, since this is the one that needs a decision. */
 #editor-tabs .tab .tab-title.conflict::after {
     content: " ▲";
-    color: var(--warning-color, #e0a030);
+    color: var(--fg-color-highlight);
 }
 
 #editor-tabs .menu-action {
@@ -113,7 +113,15 @@ body.loaded {
 }
 
 #toast-container.toast-top-right {
-    top: 4.75rem;
+    top: 2.75rem;
+}
+
+#toast-container > div {
+    border-radius: 0px;
+    -webkit-border-radius: 0px;
+    opacity: 0.95;
+    box-shadow: none;
+    -webkit-box-shadow: none;
 }
 
 .editor-tab-pane {
@@ -266,6 +274,10 @@ body.loaded {
     padding: 0;
 }
 
+.tree-rename-input.folder-rename-input {
+    outline: 1px solid var(--accent-color);
+}
+
 .tree-node.drop-target,
 .tree-row.drop-target,
 #menu-file-tree.drop-target {
@@ -293,7 +305,11 @@ body.loaded {
 #menu-file-tree .changed.conflict::after,
 #menu-file-tree .conflict::after {
     content: "▲";
-    color: var(--warning-color, #e0a030);
+    color: var(--fg-color-highlight);
+}
+
+#menu-file-tree .fs-stale {
+    color: var(--fg-color-highlight);
 }
 
 /* The rename input carries the row's own classes along (open/changed/conflict),

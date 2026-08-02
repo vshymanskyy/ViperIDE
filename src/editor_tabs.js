@@ -1,4 +1,5 @@
-import { QSA, QS, QID, escapeHTML, escapeCSS } from './utils.js'
+import { escapeHTML, escapeCSS } from './utils.js'
+import { QSA, QS, QID } from './utils_browser.js'
 
 
 let currentTab = 0
