@@ -32,7 +32,7 @@
             "editor": "editor",
             "other": "outros",
             "interrupt-running-code": "Interromper execução",
-            "force-serial-poly": "Forçar uso do WebSerial polyfill",
+            "force-serial-poly": "Usar WebUSB em vez de WebSerial",
             "expand-minify-json": "Minificação automática de JSON",
             "use-word-wrap": "Quebra de linha",
             "render-markdown": "Visualizador de Markdown",

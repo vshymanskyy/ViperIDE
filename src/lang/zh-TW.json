@@ -32,7 +32,7 @@
             "editor": "編輯器",
             "other": "其他",
             "interrupt-running-code": "中斷執行",
-            "force-serial-poly": "強制使用 WebSerial polyfill",
+            "force-serial-poly": "使用 WebUSB 而不是 WebSerial",
             "expand-minify-json": "JSON 自動最小化",
             "use-word-wrap": "自動換行",
             "render-markdown": "Markdown 查看器",

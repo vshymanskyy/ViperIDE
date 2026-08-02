@@ -32,7 +32,7 @@
             "editor": "편집기",
             "other": "기타",
             "interrupt-running-code": "실행 중단",
-            "force-serial-poly": "WebSerial polyfill 사용 강제",
+            "force-serial-poly": "WebSerial 대신 WebUSB 사용",
             "expand-minify-json": "JSON 자동 축소",
             "use-word-wrap": "자동 줄 바꿈",
             "render-markdown": "Markdown 뷰어",

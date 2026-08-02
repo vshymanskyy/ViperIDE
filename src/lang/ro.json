@@ -32,7 +32,7 @@
             "editor": "editor",
             "other": "alte",
             "interrupt-running-code": "Întrerupe execuția",
-            "force-serial-poly": "Forțează utilizarea WebSerial polyfill",
+            "force-serial-poly": "Utilizează WebUSB în loc de WebSerial",
             "expand-minify-json": "Minificarea automată a JSON",
             "use-word-wrap": "Împachetarea cuvintelor",
             "render-markdown": "Vizualizator Markdown",

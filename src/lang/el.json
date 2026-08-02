@@ -32,7 +32,7 @@
             "editor": "επεξεργαστής",
             "other": "άλλο",
             "interrupt-running-code": "Διακοπή εκτέλεσης",
-            "force-serial-poly": "Επιβολή χρήσης WebSerial polyfill",
+            "force-serial-poly": "Χρήση WebUSB αντί για WebSerial",
             "expand-minify-json": "Αυτόματη σμίκρυνση JSON",
             "use-word-wrap": "Αναδίπλωση λέξεων",
             "render-markdown": "Προβολή Markdown",

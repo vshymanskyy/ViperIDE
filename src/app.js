@@ -111,7 +111,7 @@ function handleDisconnected() {
     for (const t of ['ws', 'ble', 'usb']) {
         QID(`btn-conn-${t}`).classList.remove('connected')
     }
-    QID('menu-file-tree').classList.add('inert')
+    QID('menu-files').classList.add('inert')
     document.dispatchEvent(new CustomEvent("deviceDisconnected"))
 }
 
@@ -173,6 +173,9 @@ async function prepareNewPort(type) {
 
             new_port = new WebSocketREPL(url)
             new_port.onPasswordRequest(async () => {
+                /* A board that rebooted asks again, and a dialog nobody opened would
+                   be a strange way to find out. The board says if it is wrong. */
+                // TODO: if (reconnecting && defaultWsPass) { return defaultWsPass }
                 const pass = prompt('WebREPL password:', defaultWsPass)
                 if (pass == null) { return }
                 if (pass.length < 4) {
@@ -219,7 +222,7 @@ async function prepareNewPort(type) {
             return
         }
         if (typeof navigator.serial === 'undefined' || getSetting('force-serial-poly')) {
-            console.log('Using WebSerial polyfill')
+            console.log('Using WebUSB instead of WebSerial')
             new_port = new WebSerial(webSerialPolyfill)
         } else {
             new_port = new WebSerial()
@@ -269,7 +272,7 @@ export async function connectDevice(type) {
     })
 
     QID(`btn-conn-${type}`).classList.add('connected')
-    QID('menu-file-tree').classList.remove('inert')
+    QID('menu-files').classList.remove('inert')
 
     analytics.track('Device Port Connected', Object.assign({ connection: type }, await port.getInfo()))
 
@@ -801,7 +804,7 @@ function _updateFileTree(fs_tree, fs_stats)
 
     /* Something wrote to the device without going through us - a script, a
        reboot, a paste at the REPL - so what is shown may already be out of date */
-    const staleHint = fsCache.isListingStale() ? ` • ${T('files.stale')}` : ''
+    const listingStale = fsCache.isListingStale()
 
     const root = {
         name: '/',
@@ -812,7 +815,8 @@ function _updateFileTree(fs_tree, fs_stats)
         // but there is nowhere to move it to
         drag: true,
         move: false,
-        meta: `${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}${staleHint}`,
+        meta: `${T('files.used')} ${sizeFmt(fs_used,0)} / ${sizeFmt(fs_size,0)}`,
+        classes: listingStale ? ['conflict'] : [],
         actions: [
             { action: 'create',  title: 'Create',  icon: 'fa-solid fa-plus' },
             { action: 'refresh', title: 'Refresh', icon: 'fa-solid fa-arrows-rotate' },
@@ -922,9 +926,9 @@ async function _raw_updateFileTree(raw) {
 
 /*
  * The device is only asked who it is once per connection. It cannot be asked
- * before raw mode works, which is why this is not simply part of connecting:
- * with 'Interrupt device' turned off, the first time we know raw mode works is
- * when a walk succeeds - possibly only after the user interrupts the device by hand.
+ * before raw mode works, which is why this is not simply part of connecting: on a
+ * board that was busy when it was plugged in, the first time we know raw mode
+ * works is after the running code ended or was interrupted by hand.
  */
 async function _raw_ensureDevInfo(raw) {
     if (devInfo) return devInfo
@@ -1766,6 +1770,7 @@ export function applyTranslation() {
 
         QS('label[for=interrupt-running-code]').innerText = T('settings.interrupt-running-code')
         QS('label[for=force-serial-poly]').innerText = T('settings.force-serial-poly')
+        QS('label[for=install-package-source]').innerText = T('settings.install-package-source')
         QS('label[for=expand-minify-json]').innerText = T('settings.expand-minify-json')
         QS('label[for=use-word-wrap]').innerText = T('settings.use-word-wrap')
         QS('label[for=render-markdown]').innerText = T('settings.render-markdown')

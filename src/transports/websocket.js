@@ -18,6 +18,8 @@ export class WebSocketREPL extends Transport {
         this.info = {
             url: this.url
         }
+        /* The address is all it takes to open this one again */
+        this.canReopen = true
     }
 
     onPasswordRequest(callback) {
@@ -76,6 +78,10 @@ export class WebSocketREPL extends Transport {
         }
 
         this.socket.onclose = (_ev) => {
+            /* Nothing left to keep alive, and the heartbeat would otherwise go on
+               poking a closed socket every ten seconds */
+            clearInterval(this.hbeat)
+            this.hbeat = null
             this.disconnectCallback()
         }
 
@@ -103,6 +109,20 @@ export class WebSocketREPL extends Transport {
         } finally {
             release()
         }
+    }
+
+    /* connect() builds its own socket and redoes the WebREPL handshake, so all this
+       has to do is let go of the closed one. */
+    async reopen() {
+        clearInterval(this.hbeat)
+        this.hbeat = null
+        if (this.socket) {
+            /* An attempt that got as far as opening a socket and then failed the
+               handshake leaves one behind, and it will not close itself */
+            try { this.socket.close() } catch (_err) { /* already closed */ }
+            this.socket = null
+        }
+        await this.connect()
     }
 
     async disconnect() {

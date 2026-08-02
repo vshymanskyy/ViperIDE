@@ -139,6 +139,71 @@ button.connected {
     color: var(--connected-color);
 }
 
+/* The device dropped and is being waited for. It keeps the colour of a connection
+   because the session is not over yet - the board is expected back. */
+button.reconnecting {
+    color: var(--connected-color);
+    animation: reconnecting-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes reconnecting-pulse {
+    50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button.reconnecting {
+        animation: none;
+        opacity: 0.6;
+    }
+}
+
+/* Buttons here draw neither background nor border, so being disabled would not
+   show at all otherwise */
+button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* Inactive panels should feel visually detached from the active UI, while still
+   keeping their content readable. */
+:where([inert], .inert) {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+:where([inert], .inert)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.08) 0,
+        rgba(255, 255, 255, 0.08) 8px,
+        transparent 8px,
+        transparent 16px
+    );
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    mix-blend-mode: screen;
+}
+
+:where([inert], .inert) > * {
+    position: relative;
+    z-index: 1;
+}
+
+#menu-files[inert],
+#menu-files.inert,
+#menu-pkg[inert],
+#menu-pkg.inert,
+#menu-tools[inert],
+#menu-tools.inert {
+    opacity: 0.4;
+}
+
 select {
     border: none;
 }
@@ -181,7 +246,7 @@ option {
 .fa-certificate { color: #ba0311; }
 .fa-cube { color: #ba9066; }
 .fa-cubes { color: #ba9066; }
-.fa-gauge-high { color: #ffcc4d; }
+.fa-gauge-high { color: #87c244; }
 .fa-tools { color: #ccd6dd; }
 /*.fa-arrows-rotate { color: #3b88c3; }*/
 .fa-sliders { color: #ccd6dd }

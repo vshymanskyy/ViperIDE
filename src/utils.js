@@ -195,6 +195,16 @@ export function sanitizeHTML(s) {
     return (new Option(s)).innerHTML.replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;')
 }
 
+function shouldIgnoreDroppedPath(path) {
+    const parts = String(path).split('/')
+    const base = parts[parts.length - 1]
+
+    if (base === '.DS_Store' || base === '.gitignore' || base === 'Thumbs.db') return true
+    if (/\.(pyc|pyo|pyd)$/i.test(base)) return true
+    if (parts.includes('.git') || parts.includes('__pycache__')) return true
+    return false
+}
+
 // Escapes text for safe interpolation into HTML text nodes or attribute values.
 // Unlike sanitizeHTML(), this does not alter whitespace, so the result round-trips
 // exactly through the HTML parser (needed when the value is later looked up, e.g. via data-* attributes).
@@ -236,12 +246,15 @@ export function readDroppedFiles(dataTransfer) {
             entries.push(entry)
         } else {
             const file = item.getAsFile()
-            if (file) { collected.push({ path: file.name, file }) }
+            if (file && !shouldIgnoreDroppedPath(file.name)) {
+                collected.push({ path: file.name, file })
+            }
         }
     }
 
     if (!entries.length && !collected.length) {
         for (const file of Array.from(dataTransfer.files || [])) {
+            if (shouldIgnoreDroppedPath(file.name)) continue
             collected.push({ path: file.name, file })
         }
     }
@@ -260,6 +273,8 @@ export function readDroppedFiles(dataTransfer) {
 
 async function walkFileEntry(entry, prefix, out) {
     const path = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (shouldIgnoreDroppedPath(path)) return
+
     if (entry.isFile) {
         out.push({ path, file: await new Promise((res, rej) => entry.file(res, rej)) })
     } else if (entry.isDirectory) {

@@ -32,7 +32,7 @@
             "editor": "редактор",
             "other": "решта",
             "interrupt-running-code": "Переривати виконання",
-            "force-serial-poly": "Застосувати WebSerial polyfill",
+            "force-serial-poly": "Використовувати WebUSB замість WebSerial",
             "expand-minify-json": "Авто-стиснення JSON",
             "use-word-wrap": "Перенос слів",
             "render-markdown": "Переглядач Markdown",

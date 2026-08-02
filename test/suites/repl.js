@@ -7,7 +7,7 @@
 
 import { ctx, skip } from '../setup.js'
 import { assert } from 'chai'
-import { MpRawMode, withRaw } from '../board.js'
+import { MpRawMode, SOFT_RESET_BANNER, withRaw } from '../board.js'
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -176,6 +176,63 @@ for i in range(5):
         })
     })
 
+    /*
+     * Leaves the board running `code` at the friendly REPL - the state ViperIDE finds
+     * it in when it is plugged in while a program of its own is going.
+     */
+    async function startAtRepl(code) {
+        const release = await ctx.port.startTransaction()
+        try {
+            await ctx.port.write('\x03')
+            await ctx.port.readUntil('>>> ', 5000)
+            await ctx.port.flushInput()
+            await ctx.port.write(code + '\r\n')
+            await sleep(500)
+        } finally {
+            release()
+        }
+    }
+
+    it('probeRepl sees an idle prompt', async () => {
+        // Leaving raw mode puts the board back at the friendly REPL
+        await withRaw(ctx.port, raw => raw.exec(`pass`))
+
+        assert.isTrue(await MpRawMode.probeRepl(ctx.port))
+
+        // The Enter it sent must not have left anything behind for the next session
+        await withRaw(ctx.port, async (raw) => {
+            assert.strictEqual(lines(await raw.exec(`print('still here')`)), 'still here')
+        })
+    })
+
+    it('probeRepl finds no prompt while code is running', async () => {
+        if (!ctx.caps.interrupt) { skip('the wasm REPL cannot run and answer at the same time') }
+
+        await startAtRepl('while 1: pass')
+        assert.isFalse(await MpRawMode.probeRepl(ctx.port))
+
+        // Only now is the loop interrupted - probing must not have done it
+        await withRaw(ctx.port, async (raw) => {
+            assert.strictEqual(lines(await raw.exec(`print('recovered')`)), 'recovered')
+        })
+    })
+
+    it('probeRepl gives up on a board printing in a loop', async () => {
+        if (!ctx.caps.interrupt) { skip('the wasm REPL cannot run and answer at the same time') }
+
+        await startAtRepl(`while 1: print('x')`)
+
+        /* The case the probe has its own deadline for: readUntil() restarts its
+           timeout on every byte, so continuous output would keep it waiting. */
+        const started = Date.now()
+        assert.isFalse(await MpRawMode.probeRepl(ctx.port, 500))
+        assert(Date.now() - started < 5000, 'the probe waited on continuous output')
+
+        await withRaw(ctx.port, async (raw) => {
+            assert.strictEqual(lines(await raw.exec(`print('recovered')`)), 'recovered')
+        })
+    })
+
     it('soft reboot resets the interpreter state', async () => {
         if (!ctx.caps.softReboot) { skip('soft reboot is not supported by this target') }
 
@@ -184,6 +241,36 @@ for i in range(5):
             const err = await assert.rejects(() => raw.exec(`print(_viper_reboot_marker)`))
             assert.include(err.message, 'NameError')
         }, { soft_reboot: true })
+    })
+
+    /*
+     * ViperIDE has nothing but the terminal stream to tell it that the board restarted
+     * under it, so the banner has to be exactly what it watches for - and the board has
+     * to answer a probe once it is back. This is the sequence the app performs.
+     *
+     * Assumes a board that is not busy after a reboot, as the rest of the suite does:
+     * one with a main.py of its own would be found busy here, which is precisely what
+     * the app then reports.
+     */
+    it('a soft reboot announces itself and hands the board back', async () => {
+        if (!ctx.caps.softReboot) { skip('soft reboot is not supported by this target') }
+
+        // Leaving raw mode puts the board back at the friendly REPL, where Ctrl-D reboots
+        await withRaw(ctx.port, raw => raw.exec(`pass`))
+
+        let banner
+        const release = await ctx.port.startTransaction()
+        try {
+            await ctx.port.write('\x04')
+            banner = await ctx.port.readUntil('soft reboot\r\n', 10000)
+        } finally {
+            release()
+        }
+        assert.match(banner, SOFT_RESET_BANNER)
+
+        // What the app does next: a moment for boot.py and main.py, then a probe
+        await sleep(300)
+        assert.isTrue(await MpRawMode.probeRepl(ctx.port, 3000))
     })
 
     it('exec reports a timeout when the board takes too long', async () => {

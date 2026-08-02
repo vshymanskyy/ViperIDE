@@ -32,7 +32,7 @@
             "editor": "עורך",
             "other": "אחרים",
             "interrupt-running-code": "להפסיק את הביצוע",
-            "force-serial-poly": "הכרח שימוש ב-WebSerial polyfill",
+            "force-serial-poly": "שימוש ב-WebUSB במקום WebSerial",
             "expand-minify-json": "מיניפיקציה אוטומטית של JSON",
             "use-word-wrap": "גלישת מילים",
             "render-markdown": "צופה Markdown",

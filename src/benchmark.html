@@ -157,7 +157,7 @@ async function prepareNewPort(type) {
             return
         }
         if (typeof navigator.serial === 'undefined') {
-            console.log('Using WebSerial polyfill')
+            console.log('Using WebUSB instead of WebSerial')
             new_port = new WebSerial(webSerialPolyfill)
         } else {
             new_port = new WebSerial()

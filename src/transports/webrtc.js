@@ -13,6 +13,9 @@ export class WebRTCTransport extends Transport {
 
         this.peerId = peerId
         this.myId = myId
+        /* The peer outlives the data connection, and the peer id is all that dialling
+           it again takes */
+        this.canReopen = true
     }
 
     onConnect(callback) {
@@ -98,7 +101,10 @@ export class WebRTCTransport extends Transport {
 
     connect() {
         return new Promise((resolve, reject) => {
-            this.peer.on('error', reject)
+            /* Taken off again once this attempt is over: a retry would otherwise leave
+               a listener behind on the peer for every connection ever tried. */
+            const onPeerError = (err) => { this.peer.off('error', onPeerError); reject(err) }
+            this.peer.on('error', onPeerError)
 
             const conn = this.peer.connect(this.peerId, {
                 serialization: 'binary',
@@ -107,10 +113,17 @@ export class WebRTCTransport extends Transport {
 
             conn.on('error', reject)
             conn.on('open', () => {
+                this.peer.off('error', onPeerError)
                 this._setup_conn(conn)
                 resolve()
             })
         });
+    }
+
+    /* The peer is still up; only the data connection died */
+    async reopen() {
+        this.connection = null
+        await this.connect()
     }
 
     async disconnect() {

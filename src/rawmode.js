@@ -6,6 +6,8 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
 // Renders a JS string as a single-quoted Python string literal, so it can be safely
 // spliced into generated Python source (filenames/paths may contain ' or \).
 function pyStr(s) {  // reprStr
@@ -29,6 +31,13 @@ function pyStr(s) {  // reprStr
   return out + quote;
 }
 
+/*
+ * What a board prints when the interpreter restarts: MicroPython says
+ * 'MPY: soft reboot', CircuitPython just 'soft reboot'. Anchored to a line of its own -
+ * a false positive only costs one extra probe, but not none at all.
+ */
+export const SOFT_RESET_BANNER = /(^|[\r\n])(MPY: )?soft reboot\r?\n/
+
 export class MpRawMode {
     constructor(port) {
         this.port = port
@@ -44,6 +53,38 @@ export class MpRawMode {
             throw err
         }
         return res
+    }
+
+    /*
+     * Whether the board is sitting at the friendly REPL: one Enter, and a short wait
+     * for the prompt to come back. Nothing else is sent, so a running program is left
+     * alone - the Enter it may receive on stdin is the price of asking.
+     *
+     * port.readUntil() cannot be used here: its deadline restarts on every byte that
+     * arrives, so a program printing in a loop would keep the probe waiting forever.
+     * This deadline is hard.
+     */
+    static async probeRepl(port, timeout=3000) {
+        const release = await port.startTransaction()
+        try {
+            // The space is important, newline is not enough sometimes
+            await port.write(' \r')
+            const endTime = Date.now() + timeout
+            while (Date.now() < endTime) {
+                if (port.receivedData.includes('>>> ')) {
+                    await port.flushInput()   // the prompt we asked for is not board output
+                    return true
+                }
+                await sleep(100)
+            }
+            /* Whatever the program printed meanwhile is deliberately left in the
+               buffer: the transaction hands it to the terminal on release, so the
+               user sees it - and a prompt that arrived just too late still gets
+               noticed downstream. */
+            return false
+        } finally {
+            release()
+        }
     }
 
     async interruptProgram(timeout=20000) {

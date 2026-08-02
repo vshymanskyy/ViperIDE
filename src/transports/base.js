@@ -22,6 +22,11 @@ export class Transport {
         this.writeChunk = 128
         this.emit = false
         this.info = {}
+        /* Whether this transport still knows enough about the device to open it
+           again on its own. Access is granted to a device, not to a connection, so
+           what needs asking is asked once - but only the transport can say whether
+           what it holds outlives the device going away. */
+        this.canReopen = false
     }
 
     async requestAccess() {
@@ -38,6 +43,15 @@ export class Transport {
 
     async disconnect() {
         throw new Error("Method 'disconnect()' must be implemented.")
+    }
+
+    /*
+     * Clears away a connection that died and brings the same device back up, with
+     * nothing asked of the user. Throws if the device is not back yet, which is the
+     * expected answer while a board is still rebooting.
+     */
+    async reopen() {
+        throw new Error("Reconnecting is not supported by this transport")
     }
 
     async write(data) {

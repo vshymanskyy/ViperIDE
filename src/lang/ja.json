@@ -32,7 +32,7 @@
             "editor": "エディター",
             "other": "その他",
             "interrupt-running-code": "実行を中断",
-            "force-serial-poly": "WebSerial polyfillの使用を強制する",
+            "force-serial-poly": "WebSerial の代わりに WebUSB を使用する",
             "expand-minify-json": "JSONの自動圧縮",
             "use-word-wrap": "ワードラップ",
             "render-markdown": "Markdownビューア",

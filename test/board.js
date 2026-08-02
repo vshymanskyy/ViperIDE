@@ -9,7 +9,7 @@
  * difference between "the board cannot store this name" and "ViperIDE mangled it".
  */
 
-import { MpRawMode } from '../src/rawmode.js'
+import { MpRawMode, SOFT_RESET_BANNER } from '../src/rawmode.js'
 
 const encoder = new TextEncoder()
 
@@ -113,4 +113,4 @@ _w(${pyPath(path)})
     })
 }
 
-export { MpRawMode }
+export { MpRawMode, SOFT_RESET_BANNER }

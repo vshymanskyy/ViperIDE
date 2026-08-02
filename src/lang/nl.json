@@ -32,7 +32,7 @@
             "editor": "editor",
             "other": "overige",
             "interrupt-running-code": "Uitvoering onderbreken",
-            "force-serial-poly": "Gebruik van WebSerial polyfill afdwingen",
+            "force-serial-poly": "WebUSB gebruiken in plaats van WebSerial",
             "expand-minify-json": "Automatische minimalisering van JSON",
             "use-word-wrap": "Woorden afbreken",
             "render-markdown": "Markdown viewer",

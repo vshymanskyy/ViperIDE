@@ -32,7 +32,7 @@
             "editor": "editor",
             "other": "lainnya",
             "interrupt-running-code": "Hentikan eksekusi",
-            "force-serial-poly": "Paksa penggunaan WebSerial polyfill",
+            "force-serial-poly": "Gunakan WebUSB sebagai pengganti WebSerial",
             "expand-minify-json": "Minifikasi otomatis JSON",
             "use-word-wrap": "Bungkus kata",
             "render-markdown": "Penampil Markdown",

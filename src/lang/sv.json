@@ -32,7 +32,7 @@
             "editor": "redaktör",
             "other": "andra",
             "interrupt-running-code": "Avbryt körning",
-            "force-serial-poly": "Tvinga användning av WebSerial polyfill",
+            "force-serial-poly": "Använd WebUSB i stället för WebSerial",
             "expand-minify-json": "Automatisk minimisering av JSON",
             "use-word-wrap": "Ordbrytning",
             "render-markdown": "Markdown-visare",

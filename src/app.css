@@ -112,6 +112,10 @@ body.loaded {
     text-wrap: nowrap;
 }
 
+#toast-container.toast-top-right {
+    top: 4.75rem;
+}
+
 .editor-tab-pane {
     display: none;
 }
@@ -298,9 +302,11 @@ body.loaded {
     content: none;
 }
 
-/* Disconnected: the tree is the last known state of the board and stays
-   readable, but nothing on it can be acted on until a board is back. */
-#menu-file-tree.inert {
+/* Disconnected, or busy running code of its own: the tree is the last known state
+   of the board and stays readable, but nothing on it - nor in the package manager,
+   which would have to interrupt the board to install anything - can be acted on
+   until the board is back and free. */
+.inert {
     pointer-events: none;
 }
 

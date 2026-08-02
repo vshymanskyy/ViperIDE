@@ -38,6 +38,9 @@ export class WebBluetooth extends Transport {
         super.writeChunk = 20
         this.decoderStream = null
         this.reader = null
+        /* The device object outlives the GATT link, and reconnecting to it needs no
+           picker - only requestDevice() does. */
+        this.canReopen = true
     }
 
     async requestAccess() {
@@ -53,9 +56,11 @@ export class WebBluetooth extends Transport {
             optionalServices: [NUS_SERVICE, ADA_NUS_SERVICE, 0xfebb, CH9143_SERVICE],
         })
 
-        this.device.addEventListener("gattserverdisconnected", () => {
-            this.disconnectCallback()
-        })
+        /* Kept so it can be taken off again: the listener sits on the device, which
+           outlives this transport, and one that is no longer anybody's must not
+           still be reporting drops. */
+        this.onGattDisconnected = () => { this.disconnectCallback() }
+        this.device.addEventListener("gattserverdisconnected", this.onGattDisconnected)
         try {
             this.info = {
                 name: this.device.name,
@@ -134,17 +139,40 @@ export class WebBluetooth extends Transport {
         processStream()
     }
 
+    /*
+     * connect() rebuilds the GATT link, the characteristics and the stream from the
+     * device object, so reconnecting is that plus letting go of the dead stream. The
+     * 'gattserverdisconnected' listener sits on the device, not on the link, and so
+     * survives to report the next drop.
+     */
+    async reopen() {
+        await this._dropStream()
+        await this.connect()
+    }
+
+    async _dropStream() {
+        if (this.reader) {
+            try { await this.reader.cancel() } catch (_err) { /* link already gone */ }
+            try { this.reader.releaseLock() } catch (_err) { /* already released */ }
+        }
+        if (this.decoderStream) {
+            try { await this.decoderStream.writable.abort() } catch (_err) { /* already aborted */ }
+        }
+        this.reader = null
+        this.decoderStream = null
+    }
+
     async disconnect() {
+        /* This device is done with, so the drop about to happen is not news - and
+           nothing that comes off it afterwards is either. */
+        if (this.device && this.onGattDisconnected) {
+            this.device.removeEventListener("gattserverdisconnected", this.onGattDisconnected)
+            this.onGattDisconnected = null
+        }
         if (this.device && this.device.gatt.connected) {
             await this.device.gatt.disconnect();
         }
-        if (this.reader) {
-            await this.reader.cancel()
-            this.reader.releaseLock()
-        }
-        if (this.decoderStream) {
-            await this.decoderStream.writable.abort()
-        }
+        await this._dropStream()
     }
 
     async writeBytes(data) {
