@@ -1,5 +1,6 @@
 # REPL over a Secure WebSocket Relay
-
+import network
+import time
 import os
 import machine
 import ws_client
@@ -20,6 +21,20 @@ try:
 except Exception:
     ssl_ctx = None
     _default_url = _default_url.replace("wss://", "ws://")
+
+
+def connect_wifi(ssid, password, timeout=10):
+    sta = network.WLAN(network.STA_IF)
+    if not sta.isconnected():
+        print('Connecting to WiFi...')
+        sta.active(True)
+        sta.connect(ssid, password)
+        t = time.ticks_ms()
+        while time.ticks_diff(time.ticks_ms(), t) < timeout * 1000:
+            if sta.isconnected():
+                break
+        else:
+            print('Error: Could not connect to WiFi!')
 
 def _curious_base24(n, length):
     # Base 24 alphabet avoiding visually similar or inappropriate characters

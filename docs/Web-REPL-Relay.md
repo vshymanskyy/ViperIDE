@@ -13,24 +13,12 @@ A `Secure WebSocket Relay` can be used to connect to your device over the intern
 #### 3. In your `main.py`
 
 ```py
-# Set your WiFi network credentials
-WIFI_SSID='WiFi_SSID'
-WIFI_PASS='WiFi_Password'
-
-import network, time
-sta = network.WLAN(network.STA_IF)
-if not sta.isconnected():
-    print('Connecting to WiFi...')
-    sta.active(True)
-    sta.connect(WIFI_SSID, WIFI_PASS)
-    t = time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t) < 10000:
-        if sta.isconnected():
-            break
-    else:
-        print('Error: Could not connect to WiFi!')
-
 import wss_repl
+
+# Set your WiFi network
+wss_repl.connect_wifi('WiFi_SSID', 'WiFi_Password')
+
+# Connect to the WebSocket server
 wss_repl.start()
 ```
 
@@ -57,7 +45,7 @@ Visit the specified link to open the IDE.
 
 ## Advanced: Running your own WebSocket relay server
 
-If you're running a [relay server](../src/websocket_relay.js), please specify the URL:
+If you're running a [relay server](../src/websocket_relay.cjs), please specify the URL:
 
 ```py
 wss_repl.start(url='wss://your-server-url')

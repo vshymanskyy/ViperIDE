@@ -16,28 +16,13 @@ The board acts as a web server, so usually you need to be connected to the same 
 #### 3. In your `main.py`
 
 ```py
+import web_repl
+
 # Set your WiFi network credentials
-WIFI_SSID='WiFi_SSID'
-WIFI_PASS='WiFi_Password'
+web_repl.connect_wifi('WiFi_SSID', 'WiFi_Password')
 
 # Password will be required to access the REPL (4-8 symbols)
-REPL_PASS='1234'
-
-import network, time
-sta = network.WLAN(network.STA_IF)
-if not sta.isconnected():
-    print('Connecting to WiFi...')
-    sta.active(True)
-    sta.connect(WIFI_SSID, WIFI_PASS)
-    t = time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t) < 10000:
-        if sta.isconnected():
-            break
-    else:
-        print('Error: Could not connect to WiFi!')
-
-import web_repl
-web_repl.start(password=REPL_PASS)
+web_repl.start(password='1234')
 ```
 
 #### 4. Reset your device

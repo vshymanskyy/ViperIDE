@@ -2,6 +2,7 @@
 import binascii
 import hashlib
 import network
+import time
 import os
 import socket
 import sys
@@ -12,6 +13,20 @@ listen_s = None
 client_s = None
 
 DEBUG = 0
+
+
+def connect_wifi(ssid, password, timeout=10):
+    sta = network.WLAN(network.STA_IF)
+    if not sta.isconnected():
+        print('Connecting to WiFi...')
+        sta.active(True)
+        sta.connect(ssid, password)
+        t = time.ticks_ms()
+        while time.ticks_diff(time.ticks_ms(), t) < timeout * 1000:
+            if sta.isconnected():
+                break
+        else:
+            print('Error: Could not connect to WiFi!')
 
 
 def server_handshake(cl):
