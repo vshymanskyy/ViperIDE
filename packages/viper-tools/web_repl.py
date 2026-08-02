@@ -15,10 +15,10 @@ client_s = None
 DEBUG = 0
 
 
-def connect_wifi(ssid, password, timeout=10):
+def connect_wifi(ssid, password, timeout=15):
     sta = network.WLAN(network.STA_IF)
     if not sta.isconnected():
-        print('Connecting to WiFi...')
+        print("Connecting to WiFi...")
         sta.active(True)
         sta.connect(ssid, password)
         t = time.ticks_ms()
@@ -26,7 +26,7 @@ def connect_wifi(ssid, password, timeout=10):
             if sta.isconnected():
                 break
         else:
-            print('Error: Could not connect to WiFi!')
+            print("Error: Could not connect to WiFi!")
 
 
 def server_handshake(cl):
@@ -165,6 +165,7 @@ def start(port=8266, password=None, accept_handler=accept_conn):
         # Run accept_conn to serve HTML until we get a websocket connection.
         while not accept_conn(s):
             pass
+
 
 def start_foreground(port=8266, password=None):
     start(port, password, None)

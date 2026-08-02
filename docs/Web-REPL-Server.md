@@ -18,7 +18,7 @@ The board acts as a web server, so usually you need to be connected to the same 
 ```py
 import web_repl
 
-# Set your WiFi network credentials
+# Setup your WiFi network
 web_repl.connect_wifi('WiFi_SSID', 'WiFi_Password')
 
 # Password will be required to access the REPL (4-8 symbols)

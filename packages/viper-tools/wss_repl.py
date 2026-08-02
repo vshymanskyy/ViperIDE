@@ -5,28 +5,38 @@ import os
 import machine
 import ws_client
 
-def on_connect(): pass
+
+def on_connect():
+    pass
+
+
+try:
+    timer_hb = machine.Timer(-1)
+except ValueError:
+    timer_hb = machine.Timer(0)
 
 client_s = None
-timer_hb = machine.Timer(-1)
 _url = None
 _uid = None
 _default_url = "wss://hub.viper-ide.org/relay"
+_config_file = ".viper.json"
+_uid_key = "wss_uid"
 
 try:
     import tls
+
     ssl_ctx = tls.SSLContext(tls.PROTOCOL_TLS_CLIENT)
     ssl_ctx.verify_mode = tls.CERT_NONE
-    #ssl_ctx.load_verify_locations(...)
+    # ssl_ctx.load_verify_locations(...)
 except Exception:
     ssl_ctx = None
     _default_url = _default_url.replace("wss://", "ws://")
 
 
-def connect_wifi(ssid, password, timeout=10):
+def connect_wifi(ssid, password, timeout=15):
     sta = network.WLAN(network.STA_IF)
     if not sta.isconnected():
-        print('Connecting to WiFi...')
+        print("Connecting to WiFi...")
         sta.active(True)
         sta.connect(ssid, password)
         t = time.ticks_ms()
@@ -34,7 +44,8 @@ def connect_wifi(ssid, password, timeout=10):
             if sta.isconnected():
                 break
         else:
-            print('Error: Could not connect to WiFi!')
+            print("Error: Could not connect to WiFi!")
+
 
 def _curious_base24(n, length):
     # Base 24 alphabet avoiding visually similar or inappropriate characters
@@ -51,10 +62,12 @@ def _curious_base24(n, length):
         n //= base
     return res
 
+
 def generate_uid():
     num = int.from_bytes(os.urandom(10), "big")
     num = _curious_base24(num, 16)
-    return num[0:4]+"-"+num[4:8]+"-"+num[8:12]
+    return num[0:4] + "-" + num[4:8] + "-" + num[8:12]
+
 
 def _hbeat(tmr):
     global client_s, _uid, _url
@@ -69,14 +82,15 @@ def _hbeat(tmr):
         except Exception:
             pass
     finally:
-        timer_hb.init(mode=timer_hb.ONE_SHOT, period=50*1000, callback=_hbeat)
+        timer_hb.init(mode=timer_hb.ONE_SHOT, period=50 * 1000, callback=_hbeat)
+
 
 def _start(uid=None, url=_default_url):
     global client_s, timer_hb, _uid, _url
     _uid, _url = uid, url
 
     # Heartbeat / reconnect every 50 seconds
-    timer_hb.init(mode=timer_hb.ONE_SHOT, period=50*1000, callback=_hbeat)
+    timer_hb.init(mode=timer_hb.ONE_SHOT, period=50 * 1000, callback=_hbeat)
 
     client_s = ws_client.connect(url + "/new/" + uid, ssl=ssl_ctx)
 
@@ -88,10 +102,26 @@ def _start(uid=None, url=_default_url):
 
     on_connect()
 
+
 def start(uid=None, url=_default_url):
     if not uid:
-        # TODO: store the UID in device configuration
-        uid = generate_uid()
+        import json
+
+        config = {}
+        try:
+            with open(_config_file) as f:
+                config = json.load(f)
+        except Exception:
+            pass
+        uid = config.get(_uid_key)
+        if not uid:
+            uid = generate_uid()
+            config[_uid_key] = uid
+            try:
+                with open(_config_file, "w") as f:
+                    json.dump(config, f)
+            except Exception:
+                pass
     try:
         _start(uid, url)
         if _url == _default_url:
@@ -102,6 +132,7 @@ def start(uid=None, url=_default_url):
             print("Remote REPL available on", lnk)
     except Exception:
         print("Unable to provide remote REPL, will retry periodically")
+
 
 def stop():
     global client_s, timer_hb
@@ -114,6 +145,7 @@ def stop():
     client_s = None
     _url = None
     _uid = None
+
 
 def started():
     return _uid is not None

@@ -15,15 +15,17 @@ A `Secure WebSocket Relay` can be used to connect to your device over the intern
 ```py
 import wss_repl
 
-# Set your WiFi network
+# Setup your WiFi network
 wss_repl.connect_wifi('WiFi_SSID', 'WiFi_Password')
 
 # Connect to the WebSocket server
 wss_repl.start()
 ```
 
-The device will generate a new random ID on every boot. Most likely, you'll want to have a fixed ID.  
-This is easy, just take the auto-generated ID and put it into your code like this:
+On the first run, the device generates a random ID and stores it in `.viper.json`.
+Later boots reuse the same ID automatically.
+
+You can still provide a fixed ID explicitly:
 
 ```py
 wss_repl.start(uid='YOUR-DEVICE-UID')
@@ -34,7 +36,7 @@ wss_repl.start(uid='YOUR-DEVICE-UID')
 In the terminal, you should see something like:
 
 ```log
-Secure WebREPL available on https://viper-ide.org?relay=YOUR-DEVICE-UID
+IDE available on https://viper-ide.org?wss=YOUR-DEVICE-UID
 ```
 
 #### 5. Connect ViperIDE to your device using `WebREPL`
