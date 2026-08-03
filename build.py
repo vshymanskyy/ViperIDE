@@ -8,7 +8,9 @@ from shutil import copyfile as cp, copytree, rmtree
 # Base URL the IDE is deployed at. It is substituted into the JS (as the
 # VIPER_IDE_BASE_URL constant) and into the HTML at build time.
 # CI workflows set VIPER_IDE_BASE_URL explicitly for production builds.
-BASE_URL = os.environ.get("VIPER_IDE_BASE_URL", "http://localhost:10001")
+BASE_URL = os.environ.get("VIPER_IDE_BASE_URL")
+if not BASE_URL:
+    BASE_URL = os.environ["VIPER_IDE_BASE_URL"] = "http://localhost:10001"
 
 def run(cmd):
     subprocess.run(cmd, shell=isinstance(cmd, str), check=True)
@@ -102,12 +104,14 @@ if __name__ == "__main__":
     gen_tar("src/tools_vfs", "build/assets/tools_vfs.tar.gz")
     gen_tar("src/vm_vfs", "build/assets/vm_vfs.tar.gz")
 
+    # Prepare
+    if sys.argv[1] != "--skip-tests":
+        if not path.isdir("node_modules"):
+            run("npm install")
+        run("npm run lint")
+        run("npm run test")
+
     # Build
-    os.environ["VIPER_IDE_BASE_URL"] = BASE_URL
-    if not path.isdir("node_modules"):
-        run("npm install")
-    #run("npm run lint")
-    #run("npm run test")
     run("npm run build")
 
     # Combine everything

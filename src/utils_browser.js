@@ -234,10 +234,6 @@ async function walkFileEntry(entry, prefix, out) {
     }
 }
 
-export function isRunningStandalone() {
-    return (window.matchMedia('(display-mode: standalone)').matches);
-}
-
 let activityTimeout = -1;
 
 // Function to indicate activity

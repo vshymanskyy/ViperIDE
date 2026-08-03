@@ -12,10 +12,12 @@ _MP_STREAM_POLL_RD = micropython.const(0x0001)
 
 # TODO: Remove this when STM32 gets machine.Timer.
 if hasattr(machine, "Timer"):
-    try:
-        _timer = machine.Timer(-1)
-    except ValueError:
-        _timer = machine.Timer(0)
+    for _tid in [-1]+list(range(16,0,-1)):
+        try:
+            _timer = machine.Timer(_tid)
+            break
+        except ValueError:
+            pass
 else:
     _timer = None
 

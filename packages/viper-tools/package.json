@@ -1,5 +1,5 @@
 {
-    "version": "0.1.1",
+    "version": "0.1.2",
     "urls": [
         ["web_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/web_repl.py"],
         ["ble_repl.py",   "github:vshymanskyy/ViperIDE/packages/viper-tools/ble_repl.py"],

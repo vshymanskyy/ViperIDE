@@ -35,7 +35,6 @@ export class WebSocketREPL extends Transport {
                 const ws = new WebSocket(url)
                 let finished = false
                 ws.onopen = async function() {
-                    await sleep(300)    // TODO: find a better way
                     if (!finished) {
                         finished = true
                         resolve(ws)
@@ -88,6 +87,7 @@ export class WebSocketREPL extends Transport {
         const release = await this.startTransaction()
         try {
             try {
+                this.socket.send('')
                 await this.readUntil('Password:', 5000)
             } catch (_err) {
                 return

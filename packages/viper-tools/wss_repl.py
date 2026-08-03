@@ -9,11 +9,12 @@ import ws_client
 def on_connect():
     pass
 
-
-try:
-    timer_hb = machine.Timer(-1)
-except ValueError:
-    timer_hb = machine.Timer(0)
+for _tid in [-1]+list(range(16,0,-1)):
+    try:
+        timer_hb = machine.Timer(_tid)
+        break
+    except ValueError:
+        pass
 
 client_s = None
 _url = None

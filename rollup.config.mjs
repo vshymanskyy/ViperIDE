@@ -92,7 +92,11 @@ const common = (args, name) => ({
       }
     }),
     args.configDebug && sourcemaps(),
-    !args.configDebug && terser(),
+    !args.configDebug && terser({
+        format: {
+          comments: false
+        }
+    }),
     args.configDebug && serve("build"),
   ]
 })

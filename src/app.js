@@ -20,6 +20,7 @@ import { Terminal } from '@xterm/xterm'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { FitAddon } from '@xterm/addon-fit'
 
+import { isStandalonePWA } from 'is-standalone-pwa';
 import { addUpdateHandler, createNewEditor, getEditorFromElement } from './editor.js'
 import { displayOpenFile, createTab, getTabFileName, getTabEditorElement } from './editor_tabs.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
@@ -39,7 +40,7 @@ import * as amplitude from '@amplitude/unified'
 
 import { splitPath, joinPath, sleep, fetchJSON, escapeCSS, sizeFmt, report } from './utils.js'
 import { getUserUID, getScreenInfo, IdleMonitor, getCssPropertyValue, QSA, QS, QID, iOS,
-         sanitizeHTML, isRunningStandalone, indicateActivity, setupTabs,
+         sanitizeHTML, indicateActivity, setupTabs,
          readDroppedFiles } from './utils_browser.js'
 
 import { TreeView, parentDir, TREE_DRAG_TYPE } from './tree_view.js'
@@ -2004,6 +2005,10 @@ if (!document.fullscreenEnabled) {
     QID('term-expand').style.display = 'none'
 }
 
+if (isStandalonePWA()) {
+    QID('app-expand').style.display = 'none'
+}
+
 /* iOS: Disable auto-zoom on contenteditable */
 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
     document
@@ -2184,7 +2189,7 @@ function showOfflineReadyToast(version) {
                 os: ua.getOS().name,
                 os_version: ua.getOS().version,
                 cpu: ua.getCPU().architecture,
-                pwa: isRunningStandalone(),
+                pwa: isStandalonePWA(),
                 screen: scr.width + 'x' + scr.height,
                 orientation: scr.orientation,
                 dpr: scr.dpr,
