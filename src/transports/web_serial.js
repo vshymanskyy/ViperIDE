@@ -62,7 +62,6 @@ export class WebSerial extends Transport {
             try {
                 while (true) {
                     const { value, done } = await reader.read()
-                    console.log(done, value)
                     if (done) { break }
                     this.receiveCallback(value)
                     this.activityCallback()

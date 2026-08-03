@@ -1924,18 +1924,25 @@ async function openPkgReadmeTab(pkg) {
  * up as soon as something connects.
  */
 async function startQuickInstall(pkg) {
+    /* Already queued and waiting for a board - a second link for the same
+       package has nothing to add, and re-toasting would only nag */
+    if (window.pkg_install_url === pkg) { return }
+
+    /* Parked before anything that can fail, so a link is never lost to a
+       readme fetch or an analytics call going wrong */
+    const ready = portReady()
+    if (!ready) {
+        window.pkg_install_url = pkg
+        toastr.info('Warning: your files may be overwritten!', `Connect your device to install ${pkg}`)
+    }
+
     analytics.track('Quick Install Opened', { id: pkg })
     /* Deliberately not awaited: a slow, missing or malformed readme must not
        hold up connecting to the device, which is what the link is really for */
     openPkgReadmeTab(pkg).catch(err => { console.log('Cannot load package readme', err) })
 
-    if (portReady()) {
-        if (await installPkg(pkg)) {
-            analytics.track('Quick Install Completed', { url: pkg })
-        }
-    } else {
-        window.pkg_install_url = pkg
-        toastr.info('Warning: your files may be overwritten!', `Connect your device to install ${pkg}`)
+    if (ready && await installPkg(pkg)) {
+        analytics.track('Quick Install Completed', { url: pkg })
     }
 }
 
@@ -1958,22 +1965,31 @@ async function handleLaunchUrl(targetUrl) {
     }
 }
 
+/* Flipped once the startup path below has had its look at location.search */
+let startupSettled = false
+
 /*
  * The manifest asks for 'focus-existing', so a link followed while ViperIDE is
  * open focuses this window and delivers the URL here instead of reloading it.
- * The launch that opened the window in the first place is delivered too - that
- * one was already handled by the startup path, and is skipped.
+ *
+ * The launch that opened the window in the first place is delivered here too,
+ * and the startup path has already acted on that one. The two are told apart
+ * by when they arrive - the creating launch is queued before the page runs a
+ * line of script, so it lands while startup is still in progress. Comparing it
+ * against location.href would not do: following the same link twice is a real
+ * launch that must still install, and in a window opened by that very link the
+ * URLs are identical.
  */
 function initLaunchHandler() {
-    if (!('launchQueue' in window)) { return }
-    let initialUrl = window.location.href
+    if (!('launchQueue' in window)) {
+        console.log('Launch handler not supported')
+        return
+    }
     window.launchQueue.setConsumer((launchParams) => {
         const target = launchParams && launchParams.targetURL
-        const isInitial = initialUrl !== null && target === initialUrl
-        initialUrl = null
-        if (target && !isInitial) {
-            handleLaunchUrl(target)
-        }
+        console.log('Launched with', target, startupSettled ? '' : '(startup, handled by page load)')
+        if (!target || !startupSettled) { return }
+        handleLaunchUrl(target).catch(err => { report('Cannot handle link', err) })
     })
 }
 
@@ -2308,6 +2324,7 @@ function showOfflineReadyToast(version) {
         term.options.fontSize = (size * 0.9).toFixed(1)
     })
 
+    initLaunchHandler()
     applyTranslation()
 
 
@@ -2475,10 +2492,16 @@ function showOfflineReadyToast(version) {
     }
 
     if ((urlID = urlParams.get('install'))) {
-        await startQuickInstall(urlID)
+        try {
+            await startQuickInstall(urlID)
+        } catch (err) {
+            report('Quick install failed', err)
+        }
     }
 
-    initLaunchHandler()
+    /* location.search has been acted on, so anything the launch queue hands
+       over from here on is a link followed into this already-running window */
+    startupSettled = true
 
     if (typeof webrepl_url !== 'undefined') {
         await sleep(100)
