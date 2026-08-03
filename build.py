@@ -92,6 +92,11 @@ def combine(dst):
         f.write(combined)
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Build the VIPER IDE")
+    parser.add_argument("--skip-tests", action="store_true", help="Skip linting and tests")
+    args = parser.parse_args()
+
     # Prepare
     rmtree("build", ignore_errors=True)
     makedirs("build/assets")
@@ -105,7 +110,7 @@ if __name__ == "__main__":
     gen_tar("src/vm_vfs", "build/assets/vm_vfs.tar.gz")
 
     # Prepare
-    if sys.argv[1] != "--skip-tests":
+    if not args.skip_tests:
         if not path.isdir("node_modules"):
             run("npm install")
         run("npm run lint")

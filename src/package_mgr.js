@@ -6,8 +6,8 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { fetchJSON, fetchArrayBuffer, splitPath } from './utils.js'
-//import { compilePython } from './python_utils.js'
+import { fetchJSON, fetchText, fetchArrayBuffer, splitPath } from './utils.js'
+import { compilePython } from './python_utils.js'
 
 const MIP_INDEXES = [{
     name: 'featured',
@@ -76,6 +76,24 @@ function rewriteUrl(url, { base=null, branch=null } = {}) {
     return url
 }
 
+/*
+ * A link written inside a document that came with a package - an image or a
+ * link in a readme. It is resolved the same way as everything else in
+ * package.json: relative to where the document itself is, with the `github:` /
+ * `gitlab:` shorthands understood and a GitHub `blob` page turned into the raw
+ * file it shows. What is not a location (`data:`, `mailto:`, a bare fragment)
+ * and what cannot be placed is left exactly as it was written.
+ */
+export function rewriteDocUrl(url, { base=null, branch=null } = {}) {
+    if (!url || url.startsWith('#')) { return url }
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^(https?|github|gitlab):/i.test(url)) { return url }
+    try {
+        return rewriteUrl(url, { base, branch })
+    } catch (_err) {
+        return url
+    }
+}
+
 export async function getPkgIndexes() {
     for (const i of MIP_INDEXES) {
         if (!i.index) {
@@ -118,6 +136,55 @@ async function loadPkgInfo(url, { base=null, version=null }= {}) {
         const pkg_json = rewriteUrl(url, { base, branch: version })
         const pkg_info = await fetchJSON(pkg_json);
         return [ pkg_info, pkg_json ]
+    }
+}
+
+/*
+ * What a package says about itself, resolved without a device: `name` is a name
+ * from one of the indexes or a URL, in the same forms `rawInstallPkg` takes.
+ * Returns `[pkg_info, pkg_json]`. `pkg_info` is null for a package that cannot be
+ * described until the board is known - micropython-lib (index v2) serves a
+ * different package.json per MPY ABI.
+ */
+export async function getPkgInfo(name, { version=null } = {}) {
+    if (!version) {
+        [ name, version ] = splitPkgName(name)
+    }
+    const [ index, index_pkg ] = await findPkg(name)
+    if (!index_pkg) {           // Not in an index => URL
+        return await loadPkgInfo(name, { base: index.url, version })
+    }
+    if (index.index.v === '3.viper-ide') {
+        for (const pkg_ver of index_pkg.versions) {
+            return await loadPkgInfo(pkg_ver.url, { base: index.url, version })
+        }
+    }
+    return [ null, null ]
+}
+
+/*
+ * The readme a package points at, or null when it has none. The `readme` field
+ * holds a URL in the same forms as everything else in package.json, so a bare
+ * file name resolves against the package.json it was found in.
+ *
+ * `url` and `version` come back with the text: what the document itself points
+ * at is written relative to where the document is, so whoever displays it needs
+ * to know that too.
+ */
+export async function fetchPkgReadme(name, { version=null } = {}) {
+    if (!version) {
+        [ name, version ] = splitPkgName(name)
+    }
+    const [ pkg_info, pkg_json ] = await getPkgInfo(name, { version })
+    if (!pkg_info || !pkg_info.readme) {
+        return null
+    }
+    const url = rewriteUrl(pkg_info.readme, { base: pkg_json, branch: version })
+    return {
+        name: pkg_info.name || name,
+        text: await fetchText(url),
+        url,
+        version,
     }
 }
 
@@ -218,11 +285,6 @@ export async function rawInstallPkg(raw, name, { dev=null, version=null, index=n
 
                 if (!prefer_source && fn.endsWith('.py')) {
                     try {
-                        // mpy-cross is a browser wasm bundle, and python_utils.js is the
-                        // only thing here that needs a page - keep it out of the module
-                        // graph so this one stays loadable anywhere. Where it cannot be
-                        // had, the import throws and the .py source is installed as is.
-                        const { compilePython } = await import('./python_utils.js')
                         content = await compilePython(fn, content, dev)
                         fn = fn.replace(/\.py$/, '.mpy')
                     } catch (_err) {

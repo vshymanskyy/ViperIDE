@@ -27,14 +27,14 @@ import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
 import { MpRawMode } from './rawmode.js'
 import { ReplMonitor } from './repl_monitor.js'
-import { getPkgIndexes, rawInstallPkg } from './package_mgr.js'
+import { getPkgIndexes, rawInstallPkg, fetchPkgReadme } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
 import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettifyPython, compilePython } from './python_utils.js'
 import { MicroPythonWASM } from './emulator.js'
 import { getSetting, onSettingChange, updateSetting } from './settings.js'
+import { renderMarkdown } from './markdown.js'
 
-import { marked, Renderer as MarkedRenderer } from 'marked'
 import { UAParser } from 'ua-parser-js'
 import * as amplitude from '@amplitude/unified'
 
@@ -67,14 +67,6 @@ library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, fa
          faFolderOpen)
 library.add(faMessage, faCircleDown)
 dom.watch()
-
-marked.use({
-    renderer: {
-        link(token) {
-            return MarkedRenderer.prototype.link.call(this, token).replace(/^<a /, '<a class="link" target="_blank" ')
-        }
-    }
-})
 
 function getBuildDate() {
     return (new Date(VIPER_IDE_BUILD)).toISOString().substring(0, 19).replace('T',' ')
@@ -1503,7 +1495,8 @@ function _reloadView(fn, bytes) {
     }
 
     if (kind === 'markdown') {
-        editorElement.innerHTML = `<div class="marked-viewer">` + marked(text) + `</div>`
+        /* Only ever a file read off the device, so its links stay live */
+        editorElement.innerHTML = renderMarkdown(text)
         fsCache.rebaseView(fn, text)
         return
     }
@@ -1594,7 +1587,7 @@ function decodeText(bytes) {
     }
 }
 
-async function _loadContent(fn, content, editorElement) {
+async function _loadContent(fn, content, editorElement, { external=null } = {}) {
     /* The name the tab carries, which is what the cache is keyed on. Disassembly
        renames `fn` below, and a move renames the tab later, so neither the
        original argument nor the editor's own name can be relied on. */
@@ -1606,7 +1599,7 @@ async function _loadContent(fn, content, editorElement) {
         fsCache.openView(tabFn, { baseline: '', kind: 'hex', readOnly: true })
         editor = null
     } else if (fn.endsWith('.md') && getSetting('render-markdown')) {
-        editorElement.innerHTML = `<div class="marked-viewer">` + marked(content) + `</div>`
+        editorElement.innerHTML = renderMarkdown(content, { external })
         fsCache.openView(tabFn, { baseline: content, kind: 'markdown', readOnly: true })
         editor = null
     } else {
@@ -1708,7 +1701,7 @@ export async function saveCurrentFile() {
    tab is closed. It has no file behind it on the device, so it is never saved
    and never reconciled against a board. */
 async function openWelcomeTab() {
-    const fn = 'README.md'
+    const fn = 'ViperIDE.md'
     const content = `
 # ViperIDE - MicroPython Web IDE
 
@@ -1896,6 +1889,25 @@ export async function installPkg(pkg, { version=null } = {}) {
     } finally {
         await raw.end()
     }
+}
+
+/*
+ * The readme an install link points at, opened as a tab so the package can be
+ * read while the install itself waits for a device. Nothing here touches a
+ * board, and a package without a readme opens nothing.
+ *
+ * The tab is named after the package so it cannot collide with the welcome tab,
+ * which is also a README.md with no file behind it. It is loaded as external
+ * content: the document comes from whoever published the package, so its links
+ * are made inert, and what it points at is resolved against where it came from.
+ */
+async function openPkgReadmeTab(pkg) {
+    const readme = await fetchPkgReadme(pkg)
+    if (!readme) { return }
+    const fn = `${readme.name}/README.md`
+    if (displayOpenFile(fn)) { return }
+    await _loadContent(fn, readme.text, createTab(fn),
+                       { external: { url: readme.url, version: readme.version } })
 }
 
 export async function installPkgFromUrl() {
@@ -2399,6 +2411,9 @@ function showOfflineReadyToast(version) {
         window.pkg_install_url = urlID
         toastr.info('Warning: your files may be overwritten!', `Connect your device to install ${urlID}`)
         analytics.track('Quick Install Opened', { id: urlID })
+        /* Deliberately not awaited: a slow, missing or malformed readme must not
+           hold up connecting to the device, which is what the link is really for */
+        openPkgReadmeTab(urlID).catch(err => { console.log('Cannot load package readme', err) })
     }
 
     if (typeof webrepl_url !== 'undefined') {

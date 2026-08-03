@@ -35,6 +35,12 @@ export async function fetchJSON(url) {
     return await response.json()
 }
 
+export async function fetchText(url) {
+    const response = await fetch(url, {cache: 'no-store'})
+    if (!response.ok) { throw new Error(response.status) }
+    return await response.text()
+}
+
 export async function fetchArrayBuffer(url) {
     const response = await fetch(url, {cache: 'no-store'})
     if (!response.ok) { throw new Error(response.status) }

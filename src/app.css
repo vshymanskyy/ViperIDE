@@ -177,9 +177,118 @@ body.loaded {
 }
 
 .marked-viewer {
-    height: 100%;
+    min-height: 100%;
     width: 100%;
-    padding: 10px;
+    max-width: 920px;
+    /* margin: 0 auto; */
+    padding: 20px;
+    color: var(--fg-color);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.marked-viewer > :first-child {
+    margin-top: 0;
+}
+
+.marked-viewer > :last-child {
+    margin-bottom: 0;
+}
+
+.marked-viewer h1,
+.marked-viewer h2,
+.marked-viewer h3,
+.marked-viewer h4,
+.marked-viewer h5,
+.marked-viewer h6 {
+    line-height: 1.25;
+    margin: 1.5em 0 0.55em;
+}
+
+.marked-viewer h1 {
+    font-size: 1.75rem;
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid #ffffff20;
+}
+
+.marked-viewer h2 {
+    font-size: 1.35rem;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid #ffffff18;
+}
+
+.marked-viewer h3 {
+    font-size: 1.1rem;
+}
+
+.marked-viewer p,
+.marked-viewer ul,
+.marked-viewer ol,
+.marked-viewer blockquote,
+.marked-viewer pre,
+.marked-viewer table {
+    margin: 0.8em 0;
+}
+
+.marked-viewer ul,
+.marked-viewer ol {
+    padding-left: 1.5em;
+}
+
+.marked-viewer li + li {
+    margin-top: 0.25em;
+}
+
+.marked-viewer blockquote {
+    padding: 0.1em 0 0.1em 1em;
+    border-left: 3px solid var(--accent-color);
+    color: #ffffffc8;
+}
+
+.marked-viewer code {
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    background: #ffffff12;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: 0.9em;
+}
+
+.marked-viewer pre {
+    max-width: 100%;
+    padding: 0.85em 1em;
+    border: 1px solid #ffffff16;
+    border-radius: 4px;
+    background: #00000028;
+    overflow: auto;
+}
+
+.marked-viewer pre code {
+    display: block;
+    padding: 0;
+    background: none;
+    white-space: pre;
+}
+
+/*.marked-viewer img {
+    max-width: 100%;
+    height: auto;
+}*/
+
+.marked-viewer table {
+    display: block;
+    max-width: 100%;
+    border-collapse: collapse;
+    overflow-x: auto;
+}
+
+.marked-viewer th,
+.marked-viewer td {
+    padding: 0.4em 0.65em;
+    border: 1px solid #ffffff20;
+}
+
+.marked-viewer th {
+    background: #ffffff0d;
 }
 
 .hexed-viewer {

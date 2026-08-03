@@ -35,6 +35,23 @@ async function installed(raw) {
     return (await listTree(raw, libPath)).map(e => e.path.slice(libPath.length + 1)).sort()
 }
 
+/* Serves `routes` (url -> body) for the duration of fn, so a package that exists
+ * nowhere can still be resolved through the real rewriting. Anything not listed -
+ * the package indexes themselves - goes to the network as usual. */
+async function withFetchStub(routes, fn) {
+    const realFetch = globalThis.fetch
+    globalThis.fetch = async (url, opts) => {
+        const body = routes[String(url)]
+        if (body === undefined) { return await realFetch(url, opts) }
+        return new Response(body, { status: 200 })
+    }
+    try {
+        return await fn()
+    } finally {
+        globalThis.fetch = realFetch
+    }
+}
+
 describe('Packages', () => {
 
     /* A plain function, not an arrow: skipping a whole suite goes through Mocha's own
@@ -85,6 +102,71 @@ describe('Packages', () => {
     it('findPkg returns null for an unknown name', async () => {
         const [, pkg] = await pm.findPkg('this-package-does-not-exist-zzz')
         assert.strictEqual(pkg, null)
+    })
+
+    it('getPkgInfo describes an indexed package without a device', async () => {
+        const [pkg_info, pkg_json] = await pm.getPkgInfo('viper-tools')
+        assert(pkg_info, 'viper-tools could not be resolved')
+        assert(pkg_info.urls?.length, 'viper-tools lists no urls')
+        assert.include(pkg_json, 'viper-tools/package.json')
+    })
+
+    it('getPkgInfo yields nothing for a package that needs the board', async () => {
+        // micropython-lib (index v2) serves a different package.json per MPY ABI
+        const [pkg_info] = await pm.getPkgInfo('base64')
+        assert.strictEqual(pkg_info, null)
+    })
+
+    it('fetchPkgReadme resolves the readme against the package.json', async () => {
+        const readme = await withFetchStub({
+            'https://raw.githubusercontent.com/acme/demo/HEAD/package.json':
+                '{"name":"demo","version":"1.0","readme":"docs/readme.md"}',
+            'https://raw.githubusercontent.com/acme/demo/HEAD/docs/readme.md': '# Demo',
+        }, () => pm.fetchPkgReadme('github:acme/demo'))
+
+        assert.strictEqual(readme.name, 'demo')
+        assert.strictEqual(readme.text, '# Demo')
+        // Where it came from, which is what the links inside it are relative to
+        assert.strictEqual(readme.url, 'https://raw.githubusercontent.com/acme/demo/HEAD/docs/readme.md')
+    })
+
+    it('fetchPkgReadme follows the requested version', async () => {
+        const readme = await withFetchStub({
+            'https://raw.githubusercontent.com/acme/demo/v2/package.json':
+                '{"name":"demo","version":"2.0","readme":"readme.md"}',
+            'https://raw.githubusercontent.com/acme/demo/v2/readme.md': '# Demo v2',
+        }, () => pm.fetchPkgReadme('github:acme/demo@v2'))
+
+        assert.strictEqual(readme.text, '# Demo v2')
+        assert.strictEqual(readme.url, 'https://raw.githubusercontent.com/acme/demo/v2/readme.md')
+        assert.strictEqual(readme.version, 'v2')
+    })
+
+    it('rewriteDocUrl places what a readme points at', () => {
+        const origin = { base: 'https://raw.githubusercontent.com/acme/demo/v2/docs/readme.md', branch: 'v2' }
+        const cases = [
+            // Relative to the document, which is what a readme in a repository writes
+            ['img/shot.png',  'https://raw.githubusercontent.com/acme/demo/v2/docs/img/shot.png'],
+            // `..` is left in place: it is the URL parser that collapses it, at fetch time
+            ['../logo.png',   'https://raw.githubusercontent.com/acme/demo/v2/docs/../logo.png'],
+            // The same shorthands package.json accepts
+            ['github:acme/demo/logo.png', 'https://raw.githubusercontent.com/acme/demo/v2/logo.png'],
+            // A GitHub page showing a file, rather than the file
+            ['https://github.com/acme/demo/blob/main/GUIDE.md',
+             'https://raw.githubusercontent.com/acme/demo/v2/GUIDE.md'],
+            // Left alone: already absolute, or not a location at all
+            ['https://img.shields.io/badge.svg', 'https://img.shields.io/badge.svg'],
+            ['data:image/png;base64,iVBORw0K',   'data:image/png;base64,iVBORw0K'],
+            ['mailto:nobody@example.com',        'mailto:nobody@example.com'],
+            ['#usage',                           '#usage'],
+        ]
+        for (const [url, expected] of cases) {
+            assert.strictEqual(pm.rewriteDocUrl(url, origin), expected, `rewriting ${url}`)
+        }
+    })
+
+    it('rewriteDocUrl leaves a relative link alone when there is nowhere to place it', () => {
+        assert.strictEqual(pm.rewriteDocUrl('img/shot.png', {}), 'img/shot.png')
     })
 
     it('installs a package from micropython-lib as source', async () => {

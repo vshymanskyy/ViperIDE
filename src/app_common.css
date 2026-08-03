@@ -112,6 +112,12 @@ a.link {
     -webkit-text-decoration: underline dotted 1px;
 }
 
+/* A link that was deliberately not made clickable (a package readme). It still
+   reads as a link and names its target on hover, but it goes nowhere. */
+.link-dead {
+    cursor: default;
+}
+
 label {
     user-select: none;
     cursor: pointer;
