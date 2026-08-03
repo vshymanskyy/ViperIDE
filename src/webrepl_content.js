@@ -8,5 +8,8 @@
 
     fetch('index.html')
         .then(rsp => rsp.text() )
-        .then(data => document.write(data))
+        .then(data => {
+            document.write(data)
+            document.close()
+        })
 })();
