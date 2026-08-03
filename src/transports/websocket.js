@@ -15,6 +15,7 @@ export class WebSocketREPL extends Transport {
         this.url = url
         this.socket = null
         this.last_activity = 0
+        super.writeChunk = 512
         this.info = {
             url: this.url
         }
@@ -144,7 +145,7 @@ export class WebSocketREPL extends Transport {
                 this.activityCallback()
                 offset += this.writeChunk
                 if (offset < value.length) {
-                    await sleep(150)
+                    await sleep(20)
                 }
             }
             this.last_activity = Date.now()
