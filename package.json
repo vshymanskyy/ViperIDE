@@ -25,7 +25,7 @@
     "@micropython/micropython-webassembly-pyscript": "1.28.0-6",
     "@uiw/codemirror-theme-material": "^4.25.11",
     "@uiw/codemirror-theme-monokai": "^4.25.11",
-    "@vshymanskyy/mpy-cross-wasm": "https://github.com/vshymanskyy/mpy-cross-wasm/releases/download/v1.0.1/vshymanskyy-mpy-cross-wasm-1.0.1.tgz",
+    "@vshymanskyy/mpy-cross-wasm": "https://github.com/vshymanskyy/mpy-cross-wasm/releases/download/v1.1.0/vshymanskyy-mpy-cross-wasm-1.1.0.tgz",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",

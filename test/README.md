@@ -93,12 +93,6 @@ rewrites one. That works because the browser-only half of the code is kept in it
 modules: `src/utils.js` has no imports at all and `src/utils_browser.js` holds everything
 that needs a page. Anything a suite imports has to stay on the portable side of that line.
 
-`src/package_mgr.js` is the one with a foot in both: `mpy-cross` is a browser wasm bundle,
-so it reaches `src/python_utils.js` through a dynamic import at the point of use. Under
-Node that import throws, which `package_mgr.js` already treats as "install the `.py`
-source instead". Precompiled `.mpy` files served by an index are still installed as
-`.mpy`, so that path stays covered.
-
 Transports are split under `src/transports/`. The base class and the WebREPL transport are
 shared with the browser; `src/transports/node.mjs` is the barrel this suite connects
 through, adding the serial and wasm-VM transports that only exist under Node.

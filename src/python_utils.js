@@ -68,8 +68,6 @@ function mpyCrossWasmUrl(abi) {
 }
 
 export async function validatePython(filename, content, devInfo) {
-    // TODO: looks like it fetches the (cached) wasm file on every run
-    // Ideally we want to init the wasm file once and then reuse the instance multiple times
     try {
         const [_, fname] = splitPath(filename)
         // Syntax checking only needs a compiler that accepts the board's dialect, so an
