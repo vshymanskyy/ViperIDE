@@ -554,12 +554,16 @@ async function completeDeviceInit() {
             toastr.success(sanitizeHTML(devInfo.machine + '\n' + devInfo.version), 'Device connected')
             analytics.track('Device Connected', devInfo)
             console.log('Device info', devInfo)
+        }
 
-            if (window.pkg_install_url) {
-                await _raw_installPkg(raw, window.pkg_install_url)
-                analytics.track('Quick Install Completed', { url: window.pkg_install_url })
-                window.pkg_install_url = null
-            }
+        /* An install link that had no board to act on when it arrived - either
+           it opened the app, or it was handed to a window that was sitting
+           with nothing connected. Cleared either way, so it fires once */
+        if (window.pkg_install_url) {
+            const pkg = window.pkg_install_url
+            window.pkg_install_url = null
+            await _raw_installPkg(raw, pkg)
+            analytics.track('Quick Install Completed', { url: pkg })
         }
 
         await _raw_updateFileTree(raw)
@@ -1878,14 +1882,16 @@ async function _raw_installPkg(raw, pkg, { version=null } = {}) {
 export async function installPkg(pkg, { version=null } = {}) {
     if (!portReady()) {
         toastr.info('Connect yout device first')
-        return
+        return false
     }
     const raw = await MpRawMode.begin(port)
     try {
         await _raw_installPkg(raw, pkg, { version })
         await _raw_updateFileTree(raw)
+        return true
     } catch (err) {
         report('Installing failed', err)
+        return false
     } finally {
         await raw.end()
     }
@@ -1908,6 +1914,67 @@ async function openPkgReadmeTab(pkg) {
     if (displayOpenFile(fn)) { return }
     await _loadContent(fn, readme.text, createTab(fn),
                        { external: { url: readme.url, version: readme.version } })
+}
+
+/*
+ * A ?install= link. It arrives either as the URL this window was opened with,
+ * or - once the PWA is installed and handles its own links - as a launch handed
+ * to a window that is already running. A board that is already up installs
+ * right away; otherwise the package is parked for completeDeviceInit() to pick
+ * up as soon as something connects.
+ */
+async function startQuickInstall(pkg) {
+    analytics.track('Quick Install Opened', { id: pkg })
+    /* Deliberately not awaited: a slow, missing or malformed readme must not
+       hold up connecting to the device, which is what the link is really for */
+    openPkgReadmeTab(pkg).catch(err => { console.log('Cannot load package readme', err) })
+
+    if (portReady()) {
+        if (await installPkg(pkg)) {
+            analytics.track('Quick Install Completed', { url: pkg })
+        }
+    } else {
+        window.pkg_install_url = pkg
+        toastr.info('Warning: your files may be overwritten!', `Connect your device to install ${pkg}`)
+    }
+}
+
+/*
+ * What a link means to a window that is already open. Only ?install= is acted
+ * on: the connection params (?wss=, ?rtc=, ?vm=) would tear down whatever the
+ * session is already talking to, which is not what following a link should do.
+ */
+async function handleLaunchUrl(targetUrl) {
+    let params
+    try {
+        params = new URL(targetUrl, window.location.href).searchParams
+    } catch (err) {
+        report('Cannot handle link', err)
+        return
+    }
+    const pkg = params.get('install')
+    if (pkg) {
+        await startQuickInstall(pkg)
+    }
+}
+
+/*
+ * The manifest asks for 'focus-existing', so a link followed while ViperIDE is
+ * open focuses this window and delivers the URL here instead of reloading it.
+ * The launch that opened the window in the first place is delivered too - that
+ * one was already handled by the startup path, and is skipped.
+ */
+function initLaunchHandler() {
+    if (!('launchQueue' in window)) { return }
+    let initialUrl = window.location.href
+    window.launchQueue.setConsumer((launchParams) => {
+        const target = launchParams && launchParams.targetURL
+        const isInitial = initialUrl !== null && target === initialUrl
+        initialUrl = null
+        if (target && !isInitial) {
+            handleLaunchUrl(target)
+        }
+    })
 }
 
 export async function installPkgFromUrl() {
@@ -2408,13 +2475,10 @@ function showOfflineReadyToast(version) {
     }
 
     if ((urlID = urlParams.get('install'))) {
-        window.pkg_install_url = urlID
-        toastr.info('Warning: your files may be overwritten!', `Connect your device to install ${urlID}`)
-        analytics.track('Quick Install Opened', { id: urlID })
-        /* Deliberately not awaited: a slow, missing or malformed readme must not
-           hold up connecting to the device, which is what the link is really for */
-        openPkgReadmeTab(urlID).catch(err => { console.log('Cannot load package readme', err) })
+        await startQuickInstall(urlID)
     }
+
+    initLaunchHandler()
 
     if (typeof webrepl_url !== 'undefined') {
         await sleep(100)

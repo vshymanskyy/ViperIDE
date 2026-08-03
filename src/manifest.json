@@ -4,9 +4,14 @@
     "short_name": "ViperIDE",
     "description": "MicroPython Web IDE",
     "start_url": "/index.html",
+    "scope": "/",
     "background_color": "#2a2e32",
     "theme_color": "#2a2e32",
     "display": "standalone",
+    "handle_links": "preferred",
+    "launch_handler": {
+        "client_mode": "focus-existing"
+    },
     "icons": [
         {
             "src": "assets/app_1024.png",
