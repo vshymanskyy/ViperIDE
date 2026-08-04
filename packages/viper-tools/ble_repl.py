@@ -10,16 +10,13 @@ import ble_nus
 _MP_STREAM_POLL = micropython.const(3)
 _MP_STREAM_POLL_RD = micropython.const(0x0001)
 
-# TODO: Remove this when STM32 gets machine.Timer.
-if hasattr(machine, "Timer"):
-    for _tid in [-1]+list(range(16,0,-1)):
-        try:
-            _timer = machine.Timer(_tid)
-            break
-        except ValueError:
-            pass
-else:
-    _timer = None
+_timer = None
+for _tid in [-1]+list(range(16,0,-1)):
+    try:
+        _timer = machine.Timer(_tid)
+        break
+    except ValueError:
+        pass
 
 
 # Batch writes into 50ms intervals.

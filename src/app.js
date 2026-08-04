@@ -997,7 +997,6 @@ const isSpecialPath = (path) => /^\/(proc|dev|sys)(\/|$)/.test(path)
 const isDirPath = (path) => (path === '/') || !!fsCache.get(path)?.isDir
 
 function fileIcon(name) {
-    /* TODO ••• */
     const fnuc = name.toUpperCase()
     if (fnuc.endsWith('.MPY')) {
         return 'fa-solid fa-cube'

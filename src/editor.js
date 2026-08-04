@@ -7,9 +7,9 @@
  */
 
 import { basicSetup } from 'codemirror'
-import { EditorView, ViewPlugin, keymap, Decoration, MatchDecorator } from '@codemirror/view'
+import { EditorView, ViewPlugin, keymap, Decoration } from '@codemirror/view'
 import { EditorState, RangeSetBuilder, Prec, StateEffect } from '@codemirror/state'
-import { StreamLanguage, indentUnit, syntaxTree } from '@codemirror/language'
+import { StreamLanguage, indentUnit, syntaxTree, language } from '@codemirror/language'
 import { indentWithTab } from '@codemirror/commands'
 import { python } from '@codemirror/lang-python'
 import { json as modeJSON, jsonParseLinter } from '@codemirror/lang-json'
@@ -23,52 +23,62 @@ import { linter } from '@codemirror/lint'
 import { validatePython, getRuffWorkspace } from './python_utils.js'
 
 /*
+ * Highlight regexp matches, but only where they occur in comments
+ */
+
+function isInComment(state, pos) {
+  // A file with no syntax to speak of, such as a plain text one, is all "comment"
+  if (!state.facet(language)) { return true; }
+  for (let node = syntaxTree(state).resolveInner(pos); node; node = node.parent) {
+    if (node.type.name.toLowerCase().includes("comment")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function commentDecorator(regexp, decoration) {
+  return ViewPlugin.fromClass(class {
+    constructor(view) {
+      this.decorations = this.buildDecorations(view);
+    }
+
+    update(update) {
+      // The tree is parsed in the background, so the decorations of a freshly
+      // opened file are built before there is any syntax to consult
+      if (update.docChanged || update.viewportChanged ||
+          syntaxTree(update.startState) != syntaxTree(update.state)) {
+        this.decorations = this.buildDecorations(update.view);
+      }
+    }
+
+    buildDecorations(view) {
+      const builder = new RangeSetBuilder();
+      for (let {from, to} of view.visibleRanges) {
+        let text = view.state.sliceDoc(from, to);
+        let match;
+        regexp.lastIndex = 0;
+        while ((match = regexp.exec(text))) {
+          let start = from + match.index;
+          let end = start + match[0].length;
+          if (isInComment(view.state, start)) {
+            builder.add(start, end, decoration);
+          }
+        }
+      }
+      return builder.finish();
+    }
+  }, {
+    decorations: v => v.decorations
+  });
+}
+
+/*
  * Highlight links in comments
  */
 
-const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-const linkDecorator = ViewPlugin.fromClass(class {
-  constructor(view) {
-    this.decorations = this.buildDecorations(view);
-  }
-
-  update(update) {
-    if (update.docChanged || update.viewportChanged) {
-      this.decorations = this.buildDecorations(update.view);
-    }
-  }
-
-  buildDecorations(view) {
-    const builder = new RangeSetBuilder();
-    for (let {from, to} of view.visibleRanges) {
-      let text = view.state.sliceDoc(from, to);
-      let match;
-      while ((match = urlRegex.exec(text))) {
-        let start = from + match.index;
-        let end = start + match[0].length;
-        if (this.isInComment(view, start)) {
-          builder.add(start, end, Decoration.mark({class: "cm-link"}));
-        }
-      }
-    }
-    return builder.finish();
-  }
-
-  isInComment(view, pos) {
-    let tree = syntaxTree(view.state);
-    let node = tree.resolveInner(pos);
-    while (node) {
-      if (node.type.name.toLowerCase().includes("comment")) {
-        return true;
-      }
-      node = node.parent;
-    }
-    return false;
-  }
-}, {
-  decorations: v => v.decorations
-});
+const linkDecorator = commentDecorator(/https?:\/\/[^\s]+/g,
+                                       Decoration.mark({class: "cm-link"}));
 
 const linkClickPlugin = EditorView.domEventHandlers({
   click(event, _view) {
@@ -98,27 +108,14 @@ const linkCommentExtensions = [
 
 /*
  * Highlight special comments
- * TODO: only highlight in comments
  */
 
-const specialCommentDecorator = new MatchDecorator({
-  regexp: /(NOTE|OPTIMIZE|TODO|WARNING|WARN|HACK|XXX|FIXME):?/g,
-  decorate: (add, from, to, _match) => add(from, to, Decoration.mark({ class: "special-comment" })),
-});
-
-const specialCommentView = ViewPlugin.fromClass(class {
-  constructor(view) {
-    this.decorations = specialCommentDecorator.createDeco(view);
-  }
-  update(update) {
-    this.decorations = specialCommentDecorator.updateDeco(update, this.decorations);
-  }
-}, {
-  decorations: v => v.decorations
-});
+const specialCommentDecorator = commentDecorator(
+  /\b(NOTE|OPTIMIZE|TODO|WARNING|WARN|HACK|XXX|FIXME|BUG)\b:?/g,
+  Decoration.mark({class: "special-comment"}));
 
 const specialCommentExtensions = [
-  specialCommentView.extension,
+  specialCommentDecorator,
   EditorView.theme({
     ".special-comment": {
       backgroundColor: "brown",

@@ -64,12 +64,11 @@ export class WebSocketREPL extends Transport {
             }
         }, 10*1000)
 
+        const decoder = new TextDecoder('utf-8')
+
         this.socket.onmessage = (event) => {
             if (event.data instanceof ArrayBuffer) {
-                // NOTE: for WebSockets, we assume that each binary message
-                // contains a complete unicode string
-                const decoder = new TextDecoder()
-                this.receiveCallback(decoder.decode(event.data))
+                this.receiveCallback(decoder.decode(event.data, { stream: true }))
             } else {
                 this.receiveCallback(event.data)
             }
