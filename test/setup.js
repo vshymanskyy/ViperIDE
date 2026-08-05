@@ -15,8 +15,9 @@
 import { assert, config, use } from 'chai'
 import Pending from 'mocha/lib/pending.js'
 
-import { makeVMTransport, makeSerialTransport, listSerialPorts, WebSocketREPL }
+import { MicroPythonWASM, makeSerialTransport, listSerialPorts, WebSocketREPL }
     from '../src/transports/node.mjs'
+import { loadMicroPython } from '@micropython/micropython-webassembly-pyscript/micropython.mjs'
 import { withRaw, rmTree, mkdirp } from './board.js'
 
 /*
@@ -171,7 +172,7 @@ function hexDump(arr, at, span = 6) {
 async function connect(target) {
     let port
     if (target === 'vm') {
-        port = await makeVMTransport()
+        port = new MicroPythonWASM(loadMicroPython)
     } else if (target.startsWith('ws://') || target.startsWith('wss://')) {
         port = new WebSocketREPL(target)
         port.onPasswordRequest(() => opts.password)
@@ -232,7 +233,7 @@ export const mochaHooks = {
             // The wasm REPL runs Python on the same thread that feeds it input, so a
             // busy loop cannot be broken with Ctrl-C - see src/emulator.js.
             interrupt: opts.target !== 'vm',
-            softReboot: opts.target !== 'vm',
+            softReboot: true,
             // On a real board execution continues after we stop writing; the wasm build
             // finishes the statement inside replProcessCharWithAsyncify().
             asyncExec: opts.target !== 'vm',

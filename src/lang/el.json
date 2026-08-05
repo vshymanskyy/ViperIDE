@@ -37,6 +37,7 @@
             "use-word-wrap": "Αναδίπλωση λέξεων",
             "render-markdown": "Προβολή Markdown",
             "refresh-after-run": "Ανανέωση αρχείων μετά την εκτέλεση",
+            "auto-soft-reset": "Soft Reset πριν από την εκτέλεση",
             "use-natural-sort": "Φυσική ταξινόμηση",
             "lang": "Γλώσσα",
             "zoom": "Ζουμ",

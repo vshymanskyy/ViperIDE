@@ -37,6 +37,7 @@
             "use-word-wrap": "Ordbrytning",
             "render-markdown": "Markdown-visare",
             "refresh-after-run": "Uppdatera filer efter körning",
+            "auto-soft-reset": "Soft Reset före körning",
             "use-natural-sort": "Naturlig sortering",
             "lang": "Språk",
             "zoom": "Zoom",

@@ -125,7 +125,7 @@ async function prepareNewPort(type) {
             const id = ConnectionUID.parse(url.replace('rtc://', ''))
             new_port = new WebRTCTransport(id.value())
         } else if (url.startsWith('vm://')) {
-            new_port = new MicroPythonWASM()
+            new_port = createBrowserVM()
         } else {
             toastr.error('Unknown link type')
         }

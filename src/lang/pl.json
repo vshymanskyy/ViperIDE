@@ -37,6 +37,7 @@
             "use-word-wrap": "Zawijanie wierszy",
             "render-markdown": "Przeglądarka Markdown",
             "refresh-after-run": "Odśwież pliki po uruchomieniu",
+            "auto-soft-reset": "Soft Reset przed uruchomieniem",
             "use-natural-sort": "Naturalne sortowanie",
             "lang": "Język",
             "zoom": "Powiększenie",

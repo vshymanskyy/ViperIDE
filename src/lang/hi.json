@@ -37,6 +37,7 @@
             "use-word-wrap": "शब्द आवरण",
             "render-markdown": "Markdown दर्शक",
             "refresh-after-run": "चलाने के बाद फ़ाइलें ताज़ा करें",
+            "auto-soft-reset": "चलाने से पहले Soft Reset",
             "use-natural-sort": "प्राकृतिक छंटाई",
             "lang": "भाषा",
             "zoom": "ज़ूम",

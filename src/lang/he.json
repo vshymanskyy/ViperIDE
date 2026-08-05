@@ -37,6 +37,7 @@
             "use-word-wrap": "גלישת מילים",
             "render-markdown": "צופה Markdown",
             "refresh-after-run": "רענון קבצים לאחר הרצה",
+            "auto-soft-reset": "Soft Reset לפני הרצה",
             "use-natural-sort": "מיון טבעי",
             "lang": "שפה",
             "zoom": "זום",

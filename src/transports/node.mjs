@@ -10,4 +10,4 @@
 export { Transport } from './base.js'
 export { WebSocketREPL } from './websocket.js'
 export { makeSerialTransport, listSerialPorts } from './node_serial.mjs'
-export { makeVMTransport } from './node_vm.mjs'
+export { MicroPythonWASM } from './vm.js'

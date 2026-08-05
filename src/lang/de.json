@@ -37,6 +37,7 @@
             "use-word-wrap": "Zeilenumbruch",
             "render-markdown": "Markdown-Viewer",
             "refresh-after-run": "Dateien nach dem Ausführen aktualisieren",
+            "auto-soft-reset": "Soft Reset vor dem Ausführen",
             "use-natural-sort": "Natürliche Sortierung",
             "lang": "Sprache",
             "zoom": "Zoom",

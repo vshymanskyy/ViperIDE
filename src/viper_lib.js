@@ -15,7 +15,7 @@ export { toastr }
 export { serial as webSerialPolyfill } from 'web-serial-polyfill'
 export { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
 export { MpRawMode } from './rawmode.js'
-export { MicroPythonWASM } from './emulator.js'
+export { createBrowserVM } from './emulator.js'
 export { ConnectionUID } from './connection_uid.js'
 export { splitPath, sleep, sizeFmt, report } from './utils.js'
 export { getUserUID, getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML,

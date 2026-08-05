@@ -37,6 +37,7 @@
             "use-word-wrap": "Împachetarea cuvintelor",
             "render-markdown": "Vizualizator Markdown",
             "refresh-after-run": "Reîmprospătează fișierele după rulare",
+            "auto-soft-reset": "Soft Reset înainte de rulare",
             "use-natural-sort": "Sortare naturală",
             "lang": "Limbă",
             "zoom": "Zoom",

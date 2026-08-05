@@ -6,16 +6,16 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { Transport } from './transports/base.js'
+import { MicroPythonWASM, SYSTEM_DIRS } from './transports/vm.js'
 import { loadVFS } from './python_utils.js'
 import { loadMicroPython } from '@micropython/micropython-webassembly-pyscript/micropython.mjs'
 import i18next from 'i18next'
 
+export { MicroPythonWASM, SYSTEM_DIRS }
+
 const T = i18next.t.bind(i18next)
 
-async function populateFS(vm)
-{
-    vm.FS.writeFile('/main.py', `
+function getDefaultMainPy() { return `\
 # ViperIDE - MicroPython Web IDE
 # Read more: https://github.com/vshymanskyy/ViperIDE
 
@@ -43,71 +43,19 @@ def main():
 
 if __name__ == "__main__":
     main()
-`);
-
-    // ----------------------------------------------------------------------
-    await loadVFS(vm, `${VIPER_IDE_BASE_URL}/assets/vm_vfs.tar.gz`)
-
+`
 }
 
-export class MicroPythonWASM extends Transport {
-    constructor() {
-        super()
-        this.mp = null
-        this.reader = null
-        this.isConnected = false
-    }
-
-    async requestAccess() {
-        this.decoderStream = new TextDecoderStream()
-        this.reader = this.decoderStream.readable.getReader()
-        const writer = this.decoderStream.writable.getWriter()
-
-        const processStream = async () => {
-            while (this.isConnected) {
-                const { value, done } = await this.reader.read()
-                if (done) break
-                this.receiveCallback(value)
-                this.activityCallback()
-            }
-        }
-
-        this.mp = await loadMicroPython({
-            url: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm`,
-            stdout: (data) => {
-                writer.write(data)
-            },
-            linebuffer: false,
-        });
-
-        await populateFS(this.mp)
-
-        this.isConnected = true
-        processStream()
-    }
-
-    async connect() {
-        this.mp.replInit()
-    }
-
-    async disconnect() {
-        this.isConnected = false
-        if (this.reader) {
-            await this.reader.cancel()
-            this.reader.releaseLock()
-        }
-        if (this.decoderStream) {
-            await this.decoderStream.writable.abort()
-        }
-        // TODO: deinit emulator
-    }
-
-    async writeBytes(data) {
-        for (let i = 0; i < data.length; i++) {
-            const ret = await this.mp.replProcessCharWithAsyncify(data[i])
-            if (ret) {
-                this.disconnectCallback()
-            }
-        }
-    }
+/**
+ * Create a MicroPythonWASM transport configured for the browser:
+ * explicit .wasm URL, and initial FS populated with example files.
+ */
+export function createBrowserVM() {
+    return new MicroPythonWASM(loadMicroPython, {
+        wasmURL: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm`,
+        async populateFS(mp) {
+            mp.FS.writeFile('/main.py', getDefaultMainPy())
+            await loadVFS(mp, `${VIPER_IDE_BASE_URL}/assets/vm_vfs.tar.gz`)
+        },
+    })
 }

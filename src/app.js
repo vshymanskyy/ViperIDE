@@ -31,7 +31,7 @@ import { getPkgIndexes, rawInstallPkg, fetchPkgReadme } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
 import translations from '../build/translations.json'
 import { parseStackTrace, validatePython, disassembleMPY, minifyPython, prettifyPython, compilePython } from './python_utils.js'
-import { MicroPythonWASM } from './emulator.js'
+import { createBrowserVM, SYSTEM_DIRS } from './emulator.js'
 import { getSetting, onSettingChange, updateSetting } from './settings.js'
 import { renderMarkdown } from './markdown.js'
 
@@ -425,7 +425,7 @@ async function prepareNewPort(type) {
             const id = ConnectionUID.parse(url.replace('rtc://', ''))
             new_port = new WebRTCTransport(id.value())
         } else if (url.startsWith('vm://')) {
-            new_port = new MicroPythonWASM()
+            new_port = createBrowserVM()
             analytics.track('Run MPY VM')
         } else {
             toastr.error('Unknown link type')
@@ -991,7 +991,7 @@ async function execReplNoFollow(cmd) {
 
 /* /proc, /dev and /sys are windows into the running system, not storage: they
    cannot be edited, moved, deleted, or packed into a download. */
-const isSpecialPath = (path) => /^\/(proc|dev|sys)(\/|$)/.test(path)
+const isSpecialPath = (path) => SYSTEM_DIRS.has('/' + path.split('/')[1])
 
 /* The root is a folder that no walk reports as a node of its own */
 const isDirPath = (path) => (path === '/') || !!fsCache.get(path)?.isDir
@@ -2184,6 +2184,7 @@ export function applyTranslation() {
         QS('label[for=use-word-wrap]').innerText = T('settings.use-word-wrap')
         QS('label[for=render-markdown]').innerText = T('settings.render-markdown')
         QS('label[for=refresh-after-run]').innerText = T('settings.refresh-after-run')
+        QS('label[for=auto-soft-reset]').innerText = T('settings.auto-soft-reset')
         QS('label[for=use-natural-sort]').innerText = T('settings.use-natural-sort')
 
         QS('label[for=lang]').innerText = T('settings.lang')

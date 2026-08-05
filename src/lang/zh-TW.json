@@ -37,6 +37,7 @@
             "use-word-wrap": "自動換行",
             "render-markdown": "Markdown 查看器",
             "refresh-after-run": "執行後重新整理檔案",
+            "auto-soft-reset": "執行前 Soft Reset",
             "use-natural-sort": "自然排序",
             "lang": "語言",
             "zoom": "縮放",

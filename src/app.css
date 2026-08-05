@@ -356,7 +356,7 @@ body.loaded {
     flex: 0 1 auto;
     min-width: 0;
     margin-right: auto;
-    overflow: hidden;
+    overflow-x: clip;
     text-overflow: ellipsis;
     white-space: nowrap;
 }

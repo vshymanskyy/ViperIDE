@@ -37,6 +37,7 @@
             "use-word-wrap": "Перенос слов",
             "render-markdown": "Просмотр Markdown",
             "refresh-after-run": "Обновлять файлы после запуска",
+            "auto-soft-reset": "Soft Reset перед запуском",
             "use-natural-sort": "Естественная сортировка",
             "lang": "Язык",
             "zoom": "Увеличение",

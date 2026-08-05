@@ -37,6 +37,7 @@
             "use-word-wrap": "ワードラップ",
             "render-markdown": "Markdownビューア",
             "refresh-after-run": "実行後にファイルを更新",
+            "auto-soft-reset": "実行前にSoft Reset",
             "use-natural-sort": "自然な並び替え",
             "lang": "言語",
             "zoom": "ズーム",

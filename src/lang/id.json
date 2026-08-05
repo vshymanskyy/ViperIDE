@@ -37,6 +37,7 @@
             "use-word-wrap": "Bungkus kata",
             "render-markdown": "Penampil Markdown",
             "refresh-after-run": "Segarkan file setelah dijalankan",
+            "auto-soft-reset": "Soft Reset sebelum dijalankan",
             "use-natural-sort": "Penyortiran alami",
             "lang": "Bahasa",
             "zoom": "Zoom",

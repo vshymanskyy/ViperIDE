@@ -37,6 +37,7 @@
             "use-word-wrap": "Woorden afbreken",
             "render-markdown": "Markdown viewer",
             "refresh-after-run": "Bestanden vernieuwen na uitvoeren",
+            "auto-soft-reset": "Soft Reset voor uitvoeren",
             "use-natural-sort": "Natuurlijke sortering",
             "lang": "Taal",
             "zoom": "Zoom",

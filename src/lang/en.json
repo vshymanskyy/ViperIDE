@@ -37,6 +37,7 @@
             "use-word-wrap": "Word wrap",
             "render-markdown": "Markdown viewer",
             "refresh-after-run": "Refresh files after run",
+            "auto-soft-reset": "Soft Reset before run",
             "use-natural-sort": "Natural sorting",
             "lang": "Language",
             "zoom": "Zoom",

@@ -37,6 +37,7 @@
             "use-word-wrap": "Quebra de linha",
             "render-markdown": "Visualizador de Markdown",
             "refresh-after-run": "Atualizar arquivos após executar",
+            "auto-soft-reset": "Soft Reset antes de executar",
             "use-natural-sort": "Ordenação natural",
             "lang": "Idioma",
             "zoom": "Zoom",

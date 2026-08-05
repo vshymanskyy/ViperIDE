@@ -37,6 +37,7 @@
             "use-word-wrap": "تغليف الكلمات",
             "render-markdown": "عارض Markdown",
             "refresh-after-run": "تحديث الملفات بعد التشغيل",
+            "auto-soft-reset": "Soft Reset قبل التشغيل",
             "use-natural-sort": "الفرز الطبيعي",
             "lang": "اللغة",
             "zoom": "تكبير",
