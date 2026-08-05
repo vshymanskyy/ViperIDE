@@ -11,8 +11,19 @@
     <link rel="manifest" href="manifest.json">
 
     <link rel="stylesheet" href="./app.css">
+    <noscript>
+        <style>
+            body { display: block; opacity: 1; }
+            #tool-panel, #container, #dpi-ruler { display: none; }
+        </style>
+    </noscript>
 </head>
 <body id="app">
+    <noscript>
+        <div class="no-js-banner" role="alert">
+            <strong>ViperIDE requires JavaScript to run.</strong> Please enable JavaScript and reload this page.
+        </div>
+    </noscript>
     <div id="tool-panel">
         <div>
             <button onclick="app.toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>

@@ -31,7 +31,7 @@
 - **MicroPython compiler**
   - Runs in-browser using WebAssembly
   - Instant syntax check in the editor
-  - Saving compiled `.mpy` files - ⌛ *planned*
+  - Saving compiled `.mpy` files
 - **Terminal / REPL**
   - VT100 (ANSI escape sequences) support
   - Snippet support - ⌛ *planned*

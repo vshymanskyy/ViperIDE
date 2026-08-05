@@ -11,7 +11,7 @@ _MP_STREAM_POLL = micropython.const(3)
 _MP_STREAM_POLL_RD = micropython.const(0x0001)
 
 _timer = None
-for _tid in [-1]+list(range(16,0,-1)):
+for _tid in [-1] + list(range(16, 0, -1)):
     try:
         _timer = machine.Timer(_tid)
         break

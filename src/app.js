@@ -1708,11 +1708,24 @@ async function openWelcomeTab() {
     const content = `
 # ViperIDE - MicroPython Web IDE
 
+[![GitHub Repo stars](https://img.shields.io/github/stars/vshymanskyy/ViperIDE?style=flat-square&color=green)](https://github.com/vshymanskyy/ViperIDE/stargazers) 
+[![GitHub issues](https://img.shields.io/github/issues-raw/vshymanskyy/ViperIDE?style=flat-square&label=issues&color=green)](https://github.com/vshymanskyy/ViperIDE/issues) 
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/vshymanskyy/ViperIDE) 
+[![Support vshymanskyy](https://img.shields.io/static/v1?style=flat-square&label=support&message=%E2%9D%A4&color=%23fe8e86)](https://gist.github.com/vshymanskyy/840e6fa41ea6b028b91b333b6e4542ed) 
+
 Connect your device and start creating! 🤖👨‍💻🕹️
 
-You can also open a [virtual device](${VIPER_IDE_BASE_URL}/?vm=1) and explore some examples.
+> No device?  
+> 👉 Open a [virtual device](${VIPER_IDE_BASE_URL}/?vm=1) and explore some examples.
 
-Read more about ViperIDE on [GitHub](https://github.com/vshymanskyy/ViperIDE).
+## More about ViperIDE
+
+- [README](https://github.com/vshymanskyy/ViperIDE/blob/main/README.md)
+- [Features and device support](https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Features.md)
+- [Documentation](https://github.com/vshymanskyy/ViperIDE/tree/main/docs)
+- [Discussions](https://github.com/orgs/micropython/discussions?discussions_q=ViperIDE)
+- [![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md) 
+
 `
     await _loadContent(fn, content, createTab(fn))
 }

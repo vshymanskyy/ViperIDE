@@ -9,7 +9,8 @@ import ws_client
 def on_connect():
     pass
 
-for _tid in [-1]+list(range(16,0,-1)):
+
+for _tid in [-1] + list(range(16, 0, -1)):
     try:
         timer_hb = machine.Timer(_tid)
         break
@@ -21,7 +22,7 @@ _url = None
 _uid = None
 _default_url = "wss://hub.viper-ide.org/relay"
 _config_file = ".viper.json"
-_uid_key = "wss_uid"
+_uid_key = "uid"
 
 try:
     import tls
@@ -64,10 +65,51 @@ def _curious_base24(n, length):
     return res
 
 
-def generate_uid():
-    num = int.from_bytes(os.urandom(10), "big")
-    num = _curious_base24(num, 16)
-    return num[0:4] + "-" + num[4:8] + "-" + num[8:12]
+def _format_uid(num):
+    encoded = _curious_base24(num, 12)
+    return encoded[0:4] + "-" + encoded[4:8] + "-" + encoded[8:12]
+
+
+def _get_stable_uid():
+    """Return a stable UID derived from machine.unique_id(), if available."""
+
+    raw_uid = machine.unique_id()
+    if not raw_uid:
+        raise ValueError()
+
+    # FNV-1a 64-bit hash. This mixes every byte of the hardware UID while
+    # avoiding a dependency on hashlib, which may not exist on all targets.
+    value = 0xCBF29CE484222325
+    for byte in raw_uid:
+        value ^= byte
+        value = (value * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
+
+    return _format_uid(value)
+
+
+def _get_random_uid():
+    """Generate a random UID"""
+    return _format_uid(int.from_bytes(os.urandom(8), "big"))
+
+def _get_stored_uid():
+    """Random UID stored it in the config file."""
+    import json
+
+    config = {}
+    try:
+        with open(_config_file) as f:
+            config = json.load(f)
+    except OSError:
+        pass
+
+    uid = config.get(_uid_key)
+
+    if not uid:
+        uid = _get_random_uid()
+        config[_uid_key] = uid
+        with open(_config_file, "w") as f:
+            json.dump(config, f)
+    return uid
 
 
 def _hbeat(tmr):
@@ -106,23 +148,13 @@ def _start(uid=None, url=_default_url):
 
 def start(uid=None, url=_default_url):
     if not uid:
-        import json
-
-        config = {}
         try:
-            with open(_config_file) as f:
-                config = json.load(f)
+            uid = _get_stable_uid()
         except Exception:
-            pass
-        uid = config.get(_uid_key)
-        if not uid:
-            uid = generate_uid()
-            config[_uid_key] = uid
             try:
-                with open(_config_file, "w") as f:
-                    json.dump(config, f)
+                uid = _get_stored_uid()
             except Exception:
-                pass
+                uid = _get_random_uid()
     try:
         _start(uid, url)
         if _url == _default_url:

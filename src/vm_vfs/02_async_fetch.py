@@ -1,5 +1,7 @@
-import js
 import asyncio
+
+import js
+
 
 async def task():
     url = "https://dummyjson.com/quotes/random"
@@ -8,5 +10,6 @@ async def task():
     data = await res.json()
     print()
     print(data.author, ":", data.quote)
+
 
 asyncio.create_task(task())
