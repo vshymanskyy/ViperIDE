@@ -33,6 +33,11 @@
 
 [Read More](https://notes.alelec.net/posts/claude-meets-micropython)
 
+## Forks and derivative projects
+
+- [Espressif ESP-VISION-IDE](https://ide.vision.espressif.com/) - A low-code [framework and development environment](https://github.com/espressif/esp-vision) for building edge AI and computer-vision applications on Espressif SoCs, with camera capture, image processing, media streaming, model deployment, and AI inference.
+- [Jumperless IDE](https://ide.jumperless.org) - A browser-based MicroPython IDE for [JUMPERLESS breadboards](https://www.crowdsupply.com/architeuthis-flux/jumperless-v5), featuring file and package management, REPL connectivity, firmware flashing, device tools, and OLED bitmap conversion.
+
 ## Links
 
 [ViperIDE Online](https://viper-ide.org)  
