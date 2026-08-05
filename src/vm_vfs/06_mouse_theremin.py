@@ -57,7 +57,7 @@ def enable_audio(event):
     state["context"] = context
     state["osc"] = oscillator
     state["gain"] = gain
-    pad.textContent = "Move around — release pointer to mute"
+    pad.textContent = "Move around - release pointer to mute"
 
 
 def play(event):

@@ -33,11 +33,6 @@
 
 [Read More](https://notes.alelec.net/posts/claude-meets-micropython)
 
-## Forks and derivative projects
-
-- [Espressif ESP-VISION-IDE](https://ide.vision.espressif.com/) - A low-code [framework and development environment](https://github.com/espressif/esp-vision) for building edge AI and computer-vision applications on Espressif SoCs, with camera capture, image processing, media streaming, model deployment, and AI inference.
-- [Jumperless IDE](https://ide.jumperless.org) - A browser-based MicroPython IDE for [JUMPERLESS breadboards](https://www.crowdsupply.com/architeuthis-flux/jumperless-v5), featuring file and package management, REPL connectivity, firmware flashing, device tools, and OLED bitmap conversion.
-
 ## Links
 
 [ViperIDE Online](https://viper-ide.org)  
@@ -55,3 +50,10 @@
 - [mpy-cross-wasm](https://github.com/vshymanskyy/mpy-cross-wasm) - Code validation and `.mpy` compilation, MIT
 - [mpy-tool](https://github.com/micropython/micropython/blob/master/tools/mpy-tool.py) - MPY bytecode disassembler - MIT
 - [python-minifier](https://github.com/dflook/python-minifier) - Code minifier, MIT
+
+## Forks and derivative projects
+
+- [Espressif ESP-VISION-IDE](https://ide.vision.espressif.com/) - A low-code [framework and development environment](https://github.com/espressif/esp-vision) for building edge AI and computer-vision applications on Espressif SoCs, with camera capture, image processing, media streaming, model deployment, and AI inference.
+- [Jumperless IDE](https://ide.jumperless.org) - A browser-based MicroPython IDE for [JUMPERLESS breadboards](https://www.crowdsupply.com/architeuthis-flux/jumperless-v5), featuring file and package management, REPL connectivity, firmware flashing, device tools, and OLED bitmap conversion.
+- [Fri3d-IDE](https://fri3dcamp.github.io/Fri3d-IDE/) - A browser-based [ViperIDE fork](https://github.com/Fri3dCamp/Fri3d-IDE) for developing and publishing MicroPython applications for Fri3d Camp badges.
+- [HTLR-MPyRIDE](https://github.com/ArduinoAlvik/HTLR-MPyRIDE) - A customized and extended ViperIDE fork developed for MicroPython education at HTL Rankweil, with a focus on Arduino Alvik and ESP32 devices, browser-based local and remote connectivity, and features adapted for classroom use.

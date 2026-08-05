@@ -1792,7 +1792,7 @@ export async function runCurrentFile() {
 
     term.write('\r\n')
 
-    const soft_reboot = false
+    const soft_reboot = getSetting('auto-soft-reset')
     const timeout = -1
     const raw = await MpRawMode.begin(port, soft_reboot)
     try {
@@ -2380,6 +2380,25 @@ function showOfflineReadyToast(version) {
         allowProposedApi: true,
     })
     term.open(QID('xterm'))
+    /* Returning false makes xterm skip both its key handling and the
+       preventDefault that comes with it, so the browser's native copy/paste
+       runs instead - xterm itself listens for those events and fills the
+       clipboard from the selection / feeds pasted text to the device. */
+    term.attachCustomKeyEventHandler((ev) => {
+        if (ev.type !== 'keydown') return true
+        // ctrlKey for Windows/Linux, metaKey for Mac
+        if (!(ev.ctrlKey || ev.metaKey) || ev.altKey) return true
+        if (ev.code === 'KeyV') {
+            return false
+        }
+        if (ev.code === 'KeyC' && !ev.shiftKey && term.hasSelection()) {
+            /* Dropping the selection afterwards keeps Ctrl+C usable as an
+               interrupt: pressing it again goes straight to the device */
+            setTimeout(() => { term.clearSelection() }, 0)
+            return false
+        }
+        return true
+    })
     term.onData(async (data) => {
         /* Typing into a port that is being brought back would only produce
            write-error toasts */

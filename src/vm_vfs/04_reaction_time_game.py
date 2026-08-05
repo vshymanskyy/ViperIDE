@@ -84,7 +84,7 @@ def on_click(event):
             rank = "fast human ⚡"
         else:
             rank = "coffee recommended ☕"
-        message.textContent = f"{elapsed} ms — {rank}"
+        message.textContent = f"{elapsed} ms - {rank}"
 
 
 button.addEventListener("click", on_click)
