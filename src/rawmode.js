@@ -22,6 +22,42 @@ import { reprStr as pyStr } from './python_utils.js'
 export const SOFT_RESET_BANNER =
     /(^|[\r\n])((MPY: )?soft reboot|Type "help\(\)" for more information\.)\r?\n/
 
+/*
+ * Every prompt a board might answer with. '>>> ' is standard MicroPython, '--> '
+ * is aiorepl - which prints its prompt itself and never touches sys.ps1, so it has
+ * to be listed here rather than detected. begin() appends whatever else a board
+ * reports in sys.ps1; the array is appended to, never replaced, so importers keep
+ * seeing what has been learned since.
+ */
+export const REPL_PROMPTS = ['>>> ', '--> ']
+
+/* What raw mode announces itself with, the same on every board and the one reply
+   that does not depend on knowing the prompt. */
+const RAW_REPL_BANNER = 'raw REPL; CTRL-B to exit\r\n'
+
+/*
+ * The one of them this board was last seen using, as opposed to the ones it might.
+ * Only for drawing a prompt the app owes the terminal - a session ends by consuming
+ * the real one inside its transaction, and printing '>>> ' at an aiorepl board is
+ * how the terminal ends up disagreeing with the device.
+ */
+let activePrompt = REPL_PROMPTS[0]
+
+export function getActivePrompt() { return activePrompt }
+
+/*
+ * The trailing part of `buf` if it has the shape of a REPL prompt: a short run of
+ * characters on a line of its own that nothing has been printed after, ending in the
+ * space every convention puts between the prompt and what gets typed - '>>> ', '--> ',
+ * and whatever a board has put in sys.ps1. Returns null when it does not.
+ *
+ * Deliberately narrow. This only decides whether a board is idle enough to open a
+ * session on; the prompt itself is then read from sys.ps1, which cannot be guessed at.
+ */
+function looksLikePrompt(buf) {
+    return buf.match(/(^|[\r\n])(\S[^\r\n]{0,14} )$/)?.[2] ?? null
+}
+
 export class MpRawMode {
     constructor(port) {
         this.port = port
@@ -31,7 +67,17 @@ export class MpRawMode {
         const res = new MpRawMode(port)
         await res.enterRawRepl(soft_reboot)
         try {
-            await res.exec(`import sys,os`)
+            /* Which prompt this board uses is learned here rather than in a pass of
+               its own: the session is already open, so the extra print costs nothing
+               and end() below is the first thing that needs the answer. Not every
+               port builds sys.ps1 in - without it the defaults stand. */
+            const rsp = await res.exec(
+                `import sys,os\ntry: print(sys.ps1)\nexcept AttributeError: pass`)
+            const prompt = rsp.trim() && rsp.trim() + ' '
+            if (prompt && !REPL_PROMPTS.includes(prompt)) {
+                console.log(`Detected board prompt as ${prompt}`)
+                REPL_PROMPTS.push(prompt)
+            }
         } catch (err) {
             await res.end()
             throw err
@@ -61,10 +107,26 @@ export class MpRawMode {
                board that is running, and everything it prints belongs on the
                terminal as it arrives rather than in one lump seconds later. */
             const showFrom = Date.now() + 300
+            let settling = null
             while (Date.now() < endTime) {
-                if (port.receivedData.includes('>>> ')) {
+                /* Any prompt this board might answer with, not just the built-in
+                   one: a board running aiorepl is listening, and reporting it busy
+                   leaves the app waiting for a '>>> ' that is never coming. */
+                if (REPL_PROMPTS.some(p => port.receivedData.includes(p))) {
                     return true
                 }
+                /* A prompt nobody has seen before still announces itself by shape.
+                   sys.ps1 is the authority on what it says, but reading it needs a
+                   raw-mode session, and opening one needs this answer first - so the
+                   shape is all there is to go on: the Enter above was echoed, and
+                   what trails the last newline is the board asking for another line.
+                   Held to two polls, because a prompt is what a board stops on and
+                   partial output is not. begin() reads sys.ps1 straight afterwards
+                   and records the real value, so nothing is kept on a guess. */
+                const tail = looksLikePrompt(port.receivedData)
+                if (tail && tail === settling) { return true }
+                settling = tail
+
                 if (!port.emit && Date.now() > showFrom) {
                     port.emit = true
                     if (port.prevRecvCbk) { port.prevRecvCbk(port.receivedData) }
@@ -82,44 +144,59 @@ export class MpRawMode {
         }
     }
 
-    async interruptProgram(timeout=20000) {
-        const endTime = Date.now() + timeout
-        while (timeout <= 0 || (Date.now() < endTime)) {
-            await this.port.write('\x03')   // Ctrl-C: interrupt any running program
-            try {
-                let banner = await this.port.readUntil('>>> ', 2000)
-                if (this.port.prevRecvCbk && banner != '\r\n>>> ') {
-                    this.port.prevRecvCbk(banner)
-                }
-                await this.port.flushInput()
-                return
-            } catch (err) {
-                // Per-retry readUntil timeouts are expected while the device is busy.
-                // Only the final outer-timeout throw below is a real error surfaced to the user.
-                console.debug('interruptProgram retry:', err.message)
+    /*
+     * Ctrl-C, and whatever the board says on its way back to a prompt goes to the
+     * terminal - all but a bare prompt, which is only the answer to our own Ctrl-C.
+     *
+     * Best effort, and deliberately not retried here: a board using a prompt not yet
+     * known will not match any of them, and one that is busy will not answer at all.
+     * Either way it is the raw-REPL banner the caller goes on to wait for that says
+     * whether this worked, and that reply is the same on every board.
+     */
+    async interruptProgram() {
+        await this.port.write('\x03')   // Ctrl-C: interrupt any running program
+        try {
+            const banner = await this.port.readUntil(REPL_PROMPTS, 2000)
+            if (this.port.prevRecvCbk && !REPL_PROMPTS.some(p => banner === '\r\n' + p)) {
+                this.port.prevRecvCbk(banner)
             }
+        } catch (_err) {
+            /* Unknown prompt, or still running - the banner read decides */
         }
-        throw new Error('Board is not responding')
+        await this.port.flushInput()
     }
 
-    async enterRawRepl(soft_reboot=false) {
+    async enterRawRepl(soft_reboot=false, timeout=20000) {
         const release = await this.port.startTransaction()
         try {
-            await this.interruptProgram()
-
-            await this.port.write('\r\x01')       // Ctrl-A: enter raw REPL
-            await this.port.readUntil('raw REPL; CTRL-B to exit\r\n')
+            const endTime = Date.now() + timeout
+            for (;;) {
+                await this.interruptProgram()
+                await this.port.write('\r\x01')   // Ctrl-A: enter raw REPL
+                try {
+                    await this.port.readUntil(RAW_REPL_BANNER, 2000)
+                    break
+                } catch (err) {
+                    // Expected while the board is busy; only running out of time is real
+                    if (Date.now() >= endTime) {
+                        throw new Error('Board is not responding', { cause: err })
+                    }
+                }
+            }
 
             if (soft_reboot) {
                 await this.port.write('\x04\x03') // soft reboot in raw mode
-                await this.port.readUntil('raw REPL; CTRL-B to exit\r\n')
+                await this.port.readUntil(RAW_REPL_BANNER)
             }
 
             this.end = async () => {
                 try {
                     await this.port.write('\x02')     // Ctrl-B: exit raw REPL
                     await this.port.readUntil('>\r\n')
-                    await this.port.readUntil('>>> ')
+                    /* What comes back ends with the prompt the board is really
+                       using - the rest is the greeting Ctrl-B prints on the way. */
+                    const seen = await this.port.readUntil(REPL_PROMPTS)
+                    activePrompt = REPL_PROMPTS.find(p => seen.endsWith(p)) || activePrompt
                 } finally {
                     release()
                 }

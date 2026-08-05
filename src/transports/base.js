@@ -166,7 +166,11 @@ export class Transport {
         throw new Error('Timeout')
     }
 
-    async readUntil(ending, timeout=5000) {
+    /* `endings` is one string, or a list of alternatives - whichever turns up first
+       in the buffer wins. Alternatives are needed because the prompt a board answers
+       with is not fixed: see REPL_PROMPTS in rawmode.js. */
+    async readUntil(endings, timeout=5000) {
+        if (!Array.isArray(endings)) { endings = [endings] }
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
@@ -175,10 +179,18 @@ export class Transport {
             if (this._readsAborted) {
                 throw new Error('Timeout: transport closed')
             }
-            const idx = this.receivedData.indexOf(ending) + ending.length
-            if (idx >= ending.length) {
-                const res = this.receivedData.substring(0, idx)
-                this.receivedData = this.receivedData.substring(idx)
+            /* The earliest ending wins, not the first one listed: reading past one
+               match to reach another would swallow whatever sits between them. */
+            let end = -1
+            for (const ending of endings) {
+                const at = this.receivedData.indexOf(ending)
+                if (at >= 0 && (end < 0 || at + ending.length < end)) {
+                    end = at + ending.length
+                }
+            }
+            if (end >= 0) {
+                const res = this.receivedData.substring(0, end)
+                this.receivedData = this.receivedData.substring(end)
                 return res
             }
             const prev_avail = this.receivedData.length

@@ -6,7 +6,7 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { SOFT_RESET_BANNER } from './rawmode.js'
+import { SOFT_RESET_BANNER, REPL_PROMPTS } from './rawmode.js'
 
 /*
  * Watches the free-running terminal stream for two things the app cannot ask the
@@ -56,9 +56,11 @@ export class ReplMonitor {
 
         /* A prompt is only trusted once the board has been quiet on it for a while:
            '>>> ' scrolling past mid-output (or echoed back from typing) is always
-           followed by more bytes, which restart the wait. */
+           followed by more bytes, which restart the wait.
+           Which prompts count is whatever the board is known to use - aiorepl's
+           '--> ' has to promote a busy board to ready just as the built-in one does. */
         this._cancelSettle()
-        if (this.tail.endsWith('>>> ')) {
+        if (REPL_PROMPTS.some(p => this.tail.endsWith(p))) {
             this.settleTimer = setTimeout(() => {
                 this.settleTimer = null
                 this.onPromptSettled()

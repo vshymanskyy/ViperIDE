@@ -25,7 +25,7 @@ import { addUpdateHandler, createNewEditor, getEditorFromElement } from './edito
 import { displayOpenFile, createTab, getTabFileName, getTabEditorElement } from './editor_tabs.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
-import { MpRawMode } from './rawmode.js'
+import { MpRawMode, getActivePrompt } from './rawmode.js'
 import { ReplMonitor } from './repl_monitor.js'
 import { getPkgIndexes, rawInstallPkg, fetchPkgReadme } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
@@ -1815,7 +1815,7 @@ export async function runCurrentFile() {
         port.emit = false
         try { await raw.end() } catch (_err) { /* device may have disconnected */ }
         setRunMode(false)
-        term.write('\r\n>>> ')
+        term.write('\r\n' + getActivePrompt())
         await deviceRanCode({ mayRefresh: true })
     }
     // Success

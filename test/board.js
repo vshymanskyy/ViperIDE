@@ -9,13 +9,43 @@
  * difference between "the board cannot store this name" and "ViperIDE mangled it".
  */
 
-import { MpRawMode, SOFT_RESET_BANNER } from '../src/rawmode.js'
+import { MpRawMode, SOFT_RESET_BANNER, REPL_PROMPTS } from '../src/rawmode.js'
 
 const encoder = new TextEncoder()
+
+export const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+/* MicroPython's REPL cooks '\n' into '\r\n' on the way out. */
+export const lines = (s) => s.replace(/\r\n/g, '\n').trim()
 
 /* A Python expression evaluating to `s`, with no escaping involved. */
 export function pyPath(s) {
     return `bytes([${[...encoder.encode(s)].join(',')}]).decode()`
+}
+
+/*
+ * Gets the board back to a prompt and drops whatever it took to get there, so a
+ * test can start typing from a known place. Waits on any prompt the board might
+ * use, not a literal '>>> ' - this is plumbing, and pinning it to the built-in
+ * REPL would make every test that needs it fail on a board running aiorepl.
+ */
+export async function toPrompt(port, timeout = 5000) {
+    await port.write('\x03')
+    await port.readUntil(REPL_PROMPTS, timeout)
+    await port.flushInput()
+}
+
+/* Collects everything handed to the terminal while fn runs. */
+export async function captureOutput(port, fn) {
+    const seen = []
+    const prevCbk = port.receiveCallback
+    port.onReceive((data) => { seen.push(data) })
+    try {
+        await fn()
+    } finally {
+        port.onReceive(prevCbk)
+    }
+    return seen.join('')
 }
 
 function hexToStr(hex) {
@@ -113,4 +143,4 @@ _w(${pyPath(path)})
     })
 }
 
-export { MpRawMode, SOFT_RESET_BANNER }
+export { MpRawMode, SOFT_RESET_BANNER, REPL_PROMPTS }

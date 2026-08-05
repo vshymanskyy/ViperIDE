@@ -10,8 +10,7 @@
 import { ctx } from '../setup.js'
 import { assert } from 'chai'
 import { ReplMonitor } from '../../src/repl_monitor.js'
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+import { sleep, toPrompt } from '../board.js'
 
 /* Fast enough for a test, long enough to observe the wait. */
 const SETTLE = 50
@@ -112,6 +111,30 @@ describe('ReplMonitor', () => {
         assert.strictEqual(events.promptSettled, 1)
     })
 
+    /* A board running aiorepl is at a prompt and waiting, exactly like one at '>>> '.
+       Not recognising it leaves a busy board busy forever: the monitor is what
+       promotes it once it goes quiet, and nothing else will. */
+    it("reports aiorepl's prompt the same as the built-in one", async () => {
+        const { monitor, events } = makeMonitor()
+        monitor.setWatchPrompt(true)
+        monitor.feed('done\r\n--> ')
+        assert.strictEqual(events.promptSettled, 0, 'must not fire before the wait')
+        await sleep(SETTLE * 3)
+        assert.strictEqual(events.promptSettled, 1)
+    })
+
+    it("more output after aiorepl's prompt restarts the wait", async () => {
+        const { monitor, events } = makeMonitor()
+        monitor.setWatchPrompt(true)
+        monitor.feed('--> ')
+        monitor.feed('x\r\n')
+        await sleep(SETTLE * 3)
+        assert.strictEqual(events.promptSettled, 0, 'the prompt was consumed by output')
+        monitor.feed('--> ')
+        await sleep(SETTLE * 3)
+        assert.strictEqual(events.promptSettled, 1)
+    })
+
     it('a prompt scrolling past mid-output does not fire', async () => {
         const { monitor, events } = makeMonitor()
         monitor.setWatchPrompt(true)
@@ -193,9 +216,7 @@ describe('Transport read-abort', () => {
     it('the next transaction clears the abort and reads again', async () => {
         const release = await ctx.port.startTransaction()
         try {
-            await ctx.port.write('\x03')
-            await ctx.port.readUntil('>>> ', 5000)
-            await ctx.port.flushInput()
+            await toPrompt(ctx.port)
         } finally {
             release()
         }

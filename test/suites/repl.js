@@ -7,12 +7,8 @@
 
 import { ctx, skip } from '../setup.js'
 import { assert } from 'chai'
-import { MpRawMode, SOFT_RESET_BANNER, withRaw } from '../board.js'
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
-/* MicroPython's REPL cooks '\n' into '\r\n' on the way out. */
-const lines = (s) => s.replace(/\r\n/g, '\n').trim()
+import { MpRawMode, SOFT_RESET_BANNER, withRaw, sleep, lines, toPrompt, captureOutput,
+    REPL_PROMPTS } from '../board.js'
 
 describe('REPL', () => {
 
@@ -144,11 +140,9 @@ for i in range(5):
     it('friendly REPL echoes typed statements', async () => {
         const release = await ctx.port.startTransaction()
         try {
-            await ctx.port.write('\x03')
-            await ctx.port.readUntil('>>> ', 5000)
-            await ctx.port.flushInput()
+            await toPrompt(ctx.port)
             await ctx.port.write('print(2 ** 10)\r\n')
-            const echo = await ctx.port.readUntil('>>> ', 5000)
+            const echo = await ctx.port.readUntil(REPL_PROMPTS, 5000)
             assert.include(echo, '1024')
         } finally {
             release()
@@ -160,9 +154,7 @@ for i in range(5):
 
         const release = await ctx.port.startTransaction()
         try {
-            await ctx.port.write('\x03')
-            await ctx.port.readUntil('>>> ', 5000)
-            await ctx.port.flushInput()
+            await toPrompt(ctx.port)
             await ctx.port.write('while 1: pass\r\n')
             await sleep(500)
         } finally {
@@ -183,9 +175,7 @@ for i in range(5):
     async function startAtRepl(code) {
         const release = await ctx.port.startTransaction()
         try {
-            await ctx.port.write('\x03')
-            await ctx.port.readUntil('>>> ', 5000)
-            await ctx.port.flushInput()
+            await toPrompt(ctx.port)
             /* A compound statement puts the friendly REPL into continuation mode and
                there it stays until a blank line closes the block. A board left waiting
                for more input looks enough like a busy one to fool a probe, so the tests
@@ -199,26 +189,13 @@ for i in range(5):
         }
     }
 
-    /* Collects everything handed to the terminal while fn runs. */
-    async function captureOutput(fn) {
-        const seen = []
-        const prevCbk = ctx.port.receiveCallback
-        ctx.port.onReceive((data) => { seen.push(data) })
-        try {
-            await fn()
-        } finally {
-            ctx.port.onReceive(prevCbk)
-        }
-        return seen.join('')
-    }
-
     it('probeRepl sees an idle prompt', async () => {
         // Leaving raw mode puts the board back at the friendly REPL
         await withRaw(ctx.port, raw => raw.exec(`pass`))
 
         // A board that answers is quiet on the terminal: the prompt that comes back
         // is an echo of the probe's own Enter, not something the user asked for
-        const shown = await captureOutput(async () => {
+        const shown = await captureOutput(ctx.port, async () => {
             assert.isTrue(await MpRawMode.probeRepl(ctx.port))
         })
         assert.strictEqual(shown, '', 'the probe echoed itself to the terminal')
@@ -269,7 +246,7 @@ for i in range(5):
         // Numbered output, so a line shown twice can be told from a line printed twice
         await startAtRepl('i=0\r\nwhile 1: print(i); i+=1')
 
-        const shown = await captureOutput(async () => {
+        const shown = await captureOutput(ctx.port, async () => {
             assert.isFalse(await MpRawMode.probeRepl(ctx.port, 1500))
         })
 
@@ -324,7 +301,7 @@ for i in range(5):
 
         /* Not at the prompt. A board that is off running its own main.py says so by
            printing; one that has gone quiet never came back at all. */
-        const chatter = await captureOutput(() => sleep(1000))
+        const chatter = await captureOutput(ctx.port, () => sleep(1000))
         assert(chatter, 'the board did not come back to the prompt after a soft reboot')
         skip('the board runs its own main.py after boot')
     })
