@@ -1,6 +1,6 @@
 {
   "name": "ViperIDE",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "An innovative MicroPython / CircuitPython IDE for Web and Mobile. Built-in editor, file explorer, REPL, compiler, linter and device connectivity tools for embedded and web projects.",
   "main": "index.js",
   "type": "module",
@@ -11,7 +11,7 @@
     "test": "npx mocha"
   },
   "dependencies": {
-    "@amplitude/unified": "^1.1.28",
+    "@amplitude/analytics-browser": "^2.45.5",
     "@astral-sh/ruff-wasm-web": "0.16.1",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-markdown": "^6.5.2",

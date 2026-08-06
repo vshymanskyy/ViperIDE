@@ -36,7 +36,7 @@ import { getSetting, onSettingChange, updateSetting } from './settings.js'
 import { renderMarkdown } from './markdown.js'
 
 import { UAParser } from 'ua-parser-js'
-import * as amplitude from '@amplitude/unified'
+import * as amplitude from '@amplitude/analytics-browser'
 
 import { splitPath, joinPath, sleep, fetchJSON, escapeCSS, sizeFmt, report } from './utils.js'
 import { getUserUID, getScreenInfo, IdleMonitor, getCssPropertyValue, QSA, QS, QID, iOS,
@@ -2278,8 +2278,8 @@ function showOfflineReadyToast(version) {
             identify: function() {},
         }
     } else {
-        amplitude.initAll('ee23cab1415ee70b31a694db17aebcb8', {
-            analytics: { autocapture: false }
+        amplitude.init('ee23cab1415ee70b31a694db17aebcb8', {
+            autocapture: false
         })
 
         window.analytics = {
@@ -2307,13 +2307,9 @@ function showOfflineReadyToast(version) {
                 tz = (new Date()).getTimezoneOffset()
             }
 
-            //console.log(ua.getResult())
-            //console.log(scr)
-
             const userUID = getUserUID()
 
             analytics.identify(userUID, {
-                //email: userUID.split('-').pop() + '@vip.er',
                 version: VIPER_IDE_VERSION,
                 build: getBuildDate(),
                 browser: ua.getBrowser().name,
