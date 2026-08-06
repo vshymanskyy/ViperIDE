@@ -1,4 +1,7 @@
-"""Terminal Mandelbrot set. Pure MicroPython; no browser APIs required."""
+"""
+Terminal Mandelbrot set.
+Pure MicroPython; no browser APIs required.
+"""
 
 CHARS = " .,:;irsXA253hMHGS#9B&@"
 

@@ -222,6 +222,7 @@ export async function getRuffWorkspace() {
             },
             builtins: [
                 'const',            // should be imported, but often used as a builtin
+                'execfile',         // often used as a builtin
                 // Viper code
                 //'ViperTypeError', // rarely used
                 //'int',            // already a builtin

@@ -1,3 +1,8 @@
+"""
+Get a random quote from the dummyjson.com
+and print it to the console.
+"""
+
 import asyncio
 
 import js

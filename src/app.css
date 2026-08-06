@@ -323,7 +323,7 @@ body.loaded {
 }
 
 #menu-file-title, #menu-pkg-title, #menu-settings-title, #menu-tools-title {
-    font-weight: bold;
+    font-weight: 600;
 }
 
 /* File tree & package list rows */
