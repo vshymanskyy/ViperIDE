@@ -235,7 +235,7 @@ export const mochaHooks = {
             interrupt: opts.target !== 'vm',
             softReboot: true,
             // On a real board execution continues after we stop writing; the wasm build
-            // finishes the statement inside replProcessCharWithAsyncify().
+            // finishes the statement inside replProcessChar().
             asyncExec: opts.target !== 'vm',
         }
 

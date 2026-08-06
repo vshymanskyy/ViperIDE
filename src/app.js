@@ -331,9 +331,14 @@ async function onSoftResetDetected() {
     try {
         /* A moment for main.py to either finish or settle into running */
         await sleep(300)
-        if (!port || deviceState === 'reconnecting' || port.inTransaction) return
+        if (!port || deviceState === 'reconnecting' || isInRunMode || port.inTransaction) return
         const responding = await MpRawMode.probeRepl(port)
-        if (!port || deviceState === 'reconnecting') return
+        /* The probe queues behind whatever else holds the transport, so it can answer
+           long after it was asked - and about a board that has moved on since. Most of
+           all it can answer in the middle of a run that started while it waited: a
+           board the app itself is driving must never be reported busy, or the Run
+           button is left showing Stop with nothing to ever take it back. */
+        if (!port || deviceState === 'reconnecting' || isInRunMode) return
         if (responding) {
             if (isBusyState()) { await completeDeviceInit() }
         } else {
@@ -354,7 +359,7 @@ async function onPromptSettled() {
     probeInFlight = true
     try {
         const responding = await MpRawMode.probeRepl(port, 1500)
-        if (responding && port && deviceState !== 'reconnecting' && isBusyState()) {
+        if (responding && port && deviceState !== 'reconnecting' && !isInRunMode && isBusyState()) {
             await completeDeviceInit()
         }
     } finally {
@@ -1794,9 +1799,19 @@ export async function runCurrentFile() {
 
     const soft_reboot = getSetting('auto-soft-reset')
     const timeout = -1
-    const raw = await MpRawMode.begin(port, soft_reboot)
+    /* Run mode is entered before the session is opened rather than after: with
+       'soft-reset before run' the setup is the longest and noisiest part of a run -
+       an interrupt, a reboot, a banner - and everything watching the terminal has to
+       know that traffic is the app's own. */
+    setRunMode(true)
+    let raw
     try {
-        setRunMode(true)
+        raw = await MpRawMode.begin(port, soft_reboot)
+    } catch (err) {
+        setRunMode(false)
+        throw err
+    }
+    try {
         const emit = true
         await sleep(10)
         await raw.exec(editor.state.doc.toString(), timeout, emit)
@@ -1817,6 +1832,15 @@ export async function runCurrentFile() {
         setRunMode(false)
         term.write('\r\n' + getActivePrompt())
         await deviceRanCode({ mayRefresh: true })
+        /* The run drove the board through raw mode and back out to a prompt, so it is
+           listening - whatever decided otherwise while it was in flight was reading
+           the app's own traffic. Undone here because the only other way out of a busy
+           state is fresh terminal traffic for the monitor to notice, and a board
+           sitting quietly at a prompt produces none: it would take the user pressing
+           Stop, on a board that was never running anything. */
+        if (port && deviceState !== 'reconnecting' && isBusyState()) {
+            await completeDeviceInit()
+        }
     }
     // Success
     analytics.track('Script Run')

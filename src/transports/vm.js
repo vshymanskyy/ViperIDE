@@ -127,6 +127,13 @@ export class MicroPythonWASM extends Transport {
         this.mp.FS.writeFile('/lib/machine.py', MACHINE_MODULE)
     }
 
+    _processInputChar(c) {
+        // NOTE: PyScript variant is not built with ASYNCIFY
+        //return this.mp.replProcessCharWithAsyncify(c)
+
+        return this.mp.replProcessChar(c)
+    }
+
     /**
      * Restart the WASM VM while preserving the filesystem.
      * Implements both hard and soft reset identically.
@@ -143,8 +150,8 @@ export class MicroPythonWASM extends Transport {
         this.mp.replInit()
 
         if (wasRaw) {
-            await this.mp.replProcessCharWithAsyncify(0x03)
-            await this.mp.replProcessCharWithAsyncify(0x01)
+            await this._processInputChar(0x03)
+            await this._processInputChar(0x01)
         }
 
         this._suppressedOutput = false
@@ -171,7 +178,7 @@ export class MicroPythonWASM extends Transport {
             if (byte === 0x01) this._inRawMode = true
             else if (byte === 0x02) this._inRawMode = false
 
-            const ret = await this.mp.replProcessCharWithAsyncify(byte)
+            const ret = await this._processInputChar(byte)
             if (ret === PYEXEC_FORCED_EXIT) {
                 await this._restart()
             } else if (ret) {
