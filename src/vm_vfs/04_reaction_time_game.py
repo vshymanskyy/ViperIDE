@@ -22,7 +22,7 @@ def open_example_window(title, width=560, height=440):
     return popup
 
 
-window = open_example_window("MicroPython Reaction Test")
+window = open_example_window("Reaction Test")
 document = window.document
 card = document.createElement("div")
 card.style.cssText = (
@@ -31,7 +31,7 @@ card.style.cssText = (
     "box-sizing:border-box"
 )
 title = document.createElement("h2")
-title.textContent = "⚡ MicroPython Reaction Test"
+title.textContent = "⚡ Reaction Test"
 button = document.createElement("button")
 button.textContent = "Start"
 button.style.cssText = (

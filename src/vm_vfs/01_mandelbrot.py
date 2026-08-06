@@ -3,7 +3,7 @@
 CHARS = " .,:;irsXA253hMHGS#9B&@"
 
 
-def render(width=78, height=30, max_iter=42):
+def render(width=48, height=14, max_iter=77):
     # Slightly compensate for terminal character aspect ratio.
     for py in range(height):
         cy = -1.15 + (2.30 * py / (height - 1))
