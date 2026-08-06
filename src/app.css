@@ -33,7 +33,7 @@ body.loaded {
     align-items: center;
     justify-content: space-between;
     flex: 0 0 auto;
-    padding: 1px 5px;
+    padding: 1px 1px 0px 1px;
     user-select: none;
 }
 
@@ -77,7 +77,7 @@ body.loaded {
 #editor-tabs {
     flex: 0 0 auto;
     justify-content: flex-start;
-    padding: 1px 5px;
+    padding: 0px 1px 0px 0px;
     overflow-x: auto;
     overflow-y: hidden;
 }
@@ -104,7 +104,7 @@ body.loaded {
 }
 
 #editor-tabs .menu-action {
-    font-size: inherit;
+    font-size: 0.9rem;
 }
 
 #editor-tabs .tab-title {
@@ -150,7 +150,7 @@ body.loaded {
 #terminal-tabs {
     flex: 0 0 auto;
     cursor: row-resize;
-    padding: 1px 5px;
+    padding: 2px 1px 0px 0px;
     background: var(--bg-color);
 }
 
@@ -241,7 +241,7 @@ body.loaded {
 
 .marked-viewer blockquote {
     padding: 0 0 0 1em;
-    border-left: 3px solid var(--accent-color);
+    border-left: 2px solid var(--accent-color);
     color: #ffffffc8;
 }
 

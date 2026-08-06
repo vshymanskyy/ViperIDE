@@ -9,13 +9,13 @@
 :root {
     --fg-color: white;
     --fg-color-highlight: orange;
-    --accent-color: #1aafff;
+    --accent-color: #0a84ff;
     --bg-color: #2a2e32;
     --bg-color-menu: #2a2e32ee;
     --bg-color-edit: #111314;
     --font-size: 14px;
     --connected-passive: #87c244;
-    --connected-active: #1aafff;
+    --connected-active: #0a84ff;
     --connected-color: var(--connected-passive);
     --animation: 0.3s ease-in-out;
 }
@@ -340,7 +340,8 @@ option {
 }
 
 .tab.active {
-    background: #666;
+    background: var(--bg-color-edit);
+    box-shadow: inset 0 2px 0 var(--accent-color);
 }
 
 .tab-content {
