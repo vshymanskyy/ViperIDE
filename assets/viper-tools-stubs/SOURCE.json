@@ -1,0 +1,25 @@
+{
+  "package": {
+    "name": "viper-tools-stubs",
+    "version": "0.1.2.0"
+  },
+  "source": {
+    "repository": "https://github.com/Josverl/stubs_playground",
+    "commit": "ee59ea202d0e730acd5f84556ae2614479957423",
+    "path": "packages/viper-tools-stubs"
+  },
+  "upstream": {
+    "repository": "https://github.com/vshymanskyy/ViperIDE",
+    "version": "0.1.2",
+    "commit": "d8c78f1f61b92cb6e98788f6ae88cc93925db51f"
+  },
+  "build": {
+    "command": "uv build",
+    "artifact": "dist/viper_tools_stubs-0.1.2.0-py3-none-any.whl"
+  },
+  "artifact": {
+    "filename": "viper_tools_stubs-0.1.2.0-py3-none-any.whl",
+    "size": 6269,
+    "sha256": "406e48b0033590622a06a5aa4c37b3982840d6cfb89a5c6d26d0462f7105c0b6"
+  }
+}

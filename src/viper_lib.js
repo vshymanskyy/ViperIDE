@@ -19,7 +19,7 @@ export { createBrowserVM } from './emulator.js'
 export { ConnectionUID } from './connection_uid.js'
 export { splitPath, sleep, sizeFmt, report } from './utils.js'
 export { getUserUID, getCssPropertyValue, QSA, QS, QID, iOS, sanitizeHTML,
-         indicateActivity, setupTabs } from './utils_browser.js'
+         indicateActivity, requestUserValue, setupTabs } from './utils_browser.js'
 
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faLink } from '@fortawesome/free-solid-svg-icons'

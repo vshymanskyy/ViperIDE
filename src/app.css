@@ -28,6 +28,22 @@ body.loaded {
     font-weight: normal;
 }
 
+.deployment-tag {
+    margin-left: 0.25em;
+    padding: 0.1em 0.4em;
+    border: 1px solid #e5a000;
+    border-radius: 0.35em;
+    color: #e5a000;
+    font-size: 0.6em;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+}
+
+.deployment-tag:empty {
+    display: none;
+}
+
 #tool-panel {
     display: flex;
     align-items: center;
@@ -35,6 +51,36 @@ body.loaded {
     flex: 0 0 auto;
     padding: 1px 1px 0px 1px;
     user-select: none;
+}
+
+#diagnostics-badge {
+    display: inline-block;
+    min-width: 1.2em;
+    margin-left: 0.2em;
+    padding: 0 0.3em;
+    border-radius: 0.7em;
+    background: #666;
+    font-size: 0.75em;
+    text-align: center;
+}
+
+#diagnostics-badge:empty {
+    display: none;
+}
+
+#diagnostics-badge[data-severity="error"] {
+    background: #f87;
+    color: #111;
+}
+
+#diagnostics-badge[data-severity="warning"] {
+    background: #fe8;
+    color: #111;
+}
+
+#diagnostics-badge[data-severity="info"] {
+    background: #aaf;
+    color: #111;
 }
 
 #container {
@@ -152,6 +198,14 @@ body.loaded {
     cursor: row-resize;
     padding: 2px 1px 0px 0px;
     background: var(--bg-color);
+    white-space: nowrap;
+}
+
+#terminal-tabs > div {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
 }
 
 #menu-tabs {
@@ -174,6 +228,145 @@ body.loaded {
 #xterm {
     height: 0px;
     background: var(--bg-color-edit);
+}
+
+#diagnostics {
+    height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    padding: 0;
+    background: var(--bg-color-edit);
+}
+
+#diagnostics-controls {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.25em 0.55em;
+    background: var(--bg-color);
+    border-bottom: 1px solid #ffffff20;
+    font-size: 0.8rem;
+}
+
+#diagnostics-controls select {
+    max-width: 18em;
+    font-size: inherit;
+}
+
+#diagnostics-severities {
+    display: flex;
+    gap: 0.45em;
+    padding: 0;
+    border: 0;
+}
+
+#diagnostics-severities input {
+    width: 0.9em;
+    height: 0.9em;
+}
+
+#diagnostics-severities legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+#diagnostics-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+}
+
+.diagnostic-item {
+    display: grid;
+    grid-template-areas: "severity location message source";
+    grid-template-columns: 4.6em minmax(10em, 14em) minmax(0, 1fr) minmax(12em, 16em);
+    gap: 0.7em;
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    padding: 0.45em 0.7em;
+    border-bottom: 1px solid #ffffff12;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.diagnostic-item:hover,
+.diagnostic-item:focus-visible {
+    background: #ffffff12;
+}
+
+.diagnostic-severity {
+    grid-area: severity;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.diagnostic-item[data-severity="error"] .diagnostic-severity {
+    color: #ff7272;
+}
+
+.diagnostic-item[data-severity="warning"] .diagnostic-severity {
+    color: gold;
+}
+
+.diagnostic-item[data-severity="info"] .diagnostic-severity,
+.diagnostic-source {
+    color: #aaa;
+}
+
+.diagnostic-location,
+.diagnostic-message,
+.diagnostic-source {
+    min-width: 0;
+}
+
+.diagnostic-location {
+    grid-area: location;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.diagnostic-message {
+    grid-area: message;
+    overflow-wrap: anywhere;
+}
+
+.diagnostic-source {
+    grid-area: source;
+    overflow: hidden;
+    justify-self: right;
+    max-width: 100%;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+    .diagnostic-item {
+        grid-template-areas:
+            "severity location source"
+            ". message message";
+        grid-template-columns: 4.1em minmax(0, 1fr) minmax(8em, 12em);
+    }
+
+    .diagnostic-source {
+        justify-self: start;
+        text-align: left;
+    }
+}
+
+.diagnostics-empty {
+    padding: 1em;
+    color: #aaa;
 }
 
 .marked-viewer {
@@ -316,6 +509,14 @@ body.loaded {
     font-size: 0.9rem;
 }
 
+/* CodeMirror repeatedly measures tooltips with a ResizeObserver. Without a
+   fixed upper bound, Edge's shrink-to-fit width changes when CodeMirror moves
+   a long hover left, which triggers another resize and creates a feedback loop. */
+.cm-tooltip.cm-tooltip-hover {
+    max-width: min(700px, calc(100vw - 16px));
+    overflow-wrap: anywhere;
+}
+
 /* Fix touch interaction on iOS */
 .cm-editor, .cm-scroller, .cm-content, .tab-content, #side-menu {
     touch-action: pan-x pan-y !important;
@@ -453,6 +654,57 @@ body.loaded {
 #menu-settings-list div, #menu-tools-list div {
     margin: 5px 0;
     line-height: 1.2em;
+}
+
+#menu-settings-list [data-advanced-mode][hidden] {
+    display: none;
+}
+
+#menu-settings-list .typecheck-select {
+    text-align: right;
+    text-align-last: right;
+    max-width: 62%;
+}
+
+#typecheck-stub-selected-package {
+    width: 62%;
+    min-width: 0;
+    padding: 2px 4px;
+    color: var(--fg-color);
+    background: var(--bg-color-edit);
+    border: 1px solid #cccccc88;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+}
+
+#typecheck-stub-package {
+    width: 100%;
+    margin-top: 5px;
+}
+
+#menu-settings-list .typecheck-stub-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 5px;
+}
+
+#menu-settings-list .typecheck-stub-actions button {
+    padding: 3px 8px;
+    border: 1px solid #cccccc88;
+    border-radius: 2px;
+    background: var(--bg-color-edit);
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+#menu-settings-list .typecheck-stub-actions button:not(:disabled):hover {
+    border-color: var(--accent-color);
+    color: var(--fg-color-highlight);
+}
+
+#typecheck-stub-status {
+    font-size: 0.85rem;
+    opacity: 0.8;
 }
 
 /* About */

@@ -223,6 +223,9 @@ export class FsCache {
         return { key, ambiguous }
     }
 
+    // Exposes names only; callers still use peek() so this never triggers device reads.
+    knownPaths() { return [...this._listing.keys()] }
+
     /* The port is gone. Everything read off the device is void, but open editors
        keep their text and their backups - that is the point of the backups. */
     dropDeviceState() {

@@ -2,10 +2,17 @@ import globals from "globals"
 import pluginJs from "@eslint/js"
 
 export default [
-  { ignores: ["build/", "src/websocket_relay.cjs", "mcp/"] },
+  { ignores: [
+    "build/", 
+    "src/websocket_relay.cjs", 
+    "mcp/",
+    "results/playwright/", 
+    "results/playwright-report/"
+] },
   { languageOptions: { globals: globals.browser }},
-  { files: ["*.mjs"], languageOptions: { globals: globals.node }},
-  { files: ["test/**/*.js"], languageOptions: { globals: { ...globals.node, ...globals.mocha }}},
+  { files: ["**/*.mjs"], languageOptions: { globals: globals.node }},
+  { files: ["test/**/*.{js,mjs}"], languageOptions: { globals: { ...globals.node, ...globals.mocha }}},
+  { files: ["src/typechecking/**/*.js"], rules: { indent: ["error", 2, { SwitchCase: 1 }] }},
   pluginJs.configs.recommended,
   {
     rules: {
@@ -25,6 +32,9 @@ export default [
         VIPER_IDE_VERSION:  "readonly",
         VIPER_IDE_BUILD:    "readonly",
         VIPER_IDE_BASE_URL: "readonly",
+        VIPER_TOOLS_STUBS_FILENAME: "readonly",
+        VIPER_TOOLS_STUBS_SIZE:     "readonly",
+        VIPER_TOOLS_STUBS_SHA256:   "readonly",
       }
     }
   }

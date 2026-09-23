@@ -15,7 +15,8 @@
                 "ble": "Connect Bluetooth",
                 "usb": "Connect USB/Serial"
             },
-            "terminal": "Terminal"
+            "terminal": "Terminal",
+            "problems": "Problems"
         },
         "menu": {
             "package-mgr": "Package Manager",
@@ -31,6 +32,7 @@
             "conn": "connection",
             "editor": "editor",
             "other": "other",
+            "typechecking": "Typechecking",
             "interrupt-running-code": "Interrupt execution",
             "force-serial-poly": "Use WebUSB instead of WebSerial",
             "expand-minify-json": "Auto-minification of JSON",
@@ -38,6 +40,18 @@
             "render-markdown": "Markdown viewer",
             "refresh-after-run": "Refresh files after run",
             "auto-soft-reset": "Soft Reset before run",
+            "typecheck-enabled": "Enable type checking",
+            "typecheck-viper-tools-stubs": "Include Viper tools stubs",
+            "typecheck-mode": "Typecheck mode",
+            "typecheck-scope": "Typecheck files",
+            "typecheck-autodetect": "Autoselect stubs",
+            "typecheck-stub-family": "Family",
+            "typecheck-stub-version": "Version",
+            "typecheck-stub-port": "Port",
+            "typecheck-stub-board": "Board",
+            "typecheck-stub-selected-package": "Package",
+            "typecheck-stub-not-applicable": "Not applicable",
+            "typecheck-stub-package": "Install stubs from PyPI",
             "use-natural-sort": "Natural sorting",
             "lang": "Language",
             "zoom": "Zoom",

@@ -53,7 +53,9 @@ if __name__ == "__main__":
  */
 export function createBrowserVM() {
     return new MicroPythonWASM(loadMicroPython, {
-        wasmURL: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm`,
+        // The loader and WASM binary must come from the same package build.
+        // A build query bypasses an older service worker's cache on first load.
+        wasmURL: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm?build=${VIPER_IDE_BUILD}`,
         async populateFS(mp) {
             mp.FS.writeFile('/main.py', getDefaultMainPy())
             await loadVFS(mp, `${VIPER_IDE_BASE_URL}/assets/vm_vfs.tar.gz`)

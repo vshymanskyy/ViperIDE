@@ -24,6 +24,8 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
+    # Forks can provide their own Pages workflow without publishing main here.
+    if: github.repository == 'vshymanskyy/ViperIDE'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -53,7 +55,7 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           # Upload entire repository
-          path: './build'
+          path: "./build"
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -106,6 +106,8 @@ for i in range(5):
     it('getDeviceInfo reports a usable device description', async () => {
         const info = await withRaw(ctx.port, raw => raw.getDeviceInfo())
         assert(info.version && info.version.length, 'version is empty')
+        assert(typeof info.platform === 'string' && info.platform.length, 'sys.platform is empty')
+        assert(typeof info.build === 'string', 'sys.implementation._build is not a string')
         assert(Array.isArray(info.sys_path) && info.sys_path.length, 'sys_path is empty')
         assert(info.mpy_ver === 'py' || Number.isInteger(info.mpy_ver), `bad mpy_ver: ${info.mpy_ver}`)
         assert(info.mpy_arch === null || typeof info.mpy_arch === 'string', `bad mpy_arch: ${info.mpy_arch}`)

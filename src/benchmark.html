@@ -34,6 +34,18 @@
 
     <pre class="monospace" id="log"></pre>
 
+    <dialog id="user-input-dialog" aria-labelledby="user-input-dialog-title">
+        <form method="dialog">
+            <div id="user-input-dialog-title"></div>
+            <label id="user-input-label" for="user-input-value"></label>
+            <input id="user-input-value" type="text" autocomplete="off" required />
+            <div class="dialog-actions">
+                <button id="user-input-confirm" type="submit" value="confirm">OK</button>
+                <button type="submit" value="cancel" formnovalidate>Cancel</button>
+            </div>
+        </form>
+    </dialog>
+
     <script src="./viper_lib.js"></script>
     <script>
     Object.assign(window, viper_lib)
@@ -91,7 +103,11 @@ async function prepareNewPort(type) {
     if (type === 'ws') {
         let url
         if (typeof window.webrepl_url === 'undefined' || window.webrepl_url == '') {
-            url = prompt('Enter WebREPL device address.\nSupported protocols: ws wss rtc', defaultWsURL)
+            url = await requestUserValue({
+                title: 'Connect WebREPL',
+                label: 'Enter WebREPL device address.\nSupported protocols: ws wss rtc',
+                value: defaultWsURL,
+            })
             if (!url) { return }
             defaultWsURL = url
 
@@ -112,7 +128,13 @@ async function prepareNewPort(type) {
         if (url.startsWith('ws://') || url.startsWith('wss://')) {
             new_port = new WebSocketREPL(url)
             new_port.onPasswordRequest(async () => {
-                const pass = prompt('WebREPL password:', defaultWsPass)
+                const pass = await requestUserValue({
+                    title: 'Connect WebREPL',
+                    label: 'WebREPL password:',
+                    value: defaultWsPass,
+                    type: 'password',
+                    trim: false,
+                })
                 if (pass == null) { return }
                 if (pass.length < 4) {
                     toastr.error('Password is too short')

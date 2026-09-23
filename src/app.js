@@ -21,7 +21,8 @@ import { WebLinksAddon } from '@xterm/addon-web-links'
 import { FitAddon } from '@xterm/addon-fit'
 
 import { isStandalonePWA } from 'is-standalone-pwa';
-import { addUpdateHandler, createNewEditor, getEditorFromElement } from './editor.js'
+import { addUpdateHandler, configureTypechecking, createNewEditor,
+         getEditorFromElement, goToDocumentPosition, hasDiagnosticsChange, supportsTypechecking } from './editor.js'
 import { displayOpenFile, createTab, getTabFileName, getTabEditorElement } from './editor_tabs.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
@@ -41,20 +42,32 @@ import * as amplitude from '@amplitude/analytics-browser'
 import { splitPath, joinPath, sleep, fetchJSON, escapeCSS, sizeFmt, report } from './utils.js'
 import { getUserUID, getScreenInfo, IdleMonitor, getCssPropertyValue, QSA, QS, QID, iOS,
          sanitizeHTML, indicateActivity, setupTabs,
-         readDroppedFiles } from './utils_browser.js'
+         readDroppedFiles, requestUserValue, showBottomPanel } from './utils_browser.js'
 
 import { TreeView, parentDir, TREE_DRAG_TYPE } from './tree_view.js'
 import fsCache from './fs_cache.js'
 import { createZipSync } from './zip.js'
 
 import { initControlClient } from './control_client.js'
+import { typechecking } from './typechecking/typechecking.js'
+import { createTypecheckingController } from './typechecking/typechecking_controller.js'
+import { createTypecheckingStubSelector } from './typechecking/stub_selector_ui.js'
+import {
+    shouldMirrorDevicePythonWorkspace,
+    syncDevicePythonWorkspace,
+} from './typechecking/typechecking_workspace.js'
+import {
+    createDiagnosticsPanelController,
+} from './diagnostics_panel_controller.js'
+
+typechecking.setEditorIntegration(configureTypechecking)
 
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faUsb, faBluetoothB } from '@fortawesome/free-brands-svg-icons'
 import { faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug, faGaugeHigh,
-         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark,
+         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faSquareCheck, faXmark,
          faFolderOpen
        } from '@fortawesome/free-solid-svg-icons'
 import { faMessage, faCircleDown } from '@fortawesome/free-regular-svg-icons'
@@ -63,7 +76,7 @@ library.add(faUsb, faBluetoothB)
 library.add(faLink, faBars, faDownload, faCirclePlay, faCircleStop, faFolder, faFile, faFileCircleExclamation, faCubes, faGear,
          faCube, faTools, faSliders, faCircleInfo, faStar, faExpand, faCertificate,
          faPlug, faArrowUpRightFromSquare, faTerminal, faBug, faGaugeHigh,
-         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faXmark,
+         faTrashCan, faArrowsRotate, faPowerOff, faPlus, faSquareCheck, faXmark,
          faFolderOpen)
 library.add(faMessage, faCircleDown)
 dom.watch()
@@ -171,6 +184,46 @@ function setDeviceState(newState) {
     }
 
     replMonitor.setWatchPrompt(isBusyState())
+}
+
+async function jumpToDiagnostic(path, line, character) {
+    if (!displayOpenFile(path)) {
+        if (!portReady()) {
+            throw new Error(`Reconnect the device to open: ${path}`)
+        }
+        // Read through the normal device path so an old type-check snapshot can
+        // never create an editable tab that overwrites newer device content.
+        await fileClick(path)
+    }
+    const editorElement = getTabEditorElement(path)
+    const view = editorElement && getEditorFromElement(editorElement)
+    if (view) { goToDocumentPosition(view, line, character) }
+}
+
+const diagnosticsPanel = createDiagnosticsPanelController({
+    getPendingWork: () => typecheckingController.getPendingWork(),
+    onJump: jumpToDiagnostic,
+    translate: T,
+})
+const stubSelector = createTypecheckingStubSelector({
+    getDeviceInfo: () => devInfo,
+    requestReconfiguration: options => typecheckingController.applyReconfiguration(options),
+    translate: T,
+    updateUI: updateTypecheckingUI,
+})
+const typecheckingController = createTypecheckingController({
+    stubSelector,
+    syncWorkspace: syncConnectedTypecheckingWorkspace,
+    updateUI: updateTypecheckingUI,
+})
+
+function updateTypecheckingUI(snapshot = typechecking.snapshot()) {
+    stubSelector.updateControls(snapshot)
+    diagnosticsPanel.update(snapshot)
+}
+
+export function toggleTypechecking() {
+    typecheckingController.toggle()
 }
 
 function setRunMode(on) {
@@ -370,30 +423,36 @@ async function onPromptSettled() {
 let defaultWsURL = 'ws://192.168.1.123:8266'
 let defaultWsPass = ''
 
-async function prepareNewPort(type) {
+async function prepareNewPort(type, options = {}) {
     let new_port;
     analytics.track('Device Start Connection', { connection: type })
 
     if (type === 'ws') {
-        let url
-        if (typeof window.webrepl_url === 'undefined' || window.webrepl_url == '') {
-            url = prompt('Enter WebREPL device address.\nSupported protocols: ws wss rtc', defaultWsURL)
-            if (!url) { return }
-            defaultWsURL = url
-
-            if (url.startsWith('http://')) { url = url.slice(7) }
-            if (url.startsWith('https://')) { url = url.slice(8) }
-            if (!url.includes('://')) { url = 'ws://' + url }
-
-            if (window.location.protocol === 'https:' && url.startsWith('ws://')) {
-                /* Navigate to device, which should automatically reload and ask for WebREPL password */
-                window.location.assign(url.replace('ws://', 'http://'))
-                return
-            }
-        } else {
+        let url = options.url
+        let promptedForUrl = false
+        if (url === undefined && (typeof window.webrepl_url === 'undefined' || window.webrepl_url == '')) {
+            promptedForUrl = true
+            url = await requestUserValue({
+                title: 'Connect WebREPL',
+                label: 'Enter WebREPL device address.\nSupported protocols: ws wss rtc',
+                value: defaultWsURL,
+                confirmLabel: 'Connect',
+            })
+        } else if (url === undefined) {
             url = window.webrepl_url
-            defaultWsURL = url
             window.webrepl_url = ''
+        }
+        if (!url) { return }
+        defaultWsURL = url
+
+        if (url.startsWith('http://')) { url = url.slice(7) }
+        if (url.startsWith('https://')) { url = url.slice(8) }
+        if (!url.includes('://')) { url = 'ws://' + url }
+
+        if (promptedForUrl && window.location.protocol === 'https:' && url.startsWith('ws://')) {
+            /* Navigate to device, which should automatically reload and ask for WebREPL password */
+            window.location.assign(url.replace('ws://', 'http://'))
+            return
         }
 
         if (url.startsWith('ws://') || url.startsWith('wss://')) {
@@ -417,7 +476,15 @@ async function prepareNewPort(type) {
                 /* A board that rebooted asks again, and a dialog nobody opened would
                    be a strange way to find out. The board says if it is wrong. */
                 if (deviceState === 'reconnecting' && defaultWsPass) { return defaultWsPass }
-                const pass = prompt('WebREPL password:', defaultWsPass)
+                const pass = options.password === undefined
+                    ? await requestUserValue({
+                        title: 'Connect WebREPL',
+                        label: 'WebREPL password:',
+                        value: defaultWsPass,
+                        type: 'password',
+                        trim: false,
+                    })
+                    : options.password
                 if (pass == null) { return }
                 if (pass.length < 4) {
                     toastr.error('Password is too short')
@@ -490,7 +557,7 @@ function wirePort(new_port) {
     new_port.onDisconnect(handlePortDisconnect)
 }
 
-export async function connectDevice(type) {
+export async function connectDevice(type, options = {}) {
     if (port) {
         const msg = (deviceState === 'reconnecting') ? 'Stop reconnecting and disconnect?'
                                                      : 'Disconnect current device?'
@@ -499,7 +566,7 @@ export async function connectDevice(type) {
         return
     }
 
-    const new_port = await prepareNewPort(type)
+    const new_port = await prepareNewPort(type, options)
     if (!new_port) { return }
     // Connect new port
     try {
@@ -634,14 +701,18 @@ export async function refreshFileTree() {
     }
 }
 
-export async function createNewFile(path) {
+export async function createNewFile(path, name) {
     if (!portReady()) return;
-    const fn = prompt(`Creating new file inside ${path}\n` +
-                      `Please enter the name.\n` +
-                      `\n` +
-                      `Use "/" to create folders along the way:\n` +
-                      `  folder/myfile.py   - a file in a new folder\n` +
-                      `  folder/            - just the folder`)
+    const fn = name === undefined
+        ? await requestUserValue({
+            title: `Creating new file inside ${path}`,
+            label: `Please enter the name.\n\n` +
+                   `Use "/" to create folders along the way:\n` +
+                   `  folder/myfile.py   - a file in a new folder\n` +
+                   `  folder/            - just the folder`,
+            confirmLabel: 'Create',
+        })
+        : name
     if (fn == null || fn == '') return
     const raw = await MpRawMode.begin(port)
     try {
@@ -1214,7 +1285,38 @@ async function _raw_updateFileTree(raw) {
 
     await _raw_reconcileOpenTabs(raw, delta)
     await _raw_restoreDrafts(raw)
+    await _raw_syncTypecheckingWorkspace(raw)
     return delta
+}
+
+async function _raw_syncTypecheckingWorkspace(raw) {
+    const workspace = await syncDevicePythonWorkspace({
+        enabled: getSetting('typecheck-enabled'),
+        scope: getSetting('typecheck-scope'),
+        raw,
+        fsCache,
+        isSpecialPath,
+        replaceWorkspace: (files, options) => typechecking.replaceWorkspace(files, options),
+    })
+    for (const { path, error } of workspace.errors) {
+        console.warn(`Unable to mirror ${path} for type checking`, error)
+    }
+    return workspace.mirrored
+}
+
+async function syncConnectedTypecheckingWorkspace() {
+    if (!portReady() || !shouldMirrorDevicePythonWorkspace(
+        getSetting('typecheck-enabled'),
+        getSetting('typecheck-scope'),
+    )) {
+        return false
+    }
+    const raw = await MpRawMode.begin(port)
+    try {
+        return await _raw_syncTypecheckingWorkspace(raw)
+    } finally {
+        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
+    }
 }
 
 /*
@@ -1417,6 +1519,7 @@ export async function showDisassembly() {
         wordWrap: getSetting('use-word-wrap'),
         devInfo,
         readOnly: true,
+        diagnosticSeverities: diagnosticsPanel.getSeverities(),
     })
     fsCache.openView(disFn, { baseline: dis, kind: 'text', readOnly: true })
     document.dispatchEvent(new CustomEvent("editorLoaded", {detail: {editor: editor, fn: disFn}}))
@@ -1627,26 +1730,42 @@ async function _loadContent(fn, content, editorElement, { external=null } = {}) 
         }
 
         editorElement.innerHTML = '' // Clear existing content
-        editor = await createNewEditor(editorElement, fn, content, {
+        const loadedEditor = await createNewEditor(editorElement, fn, content, {
             wordWrap: getSetting('use-word-wrap'),
             devInfo,
             readOnly,
+            diagnosticSeverities: diagnosticsPanel.getSeverities(),
         })
+        if (editorElement.closest('.editor-tab-pane')?.classList.contains('active')) {
+            editor = loadedEditor
+            editorFn = fn
+        }
         /* The text as handed to the editor, which is not the bytes on the device
            for prettified JSON or a disassembly. Comparing against this is what
            makes an undo clear the marker again. */
         fsCache.openView(tabFn, { baseline: content, kind: 'text', readOnly })
-        document.dispatchEvent(new CustomEvent("editorLoaded", {detail: {editor: editor, fn: fn}}))
+        document.dispatchEvent(new CustomEvent("editorLoaded", {
+            detail: { editor: loadedEditor, fn },
+        }))
 
         const scheduleSync = makeCoalesced(1000)
-        addUpdateHandler(editor, (update) => {
+        const scheduleDiagnosticsPanel = makeCoalesced(250)
+        addUpdateHandler(loadedEditor, (update) => {
+            // Cursor moves and scrolls cannot change diagnostics, and rebuilding the
+            // panel destroys the focused row and re-announces the whole live region.
+            if (update.docChanged || hasDiagnosticsChange(update)) {
+                scheduleDiagnosticsPanel(diagnosticsPanel.update)
+            }
             if (!update.docChanged) return
             // The tab knows the current name; this one goes stale on a move
             const key = getTabFileName(editorElement) || tabFn
-            scheduleSync(() => setDirty(key, fsCache.setDraft(key, update.state.doc.toString())))
+            const text = update.state.doc.toString()
+            // Keep completion and hover synchronized while draft persistence remains coalesced.
+            typechecking.changeEditor(loadedEditor, text)
+            scheduleSync(() => {
+                setDirty(key, fsCache.setDraft(key, text))
+            })
         })
-
-        editorFn = fn
     }
     autoHideSideMenu()
 }
@@ -1784,6 +1903,7 @@ export async function runCurrentFile() {
     if (!port || deviceState === 'reconnecting') return;
 
     if (isInRunMode || isBusyState()) {
+        showBottomPanel('xterm', () => term?.focus())
         /* Ctrl-C twice: interrupt any running program. When busy, the ReplMonitor
            notices the prompt coming back and finishes the wake-up. */
         await port.write('\r\x03\x03')
@@ -1795,6 +1915,7 @@ export async function runCurrentFile() {
         return
     }
 
+    showBottomPanel('xterm', () => term?.focus())
     term.write('\r\n')
 
     const soft_reboot = getSetting('auto-soft-reset')
@@ -2034,7 +2155,10 @@ export async function installPkgFromUrl() {
         toastr.info('Connect yout device first')
         return
     }
-    const url = prompt('Enter package name or URL:')
+    const url = await requestUserValue({
+        title: 'Install package',
+        label: 'Enter package name or URL:',
+    })
     if (url) {
         await installPkg(url)
     }
@@ -2182,6 +2306,10 @@ export function applyTranslation() {
         QID('btn-conn-usb').setAttribute('title', T('tool.conn.usb'))
         QID('term-clear').setAttribute('title',   T('tool.clear'))
         QID('tab-term').innerText = T('tool.terminal')
+        const problemsLabel = T('tool.problems')
+        QID('tab-problems').innerText = problemsLabel
+        updateTypecheckingUI()
+        QID('diagnostics').setAttribute('aria-label', problemsLabel)
 
         QSA('#app-expand, #term-expand').forEach(el => {
             el.setAttribute('title', T('tool.fullscreen'))
@@ -2200,6 +2328,7 @@ export function applyTranslation() {
         QS('#menu-line-conn').innerText = T('settings.conn')
         QS('#menu-line-editor').innerText = T('settings.editor')
         QS('#menu-line-other').innerText = T('settings.other')
+        QS('#menu-line-typechecking').innerText = T('settings.typechecking')
 
         QS('label[for=interrupt-running-code]').innerText = T('settings.interrupt-running-code')
         QS('label[for=force-serial-poly]').innerText = T('settings.force-serial-poly')
@@ -2209,6 +2338,16 @@ export function applyTranslation() {
         QS('label[for=render-markdown]').innerText = T('settings.render-markdown')
         QS('label[for=refresh-after-run]').innerText = T('settings.refresh-after-run')
         QS('label[for=auto-soft-reset]').innerText = T('settings.auto-soft-reset')
+        QS('label[for=typecheck-enabled]').innerText = T('settings.typecheck-enabled')
+        QS('label[for=typecheck-mode]').innerText = T('settings.typecheck-mode')
+        QS('label[for=typecheck-scope]').innerText = T('settings.typecheck-scope')
+        QS('label[for=typecheck-autodetect]').innerText = T('settings.typecheck-autodetect')
+        QS('label[for=typecheck-stub-family]').innerText = T('settings.typecheck-stub-family')
+        QS('label[for=typecheck-stub-version]').innerText = T('settings.typecheck-stub-version')
+        QS('label[for=typecheck-stub-port]').innerText = T('settings.typecheck-stub-port')
+        QS('label[for=typecheck-stub-board]').innerText = T('settings.typecheck-stub-board')
+        QS('label[for=typecheck-stub-selected-package]').innerText = T('settings.typecheck-stub-selected-package')
+        QS('label[for=typecheck-stub-package]').innerText = T('settings.typecheck-stub-package')
         QS('label[for=use-natural-sort]').innerText = T('settings.use-natural-sort')
 
         QS('label[for=lang]').innerText = T('settings.lang')
@@ -2357,12 +2496,15 @@ function showOfflineReadyToast(version) {
         term.options.fontSize = (size * 0.9).toFixed(1)
     })
 
+    typecheckingController.wire()
+
     initLaunchHandler()
     applyTranslation()
 
 
     setupTabs(QID('side-menu'))
     setupTabs(QID('terminal-container'))
+    diagnosticsPanel.wire()
 
     toastr.options.preventDuplicates = true;
 
@@ -2506,13 +2648,33 @@ function showOfflineReadyToast(version) {
         editorFn = event.detail.fn
         markFile(event.detail.fn, 'open', true)
     })
+    document.addEventListener("editorLoaded", (event) => {
+        if (!supportsTypechecking(event.detail.fn, event.detail.editor.state.readOnly)) { return }
+        typechecking.bindEditor(event.detail.editor, event.detail.fn).
+            catch(err => report('Unable to enable type checking for this file', err))
+    })
     document.addEventListener("tabClosed", (event) => {
+        const closedEditor = getEditorFromElement(event.detail.editorElement)
+        if (closedEditor) { typechecking.unbindEditor(closedEditor) }
         markFile(event.detail.fn, 'open', false)
         markFile(event.detail.fn, 'changed', false)
         markFile(event.detail.fn, 'conflict', false)
         /* Closing already asked about discarding unsaved changes, so the backup
            has to go with them */
         fsCache.closeView(event.detail.fn)
+        diagnosticsPanel.update()
+    })
+    document.addEventListener("fileRenamed", event => {
+        typechecking.renamePath(event.detail.old, event.detail.new)
+    })
+    document.addEventListener("fileRemoved", event => {
+        typechecking.removePath(event.detail.path)
+    })
+    document.addEventListener("dirRemoved", event => {
+        typechecking.removePath(event.detail.path, true)
+    })
+    document.addEventListener("deviceConnected", () => {
+        typecheckingController.queueDeviceSelection()
     })
     /* Closing the last tab would leave the editor area blank and `editor`
        pointing at a view that is no longer in the document */
@@ -2523,6 +2685,13 @@ function showOfflineReadyToast(version) {
     setTimeout(() => {
         document.body.classList.add('loaded')
     }, 100)
+
+    // Type checking is independent of device transport and remains alive across reconnects.
+    typecheckingController.queueSetting(getSetting('typecheck-enabled'))
+    window.addEventListener('pagehide', event => {
+        // A bfcache page remains live and must retain its worker for restoration.
+        if (!event.persisted) { typechecking.dispose() }
+    })
 
     let urlID
     if ((urlID = urlParams.get('wss'))) {

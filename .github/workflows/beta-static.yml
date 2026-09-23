@@ -1,0 +1,83 @@
+# Deploy a configured beta branch from a fork to GitHub Pages.
+name: Deploy beta to Pages
+
+on:
+  # Branch filtering is handled by deploy-check so
+  # BETA_BRANCH remains the single place to configure the branch for reuse.
+  push:
+  workflow_dispatch:
+
+env:
+  BETA_REPOSITORY: Josverl/viperide
+  BETA_BRANCH: feat/type_checking
+  VIPER_IDE_DEPLOYMENT_TAG: TYPING_BETA
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# GitHub Pages has one deployment target per repository. The group is shared with the
+# production workflow, but scoped to the deploy job so an unrelated push cannot queue
+# into it and cancel a pending production deployment.
+
+jobs:
+  deploy-check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check_source.outputs.should_deploy }}
+    steps:
+      - name: Check repository and branch
+        id: check_source
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REPOSITORY,,}" == "${BETA_REPOSITORY,,}" &&
+                "$GITHUB_REF_TYPE" == "branch" &&
+                "$GITHUB_REF_NAME" == "$BETA_BRANCH" ]]; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy-beta:
+    needs: deploy-check
+    # The env context is unavailable in a job-level condition, so the validation
+    # job exposes the comparison as an output.
+    if: needs.deploy-check.outputs.should_deploy == 'true'
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    env:
+      # Project Pages is hosted below /<repository-name>. build.py substitutes
+      # this value into application URLs, the manifest, and generated HTML.
+      VIPER_IDE_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+    steps:
+      - name: Checkout beta branch
+        uses: actions/checkout@v7
+
+      # Match the production workflow: prepare dependencies once, then lint and
+      # test before creating the deployable build.
+      - name: Test
+        run: |
+          python3 build.py --prepare
+          npm run lint
+          npm run test
+
+      - name: Build beta site
+        run: python3 build.py --skip-tests
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload beta site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./build
+
+      - name: Deploy beta to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

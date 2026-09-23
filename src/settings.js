@@ -4,6 +4,7 @@ import { QID } from './utils_browser.js'
 const settingsElement = QID("menu-settings")
 let callbacks = new Map()
 let settings = _loadSettings()
+_updateAdvancedModeVisibility(settings["advanced-mode"])
 
 /**
  *
@@ -33,6 +34,9 @@ export function updateSetting(setting, newValue) {
 
     // set our local cache
     settings[setting] = newValue
+    if (setting == "advanced-mode") {
+        _updateAdvancedModeVisibility(newValue)
+    }
 
     // inform any subscribers
     _notify(setting, newValue)
@@ -57,8 +61,18 @@ export function onSettingChange(setting, callback) {
 
 settingsElement.addEventListener("change", (event) => {
     settings = _persistSettings()
+    if (event.target.id == "advanced-mode") {
+        _updateAdvancedModeVisibility(settings["advanced-mode"])
+    }
     _notify(event.target.id, settings[event.target.id])
 })
+
+
+function _updateAdvancedModeVisibility(enabled) {
+    settingsElement.querySelectorAll("[data-advanced-mode]").forEach(element => {
+        element.hidden = !enabled
+    })
+}
 
 
 function _loadSettings() {
@@ -92,6 +106,8 @@ function _loadSettings() {
         _setLoadedValue(element.id, loadedSettings[element.id], element.value, (value) => element.value = value)
     })
 
+    // Persist defaults for controls added after an existing settings record was created.
+    _persistSettings(loadedSettings)
     return loadedSettings
 }
 

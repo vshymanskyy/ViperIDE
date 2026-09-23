@@ -4,12 +4,27 @@ on:
   pull_request:
     branches: ["main"]
 
+# This workflow builds and runs untrusted pull request code.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
 
       - name: Prepare
         run: python3 build.py --prepare
@@ -22,3 +37,44 @@ jobs:
 
       - name: Build
         run: python3 build.py --skip-tests
+
+  browser-test:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.0-noble
+      options: --user 1001
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Prepare
+        run: python3 build.py --prepare
+
+      - name: Build
+        run: python3 build.py --skip-tests
+
+      - name: Verify Playwright version
+        run: test "$(npx playwright --version)" = "Version 1.55.0"
+
+      - name: Run browser tests
+        run: npx playwright test --project "${{ matrix.browser }}" --grep-invert @network
+
+      - name: Upload browser test failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-${{ matrix.browser }}-${{ github.run_attempt }}
+          path: |
+            results/playwright-report/
+            results/playwright/**/trace.zip
+          if-no-files-found: ignore

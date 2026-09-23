@@ -237,6 +237,54 @@ input, select, option {
     background-color: unset;
 }
 
+#user-input-dialog {
+    width: min(28rem, calc(100vw - 2rem));
+    padding: 1rem;
+    border: 1px solid var(--fg-color);
+    border-radius: 4px;
+    color: var(--fg-color);
+    background: var(--bg-color-menu);
+}
+
+#user-input-dialog::backdrop {
+    background: rgb(0 0 0 / 60%);
+}
+
+#user-input-dialog form {
+    display: grid;
+    gap: 0.75rem;
+}
+
+#user-input-dialog-title {
+    font-weight: bold;
+}
+
+#user-input-label {
+    white-space: pre-wrap;
+}
+
+#user-input-value {
+    width: 100%;
+    padding: 0.4rem;
+    border: 1px solid var(--fg-color);
+    color: var(--fg-color);
+    background: var(--bg-color-edit);
+}
+
+#user-input-dialog .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+#user-input-dialog button {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--fg-color);
+    color: var(--fg-color);
+    background: var(--bg-color-edit);
+    cursor: pointer;
+}
+
 option {
     background-color: var(--bg-color);
 }

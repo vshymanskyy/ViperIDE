@@ -6,17 +6,87 @@ import terser from '@rollup/plugin-terser'
 import css from 'rollup-plugin-import-css'
 import serve from 'rollup-plugin-serve'
 import sourcemaps from 'rollup-plugin-sourcemaps2';
+import { createHash } from 'node:crypto'
 import fs from 'fs'
+import path from 'path'
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 
 // build.py passes this via the environment. When running Rollup directly,
 // default to the local development server.
 const BASE_URL = process.env.VIPER_IDE_BASE_URL || 'http://localhost:10001'
+const DEPLOYMENT_TAG = process.env.VIPER_IDE_DEPLOYMENT_TAG || ''
+// Normal builds use the installed packages. build:local supplies absolute source paths
+// without changing package.json, package-lock.json, or node_modules.
+const LSP_CLIENT_PACKAGE = process.env.VIPER_IDE_LOCAL_LSP_CLIENT_PACKAGE || ''
+const PYRIGHT_WORKER_PACKAGE = process.env.VIPER_IDE_LOCAL_PYRIGHT_WORKER_PACKAGE ||
+  'node_modules/@mp-typing/pyright-worker'
+const PYRIGHT_WORKER_BUILD = 'build/assets/pyright-worker'
+const MPY_PACKAGE = 'node_modules/@micropython/micropython-webassembly-pyscript'
+const MPY_WASM_BUILD = 'build/assets/micropython.wasm'
+const VIPER_TOOLS_STUBS_SOURCE = 'assets/viper-tools-stubs'
+const VIPER_TOOLS_STUBS_BUILD = 'build/assets/viper-tools-stubs'
+const VIPER_IDE_BUILD = Date.now()
+let viperToolsStubs
+
+const copyPyrightWorkerPackage = () => {
+  fs.rmSync(PYRIGHT_WORKER_BUILD, { recursive: true, force: true })
+  fs.mkdirSync(PYRIGHT_WORKER_BUILD, { recursive: true })
+  for (const directory of ['assets', 'dist']) {
+    fs.cpSync(
+      `${PYRIGHT_WORKER_PACKAGE}/${directory}`,
+      `${PYRIGHT_WORKER_BUILD}/${directory}`,
+      { recursive: true },
+    )
+  }
+}
+
+const copyMicroPythonWasm = () => {
+  fs.copyFileSync(`${MPY_PACKAGE}/micropython.wasm`, MPY_WASM_BUILD)
+}
+
+const copyViperToolsStubs = () => {
+  const wheels = fs.readdirSync(VIPER_TOOLS_STUBS_SOURCE).
+    filter(filename => filename.endsWith('.whl'))
+  if (wheels.length !== 1) {
+    throw new Error(`${VIPER_TOOLS_STUBS_SOURCE}: expected exactly one wheel`)
+  }
+
+  const filename = wheels[0]
+  const wheelPath = path.join(VIPER_TOOLS_STUBS_SOURCE, filename)
+  const wheel = fs.readFileSync(wheelPath)
+  viperToolsStubs = {
+    filename,
+    size: wheel.byteLength,
+    sha256: createHash('sha256').update(wheel).digest('hex'),
+  }
+
+  fs.rmSync(VIPER_TOOLS_STUBS_BUILD, { recursive: true, force: true })
+  fs.mkdirSync(VIPER_TOOLS_STUBS_BUILD, { recursive: true })
+  fs.copyFileSync(wheelPath, path.join(VIPER_TOOLS_STUBS_BUILD, filename))
+}
+
+const localLspClient = () => {
+  if (!LSP_CLIENT_PACKAGE) { return null }
+  const packageJson = JSON.parse(fs.readFileSync(path.join(LSP_CLIENT_PACKAGE, 'package.json'), 'utf8'))
+  const entry = packageJson.exports?.['.']?.import || packageJson.browserDistribution?.entry || packageJson.main
+  if (packageJson.name !== '@mp-typing/lsp-client' || !entry) {
+    throw new Error(`${LSP_CLIENT_PACKAGE} is not an @mp-typing/lsp-client package`)
+  }
+  return {
+    name: 'local-lsp-client',
+    resolveId(source) {
+      return source === '@mp-typing/lsp-client'
+        ? path.resolve(LSP_CLIENT_PACKAGE, entry)
+        : null
+    },
+  }
+}
 
 const copyHtml = (src, dst) => {
   let data = fs.readFileSync(src, 'utf8').
       replaceAll('${VIPER_IDE_BASE_URL}', BASE_URL).
+      replaceAll('${VIPER_IDE_DEPLOYMENT_TAG}', DEPLOYMENT_TAG).
       replaceAll('${VIPER_IDE_DESCR}', pkg.description)
   fs.writeFileSync(dst, data)
 }
@@ -74,11 +144,19 @@ const common = (args, name) => ({
   },
   plugins: [
     stripMicroPythonNodeCli(),
+    localLspClient(),
     css({
       output: `${name}.css`,
       minify: !args.configDebug,
     }),
-    resolve(),
+    resolve({
+      dedupe: [
+        '@codemirror/autocomplete',
+        '@codemirror/lint',
+        '@codemirror/state',
+        '@codemirror/view',
+      ],
+    }),
     commonjs(),
     json({
       compact: true
@@ -87,8 +165,11 @@ const common = (args, name) => ({
       preventAssignment: true,
       values: {
         VIPER_IDE_VERSION:  '"' + pkg.version + '"',
-        VIPER_IDE_BUILD:    Date.now(),
+        VIPER_IDE_BUILD,
         VIPER_IDE_BASE_URL: '"' + BASE_URL + '"',
+        VIPER_TOOLS_STUBS_FILENAME: JSON.stringify(viperToolsStubs.filename),
+        VIPER_TOOLS_STUBS_SIZE: String(viperToolsStubs.size),
+        VIPER_TOOLS_STUBS_SHA256: JSON.stringify(viperToolsStubs.sha256),
       }
     }),
     args.configDebug && sourcemaps(),
@@ -101,13 +182,18 @@ const common = (args, name) => ({
   ]
 })
 
-export default args => [{
-  input: './src/app.js',
-  ...common(args, 'app')
-},{
-  input: './src/viper_lib.js',
-  ...common(args, 'viper_lib')
-},{
-  input: './src/app_worker.js',
-  ...common(args, 'app_worker')
-}]
+export default args => {
+  copyPyrightWorkerPackage()
+  copyMicroPythonWasm()
+  copyViperToolsStubs()
+  return [{
+    input: './src/app.js',
+    ...common(args, 'app')
+  },{
+    input: './src/viper_lib.js',
+    ...common(args, 'viper_lib')
+  },{
+    input: './src/app_worker.js',
+    ...common(args, 'app_worker')
+  }]
+}

@@ -78,19 +78,15 @@ export function initControlClient(api) {
         send({ type: 'event', event: name, data })
     }
 
-    // Serialized via mutex because upstream ViperIDE uses browser dialogs
-    // and we can't modify those function signatures.
+    // Serialized because confirmation dialogs temporarily replace a page global.
     const dialogMutex = new Mutex()
     async function withDialogOverrides(overrides, fn) {
         const release = await dialogMutex.acquire()
-        const origPrompt = window.prompt
         const origConfirm = window.confirm
-        if (overrides.prompt !== undefined) window.prompt = () => overrides.prompt
         if (overrides.confirm !== undefined) window.confirm = () => overrides.confirm
         try {
             return await fn()
         } finally {
-            window.prompt = origPrompt
             window.confirm = origConfirm
             release()
         }
@@ -152,17 +148,16 @@ export function initControlClient(api) {
                 if (type === 'ws' && !url) throw new Error('URL is required for WebSocket connections')
                 const port = api.getPort()
                 if (port) await api.disconnectDevice()
-                if (url && type === 'ws') window.webrepl_url = url
-                if (type === 'vm') window.webrepl_url = 'vm://default'
-                const overrides = { confirm: true }
-                if (password) overrides.prompt = password
                 // VM is connected via the 'ws' path with a vm:// webrepl_url.
                 // Fire and forget - connectDevice includes raw mode handshake which
                 // can take 20+ seconds, exceeding Claude Desktop's API timeout.
                 const connType = type === 'vm' ? 'ws' : type
                 connecting = true
                 lastConnectedDevInfo = null
-                withDialogOverrides(overrides, () => api.connectDevice(connType))
+                api.connectDevice(connType, {
+                    url: type === 'vm' ? 'vm://default' : url,
+                    password,
+                })
                     .catch(err => {
                         connecting = false
                         pushEvent('connect_error', { error: err.message })
@@ -269,12 +264,7 @@ export function initControlClient(api) {
             case 'save_file': {
                 if (!api.getPort()) throw new Error('No device connected')
                 if (!api.getEditor()) throw new Error('No file open in editor')
-                const { filename } = params
-                if (filename) {
-                    await withDialogOverrides({ prompt: filename }, () => api.saveCurrentFile())
-                } else {
-                    await api.saveCurrentFile()
-                }
+                await api.saveCurrentFile()
                 return { ok: true }
             }
 
@@ -333,7 +323,7 @@ export function initControlClient(api) {
 
             case 'create_file': {
                 const { path, name } = params
-                await withDialogOverrides({ prompt: name }, () => api.createNewFile(path))
+                await api.createNewFile(path, name)
                 return { ok: true }
             }
 

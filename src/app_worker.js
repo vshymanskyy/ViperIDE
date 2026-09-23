@@ -6,7 +6,7 @@
  * This includes no assurances about being fit for any specific purposevent.
  */
 
-const cacheName = `viper-${VIPER_IDE_VERSION}`;
+const cacheName = `viper-${VIPER_IDE_VERSION}-${VIPER_IDE_BUILD}`;
 const offlineReadyMessage = 'VIPER_IDE_OFFLINE_CACHE_READY';
 
 const log = console.log.bind(console).bind(console, `[Service Worker ${VIPER_IDE_VERSION}]`);

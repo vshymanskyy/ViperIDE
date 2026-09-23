@@ -323,12 +323,26 @@ try: import machine; id=machine.unique_id()
 except: id=b''
 try: v=sys.version.split(';')[1].strip()
 except: v='MicroPython '+u[2]
-mpy=getattr(sys.implementation, '_mpy', 0)
+impl=sys.implementation
+family=getattr(impl, 'name', 'micropython')
+iv=getattr(impl, 'version', ())
+fwv='.'.join(str(x) for x in iv[:3]) if iv else u[2]
+port=sys.platform
+if port.startswith('pyb'): port='stm32'
+elif port=='win32': port='windows'
+elif port=='linux': port='unix'
+mpy=getattr(impl, '_mpy', 0)
+build=getattr(impl, '_build', '')
+board_id=build
+variant=''
+if '+' in board_id: board_id,variant=board_id.split('+',1)
+cpu=u[4].split(' with ',1)[1] if ' with ' in u[4] else ''
 sp=':'.join(sys.path)
-d=[u[4],id.hex(),u[2],u[0],v,(mpy>>10)&0x0F,mpy&0xFF,(mpy>>8)&3,sp]
+d=[u[4],''.join('%02x'%byte for byte in id),u[2],u[0],v,sys.platform,build,(mpy>>10)&0x0F,mpy&0xFF,(mpy>>8)&3,sp,family,fwv,port,board_id,variant,cpu]
 print('|'.join(str(x) for x in d))
 `)
-        let [machine, uid, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path] = rsp.trim().split('|')
+        let [machine, uid, release, sysname, version, platform, build, mpy_arch, mpy_ver, mpy_sub,
+            sys_path, family, firmwareVersion, devicePort, boardId, variant, cpu] = rsp.trim().split('|')
         sys_path = sys_path.split(':')
         // See https://docs.micropython.org/en/latest/reference/mpyfiles.html
         try {
@@ -339,7 +353,17 @@ print('|'.join(str(x) for x in d))
         mpy_ver = parseInt(mpy_ver, 10)
         mpy_sub = parseInt(mpy_sub, 10)
         if (!mpy_ver) { mpy_ver = 'py' }
-        return { machine, uid, release, sysname, version, mpy_arch, mpy_ver, mpy_sub, sys_path }
+        return {
+            machine, uid, release, sysname, version, platform, build,
+            family: family || (/circuitpython/i.test(version) ? 'circuitpython' : 'micropython'),
+            firmware_version: firmwareVersion || release,
+            port: devicePort || platform,
+            board: boardId || build,
+            board_id: boardId || build,
+            variant: variant || '',
+            cpu: cpu || machine.split(' with ')[1] || '',
+            mpy_arch, mpy_ver, mpy_sub, sys_path,
+        }
     }
 
 

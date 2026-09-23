@@ -196,7 +196,9 @@ export async function getToolsVM() {
     _tools_vm = await loadMicroPython({
         pystack: 64 * 1024,
         heapsize: 32 * 1024 * 1024,
-        url: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm`,
+        // Keep this request paired with the loader in the current app bundle,
+        // even while an older service worker still controls the first reload.
+        url: `${VIPER_IDE_BASE_URL}/assets/micropython.wasm?build=${VIPER_IDE_BUILD}`,
         //stdout: (data) => { console.log(data) },
     })
 

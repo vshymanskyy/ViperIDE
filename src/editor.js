@@ -8,7 +8,7 @@
 
 import { basicSetup } from 'codemirror'
 import { EditorView, ViewPlugin, keymap, Decoration } from '@codemirror/view'
-import { EditorState, RangeSetBuilder, Prec, StateEffect } from '@codemirror/state'
+import { Compartment, EditorState, EditorSelection, RangeSetBuilder, Prec, StateEffect } from '@codemirror/state'
 import { StreamLanguage, indentUnit, syntaxTree, language } from '@codemirror/language'
 import { indentWithTab } from '@codemirror/commands'
 import { python } from '@codemirror/lang-python'
@@ -18,7 +18,7 @@ import { simpleMode } from '@codemirror/legacy-modes/mode/simple-mode'
 import { toml } from '@codemirror/legacy-modes/mode/toml'
 import { monokaiInit } from '@uiw/codemirror-theme-monokai'
 import { tags } from '@lezer/highlight'
-import { linter } from '@codemirror/lint'
+import { forceLinting, forEachDiagnostic, linter, setDiagnosticsEffect } from '@codemirror/lint'
 import { highlightSelectionMatches } from '@codemirror/search'
 
 import { validatePython, getRuffWorkspace } from './python_utils.js'
@@ -313,7 +313,8 @@ const mpyCrossLinter = linter(async (view) => {
       from: line.from,
       to: line.to,
       severity: 'error',
-      message: 'MicroPython: ' + backtrace.message,
+      message: backtrace.type ? `${backtrace.type}: ${backtrace.message}` : backtrace.message,
+      source: 'mpy-cross',
     })
   }
   return diagnostics
@@ -335,6 +336,7 @@ function ruffLinter(ruff) {
         to:   doc.line(d.end_location.row).from + d.end_location.column - 1,
         severity: (d.message.indexOf('Error:') >= 0) ? 'error' : 'warning',
         message: d.code ? d.code + ': ' + d.message : d.message,
+        source: 'Ruff',
       })
     }
     return diagnostics
@@ -402,9 +404,57 @@ const extraTheme = EditorView.theme({
  * Finally, the editor initialization
  */
 
+const lspCompartments = new WeakMap()
+const diagnosticSeverityCompartments = new WeakMap()
+
+/**
+ * Return whether a file can receive live Python language-server extensions.
+ */
+export function supportsTypechecking(fn, readOnly = false) {
+  return fn.endsWith('.py') && !readOnly
+}
+
+/**
+ * Reconfigure the private LSP compartment attached to an editable Python view.
+ */
+export function configureTypechecking(editorView, extensions) {
+  const compartment = lspCompartments.get(editorView)
+  if (!compartment) { return false }
+  editorView.dispatch({ effects: compartment.reconfigure(extensions) })
+  return true
+}
+
+function diagnosticSeverityFilter(severities) {
+  const visible = new Set(severities)
+  return (diagnostics) => diagnostics.filter((diagnostic) => {
+    const severity = diagnostic.severity === 'hint' ? 'info' : diagnostic.severity
+    return !['error', 'warning', 'info'].includes(severity) || visible.has(severity)
+  })
+}
+
+function diagnosticSeverityExtension(severities) {
+  const filter = diagnosticSeverityFilter(severities)
+  return linter(null, {
+    markerFilter: filter,
+    tooltipFilter: filter,
+  })
+}
+
+export function configureDiagnosticSeverities(editorView, severities) {
+  const compartment = diagnosticSeverityCompartments.get(editorView)
+  if (!compartment) { return false }
+  editorView.dispatch({
+    effects: compartment.reconfigure(diagnosticSeverityExtension(severities)),
+  })
+  forceLinting(editorView)
+  return true
+}
+
 export async function createNewEditor(editorElement, fn, content, options) {
     let mode = []
     let { wordWrap, readOnly } = options
+    const lspCompartment = supportsTypechecking(fn, readOnly) ? new Compartment() : null
+    const diagnosticSeverityCompartment = new Compartment()
     if (fn.endsWith('.py')) {
         const ruff = await getRuffWorkspace()
         mode = [
@@ -444,6 +494,10 @@ export async function createNewEditor(editorElement, fn, content, options) {
         mode.push(EditorState.readOnly.of(true))
         mode.push(EditorView.editable.of(false))
     }
+    if (lspCompartment) {
+      // Start empty; the service fills this after its worker handshake completes.
+      mode.push(lspCompartment.of([]))
+    }
 
     devInfo = options.devInfo
 
@@ -476,12 +530,19 @@ export async function createNewEditor(editorElement, fn, content, options) {
                 }),
                 keymap.of([indentWithTab]),
                 mode,
+                diagnosticSeverityCompartment.of(diagnosticSeverityExtension(
+                  options.diagnosticSeverities || ['error', 'warning', 'info'],
+                )),
                 linkCommentExtensions,
                 specialCommentExtensions,
                 extraTheme,
             ],
         })
     })
+    diagnosticSeverityCompartments.set(view, diagnosticSeverityCompartment)
+    if (lspCompartment) {
+      lspCompartments.set(view, lspCompartment)
+    }
 
     return view
 }
@@ -504,4 +565,46 @@ export function getEditorFromElement(element) {
  */
 export function addUpdateHandler(editorView, callback) {
   editorView.dispatch({effects: StateEffect.appendConfig.of(EditorView.updateListener.of(callback))})
+}
+
+
+/**
+ * Move the caret to a 1-based line/character position and scroll it into view.
+ */
+export function goToDocumentPosition(view, line, character = 1) {
+  const doc = view.state.doc
+  const lineInfo = doc.line(Math.min(Math.max(line, 1), doc.lines))
+  const pos = Math.min(lineInfo.from + Math.max(character - 1, 0), lineInfo.to)
+  view.dispatch({
+    selection: EditorSelection.cursor(pos),
+    effects: EditorView.scrollIntoView(pos, { y: 'center' }),
+  })
+  view.focus()
+}
+
+/**
+ * Return every CodeMirror diagnostic currently attached to an editor.
+ */
+export function getEditorDiagnostics(view) {
+  const diagnostics = []
+  forEachDiagnostic(view.state, (diagnostic, from) => {
+    const line = view.state.doc.lineAt(from)
+    diagnostics.push({
+      line: line.number,
+      character: from - line.from + 1,
+      message: diagnostic.message,
+      severity: diagnostic.severity === 'hint' ? 'info' : diagnostic.severity,
+      source: diagnostic.source || '',
+    })
+  })
+  return diagnostics
+}
+
+/**
+ * Whether a view update carries new lint results, as opposed to a cursor move or scroll.
+ */
+export function hasDiagnosticsChange(update) {
+  return update.transactions.some(
+    transaction => transaction.effects.some(effect => effect.is(setDiagnosticsEffect)),
+  )
 }

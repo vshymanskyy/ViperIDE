@@ -1,23 +1,33 @@
 <!DOCTYPE html>
 <html lang="en" translate="no">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${VIPER_IDE_DESCR}">
     <meta property="og:description" content="${VIPER_IDE_DESCR}">
     <title>ViperIDE</title>
-    <link rel="icon" type="image/png" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
-    <link rel="apple-touch-icon" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
+    <link rel="icon" type="image/png" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png" />
     <link rel="manifest" href="manifest.json">
 
     <link rel="stylesheet" href="./app.css">
     <noscript>
         <style>
-            body { display: block; opacity: 1; }
-            #tool-panel, #container, #dpi-ruler { display: none; }
+            body {
+                display: block;
+                opacity: 1;
+            }
+
+            #tool-panel,
+            #container,
+            #dpi-ruler {
+                display: none;
+            }
         </style>
     </noscript>
 </head>
+
 <body id="app">
     <noscript>
         <div class="no-js-banner" role="alert">
@@ -28,14 +38,21 @@
         <div>
             <button onclick="app.toggleSideMenu()"><i class="fa-solid fa-bars"></i></button>
             <span class="logo">ViperIDE</span>
-            <button title="Save File [Ctrl+S]"   onclick="app.saveCurrentFile()" id="btn-save"><i class="fa-solid fa-download"></i></button>
-            <button title="Run File [F5]"        onclick="app.runCurrentFile()"  id="btn-run"><i class="fa-solid fa-circle-play" id="btn-run-icon"></i></button>
+            <span class="deployment-tag">${VIPER_IDE_DEPLOYMENT_TAG}</span>
+            <button title="Save File [Ctrl+S]" onclick="app.saveCurrentFile()" id="btn-save"><i
+                    class="fa-solid fa-download"></i></button>
+            <button title="Run File [F5]" onclick="app.runCurrentFile()" id="btn-run"><i class="fa-solid fa-circle-play"
+                    id="btn-run-icon"></i></button>
         </div>
         <div>
-            <button title="Connect WebREPL"      onclick="app.connectDevice('ws')"  id="btn-conn-ws" ><i class="fa-solid fa-link"></i></button>
-            <button title="Connect Bluetooth"    onclick="app.connectDevice('ble')" id="btn-conn-ble"><i class="fa-brands fa-bluetooth-b"></i></button>
-            <button title="Connect USB/Serial"   onclick="app.connectDevice('usb')" id="btn-conn-usb"><i class="fa-brands fa-usb"></i></button>
-            <button title="Full Screen" onclick="app.toggleFullScreen('app')"  id="app-expand"><i class="fa-solid fa-expand"></i></button>
+            <button title="Connect WebREPL" onclick="app.connectDevice('ws')" id="btn-conn-ws"><i
+                    class="fa-solid fa-link"></i></button>
+            <button title="Connect Bluetooth" onclick="app.connectDevice('ble')" id="btn-conn-ble"><i
+                    class="fa-brands fa-bluetooth-b"></i></button>
+            <button title="Connect USB/Serial" onclick="app.connectDevice('usb')" id="btn-conn-usb"><i
+                    class="fa-brands fa-usb"></i></button>
+            <button title="Full Screen" onclick="app.toggleFullScreen('app')" id="app-expand"><i
+                    class="fa-solid fa-expand"></i></button>
         </div>
     </div>
     <div id="container">
@@ -44,7 +61,8 @@
             <div class="tabs" id="menu-tabs">
                 <div>
                     <a class="tab active" data-target="menu-files"><i class="fa-solid fa-folder fa-fw"></i></a>
-                    <a class="tab" data-target="menu-pkg" onclick="app.loadAllPkgIndexes();return false;"><i class="fa-solid fa-cubes fa-fw"></i></a>
+                    <a class="tab" data-target="menu-pkg" onclick="app.loadAllPkgIndexes();return false;"><i
+                            class="fa-solid fa-cubes fa-fw"></i></a>
                     <a class="tab" data-target="menu-tools"><i class="fa-solid fa-tools fa-fw"></i></a>
                 </div>
                 <div>
@@ -59,11 +77,14 @@
                 <div id="menu-file-title">File Manager</div>
                 <div id="menu-file-tree">
                     <div class="tree-node">
-                        <div class="tree-row"><span class="name"><i class="fa-solid fa-folder-open fa-fw"></i> /</span></div>
+                        <div class="tree-row"><span class="name"><i class="fa-solid fa-folder-open fa-fw"></i> /</span>
+                        </div>
                         <div class="tree-children">
                             <div class="tree-row">
-                                <a href="#" class="name" onclick="app.connectDevice('usb');return false;">🤔 <span id="no-files">no files</span></a>
-                                <a href="#" class="menu-action" onclick="app.connectDevice('usb');return false;"><i class="fa-solid fa-plug"></i></a>
+                                <a href="#" class="name" onclick="app.connectDevice('usb');return false;">🤔 <span
+                                        id="no-files">no files</span></a>
+                                <a href="#" class="menu-action" onclick="app.connectDevice('usb');return false;"><i
+                                        class="fa-solid fa-plug"></i></a>
                             </div>
                         </div>
                     </div>
@@ -78,19 +99,29 @@
                 <div id="menu-tools-title">Tools</div>
                 <div id="menu-tools-list">
                     <div class="title-lines" id="menu-tools-line-conn">device connection</div>
-                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Web-REPL-Relay.md" target="_blank">    <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> WebREPL over internet 🌎</a></div>
-                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Web-REPL-Server.md" target="_blank">   <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> WebREPL in local network</a></div>
-                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Bluetooth-REPL.md" target="_blank">    <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> Bluetooth REPL</a></div>
-                    <div><a href="bridge.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> P2P Bridge</a></div>
-                    <div><a href="benchmark.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> Device Benchmark</a></div>
+                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Web-REPL-Relay.md"
+                            target="_blank"> <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> WebREPL over
+                            internet 🌎</a></div>
+                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Web-REPL-Server.md"
+                            target="_blank"> <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> WebREPL in
+                            local network</a></div>
+                    <div><a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Bluetooth-REPL.md"
+                            target="_blank"> <i class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> Bluetooth
+                            REPL</a></div>
+                    <div><a href="bridge.html" target="_blank"><i
+                                class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> P2P Bridge</a></div>
+                    <div><a href="benchmark.html" target="_blank"><i
+                                class="fa-solid fa-arrow-up-right-from-square fa-fw"></i> Device Benchmark</a></div>
 
                     <div class="title-lines" id="menu-line-pkg-mgr">package manager</div>
-                    <div><a href="#" onclick="app.installPkgFromUrl()" id="install-via-url">📦 Install package via link</a></div>
+                    <div><a href="#" onclick="app.installPkgFromUrl()" id="install-via-url">📦 Install package via
+                            link</a></div>
 
                     <div class="title-lines" id="menu-tools-python">Python</div>
                     <div><a href="#" onclick="app.pyPrettify()" id="py-prettify">🎀 Prettify current file</a></div>
                     <div><a href="#" onclick="app.pyMinify()" id="py-minify">🤏 Minify current file</a></div>
-                    <div><a href="#" onclick="app.saveAndCompile()" id="py-save-compile">🛠️ Save &amp; compile to .mpy</a></div>
+                    <div><a href="#" onclick="app.saveAndCompile()" id="py-save-compile">🛠️ Save &amp; compile to
+                            .mpy</a></div>
                     <div><a href="#" onclick="app.showDisassembly()" id="py-disassemble">🔍 Show disassembly</a></div>
 
                     <!--div><a href="#" onclick="TODO()" id="download-all">📥 Download all files</a></div>
@@ -103,18 +134,28 @@
             <div id="menu-settings" class="tab-content">
                 <div id="menu-settings-title">Settings</div>
                 <div id="menu-settings-list">
-                    <div><input type="checkbox" id="advanced-mode"/><label for="advanced-mode">🔬 Advanced mode</label> (<a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Advanced-Mode.md" target="_blank">?</a>)</div>
+                    <div><input type="checkbox" id="advanced-mode" /><label for="advanced-mode">🔬 Advanced mode</label>
+                        (<a href="https://github.com/vshymanskyy/ViperIDE/blob/main/docs/Advanced-Mode.md"
+                            target="_blank">?</a>)</div>
                     <div class="title-lines" id="menu-line-conn">connection</div>
-                    <div><input type="checkbox" id="interrupt-running-code"/><label for="interrupt-running-code">Interrupt running code</label></div>
-                    <div><input type="checkbox" id="force-serial-poly"/><label for="force-serial-poly">Force WebUSB instead of WebSerial</label></div>
+                    <div><input type="checkbox" id="interrupt-running-code" /><label
+                            for="interrupt-running-code">Interrupt running code</label></div>
+                    <div><input type="checkbox" id="force-serial-poly" /><label for="force-serial-poly">Force WebUSB
+                            instead of WebSerial</label></div>
                     <div class="title-lines" id="menu-line-editor">editor</div>
-                    <div><input type="checkbox" id="expand-minify-json" checked/><label for="expand-minify-json">Auto expand/minify JSON</label></div>
-                    <div><input type="checkbox" id="use-word-wrap"/><label for="use-word-wrap">Word wrapping</label></div>
-                    <div><input type="checkbox" id="render-markdown" checked/><label for="render-markdown">Enable Markdown viewer</label></div>
-                    <div><input type="checkbox" id="refresh-after-run" checked/><label for="refresh-after-run">Refresh files after run</label></div>
-                    <div><input type="checkbox" id="auto-soft-reset" checked/><label for="auto-soft-reset">Soft-reset before run</label></div>
+                    <div><input type="checkbox" id="expand-minify-json" checked /><label for="expand-minify-json">Auto
+                            expand/minify JSON</label></div>
+                    <div><input type="checkbox" id="use-word-wrap" /><label for="use-word-wrap">Word wrapping</label>
+                    </div>
+                    <div><input type="checkbox" id="render-markdown" checked /><label for="render-markdown">Enable
+                            Markdown viewer</label></div>
+                    <div><input type="checkbox" id="refresh-after-run" checked /><label for="refresh-after-run">Refresh
+                            files after run</label></div>
+                    <div><input type="checkbox" id="auto-soft-reset" checked /><label for="auto-soft-reset">Soft-reset
+                            before run</label></div>
                     <div class="title-lines" id="menu-line-pkg-mgr">package manager</div>
-                    <div><input type="checkbox" id="install-package-source"/><label for="install-package-source">Prefer installing sources (.py)</label></div>
+                    <div><input type="checkbox" id="install-package-source" /><label for="install-package-source">Prefer
+                            installing sources (.py)</label></div>
                     <div class="title-lines" id="menu-line-other">other</div>
                     <div class="space-between">
                         <label for="lang">Language:</label>
@@ -161,11 +202,71 @@
                             <option value="1.50">150%</option>
                         </select>
                     </div>
-                    <div><input type="checkbox" id="use-natural-sort" checked/><label for="use-natural-sort">Use natural sorting</label></div>
+                    <div><input type="checkbox" id="use-natural-sort" checked /><label for="use-natural-sort">Use
+                            natural sorting</label></div>
+                    <div class="title-lines" id="menu-line-typechecking">Typechecking</div>
+                    <div><input type="checkbox" id="typecheck-enabled" checked /><label for="typecheck-enabled">Enable
+                            type checking</label></div>
+                    <div class="space-between">
+                        <label for="typecheck-mode">Type-check mode:</label>
+                        <select class="typecheck-select" id="typecheck-mode">
+                            <option value="basic">Basic</option>
+                            <option value="standard" selected>Standard</option>
+                            <option value="strict">Strict</option>
+                        </select>
+                    </div>
+                    <div class="space-between">
+                        <label for="typecheck-scope">Type-check files:</label>
+                        <select class="typecheck-select" id="typecheck-scope">
+                            <option value="openFilesOnly" selected>Opened</option>
+                            <option value="workspace">All</option>
+                        </select>
+                    </div>
+                    <div><input type="checkbox" id="typecheck-autodetect" checked /><label
+                            for="typecheck-autodetect">Autodetect</label></div>
+                    <div class="space-between">
+                        <label for="typecheck-stub-family">Family:</label>
+                        <select class="typecheck-select" id="typecheck-stub-family">
+                            <option value="micropython" selected>MicroPython</option>
+                            <option value="circuitpython">CircuitPython</option>
+                        </select>
+                    </div>
+                    <div class="space-between">
+                        <label for="typecheck-stub-version">Version:</label>
+                        <select class="typecheck-select" id="typecheck-stub-version"></select>
+                    </div>
+                    <div class="space-between">
+                        <label for="typecheck-stub-port">Port:</label>
+                        <select class="typecheck-select" id="typecheck-stub-port"></select>
+                    </div>
+                    <div class="space-between">
+                        <label for="typecheck-stub-board">Board:</label>
+                        <select class="typecheck-select" id="typecheck-stub-board"></select>
+                    </div>
+                    <div class="space-between typecheck-package-info" data-advanced-mode>
+                        <label for="typecheck-stub-selected-package">Package:</label>
+                        <input id="typecheck-stub-selected-package" type="text" readonly aria-readonly="true" />
+                    </div>
+                    <div data-advanced-mode>
+                        <input type="checkbox" id="typecheck-viper-tools-stubs" checked />
+                        <label for="typecheck-viper-tools-stubs">Include Viper tools stubs</label>
+                    </div>
+                    <div data-advanced-mode>
+                        <label for="typecheck-stub-package">Install type stubs from PyPI:</label>
+                        <input id="typecheck-stub-package" list="typecheck-stub-catalog"
+                            placeholder="types-requests==2.32.4.20260107" />
+                        <datalist id="typecheck-stub-catalog"></datalist>
+                        <span class="typecheck-stub-actions">
+                            <button id="typecheck-stub-install" type="button">Install</button>
+                            <button id="typecheck-stub-clear" type="button">Clear cached</button>
+                        </span>
+                        <div id="typecheck-stub-status" aria-live="polite">No cached stub packages.</div>
+                    </div>
                 </div>
             </div>
             <div id="menu-about" class="tab-content">
-                <a class="github-fork-ribbon left-top" href="https://github.com/vshymanskyy/ViperIDE" target="_blank" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+                <a class="github-fork-ribbon left-top" href="https://github.com/vshymanskyy/ViperIDE" target="_blank"
+                    data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
                 <div class="about-header">
                     <img class="about-logo" src="assets/logo_1024.png" alt="Logo">
                     <div class="about-title">ViperIDE</div>
@@ -177,14 +278,15 @@
                     </p>
                 </div>
                 <div>
-                    <hr/>
+                    <hr />
                     <p id="about-cta">
-                        If you like ViperIDE, please <a class="link" id="gh-star">give it a GitHub star</a> ⭐ and spread the word on social media 📢
+                        If you like ViperIDE, please <a class="link" id="gh-star">give it a GitHub star</a> ⭐ and spread
+                        the word on social media 📢
                     </p>
                     <p id="report-bug">
                         You can also <a class="link" id="gh-issues">report a bug</a> 🐞
                     </p>
-                    <hr/>
+                    <hr />
                 </div>
                 <p class="about-footer">
                     With 💙💛 from <a class="link" href="https://stand-with-ukraine.pp.ua" target="_blank">Ukraine</a>
@@ -194,29 +296,61 @@
         <div id="main-editor">
             <div class="tabs" id="editor-tabs"></div>
             <div id="terminal-container">
-                <div class="tabs" id="terminal-tabs" onmousedown="app.initDrag(event)" ontouchstart="app.initDrag(event)">
+                <div class="tabs" id="terminal-tabs" onmousedown="app.initDrag(event)"
+                    ontouchstart="app.initDrag(event)">
                     <div>
-                        <a class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> <span id="tab-term">Terminal</span></a>
-                        <!--a class="tab"        data-target="logs"><i class="fa-solid fa-bug"></i> IDE Logs</a-->
+                        <a class="tab active" data-target="xterm"><i class="fa-solid fa-terminal"></i> <span
+                                id="tab-term">Terminal</span></a>
+                        <a class="tab" id="typecheck-tab" data-target="diagnostics" aria-label="Problems"><i
+                                class="fa-solid fa-square-check"></i> <span id="tab-problems">Problems</span> <span
+                                id="diagnostics-badge" aria-hidden="true"></span></a>
                     </div>
                     <div>
-                        <button title="Clear" onclick="app.clearTerminal()" id="term-clear"><i class="fa-solid fa-trash-can"></i></button>
-                        <button title="Soft Reset" onclick="app.reboot('soft')" id="btn-reset-soft"><i class="fa-solid fa-arrows-rotate"></i></button>
-                        <button title="Hard Reset" onclick="app.reboot('hard')" id="btn-reset-hard"><i class="fa-solid fa-power-off"></i></button>
-                        <button title="Full Screen" onclick="app.toggleFullScreen('terminal-container')" id="term-expand"><i class="fa-solid fa-expand"></i></button>
+                        <button title="Clear" onclick="app.clearTerminal()" id="term-clear"><i
+                                class="fa-solid fa-trash-can"></i></button>
+                        <button title="Soft Reset" onclick="app.reboot('soft')" id="btn-reset-soft"><i
+                                class="fa-solid fa-arrows-rotate"></i></button>
+                        <button title="Hard Reset" onclick="app.reboot('hard')" id="btn-reset-hard"><i
+                                class="fa-solid fa-power-off"></i></button>
+                        <button title="Full Screen" onclick="app.toggleFullScreen('terminal-container')"
+                            id="term-expand"><i class="fa-solid fa-expand"></i></button>
                     </div>
                 </div>
                 <div id="xterm" class="tab-content active">
                     <!-- Xterm.js terminal content goes here -->
                 </div>
-                <div id="logs" class="tab-content">
-                    <!-- Logs content goes here -->
+                <div id="diagnostics" class="tab-content" role="tabpanel" aria-label="Problems">
+                    <div id="diagnostics-controls">
+                        <label for="diagnostics-file">File</label>
+                        <select id="diagnostics-file">
+                            <option value="">All files</option>
+                        </select>
+                        <fieldset id="diagnostics-severities">
+                            <legend>Severity</legend>
+                            <label><input type="checkbox" value="error" checked> Error</label>
+                            <label><input type="checkbox" value="warning" checked> Warning</label>
+                            <label><input type="checkbox" value="info" checked> Info</label>
+                        </fieldset>
+                    </div>
+                    <div id="diagnostics-list" aria-live="polite"></div>
                 </div>
             </div>
         </div>
     </div>
+    <dialog id="user-input-dialog" aria-labelledby="user-input-dialog-title">
+        <form method="dialog">
+            <div id="user-input-dialog-title"></div>
+            <label id="user-input-label" for="user-input-value"></label>
+            <input id="user-input-value" type="text" autocomplete="off" required />
+            <div class="dialog-actions">
+                <button id="user-input-confirm" type="submit" value="confirm">OK</button>
+                <button type="submit" value="cancel" formnovalidate>Cancel</button>
+            </div>
+        </form>
+    </dialog>
     <div id="dpi-ruler" style="position:absolute;height:1in;width:1in;left:-100%;top:-100%;"></div>
 
     <script src="./app.js"></script>
 </body>
+
 </html>

@@ -15,6 +15,27 @@ import toastr from 'toastr'
 
 import { report, setErrorReporter } from './utils.js'
 
+/** Open the page's reusable input dialog. Cancellation resolves to null. */
+export function requestUserValue({ title, label, value = '', type = 'text', confirmLabel = 'OK', trim = true }) {
+    const dialog = QID('user-input-dialog')
+    const input = QID('user-input-value')
+    QID('user-input-dialog-title').textContent = title
+    QID('user-input-label').textContent = label
+    QID('user-input-confirm').textContent = confirmLabel
+    input.type = type
+    input.value = value
+    dialog.returnValue = 'cancel'
+    return new Promise(resolve => {
+        dialog.addEventListener('close', () => {
+            const result = trim ? input.value.trim() : input.value
+            resolve(dialog.returnValue === 'confirm' ? result : null)
+        }, { once: true })
+        dialog.showModal()
+        input.focus()
+        input.select()
+    })
+}
+
 export function getUserUID() {
     const localStorageKey = 'uuid';
 
@@ -279,6 +300,11 @@ export function setupTabs(containerNode) {
             return false
         })
     })
+}
+
+export function showBottomPanel(target, focus) {
+    QS(`#terminal-tabs .tab[data-target="${target}"]`)?.click()
+    focus?.()
 }
 
 if (navigator.appVersion.indexOf("Win") >= 0) {

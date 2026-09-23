@@ -6,3 +6,4 @@ node_modules/
 extra/
 src/tools_vfs/lib/python_minifier/
 bun.lock
+results/

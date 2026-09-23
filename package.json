@@ -6,9 +6,16 @@
   "type": "module",
   "scripts": {
     "build": "rollup --config",
+    "build:local": "node scripts/build-local.mjs build",
     "start": "rollup --config --configDebug --watch",
+    "start:local": "node scripts/build-local.mjs start",
     "lint": "npx eslint",
-    "test": "npx mocha"
+    "test": "npx mocha && npm run test:unit",
+    "test:browser": "playwright test --grep-invert @network",
+    "test:browser:network": "playwright test --grep @network",
+    "test:browser:ui": "playwright test --ui",
+    "test:local": "node scripts/build-local.mjs test",
+    "test:unit": "npx mocha --no-config \"test/unit/**/*.js\""
   },
   "dependencies": {
     "@amplitude/analytics-browser": "^2.45.5",
@@ -22,7 +29,9 @@
     "@fortawesome/free-regular-svg-icons": "^7.3.1",
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
     "@gera2ld/tarjs": "^0.3.1",
-    "@micropython/micropython-webassembly-pyscript": "1.27.0",
+    "@micropython/micropython-webassembly-pyscript": "1.29.0-6",
+    "@mp-typing/lsp-client": "0.3.7",
+    "@mp-typing/pyright-worker": "0.4.9",
     "@uiw/codemirror-theme-material": "^4.25.11",
     "@uiw/codemirror-theme-monokai": "^4.25.11",
     "@vshymanskyy/mpy-cross-wasm": "https://github.com/vshymanskyy/mpy-cross-wasm/releases/download/v1.1.0/vshymanskyy-mpy-cross-wasm-1.1.0.tgz",
@@ -41,6 +50,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.55.0",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
@@ -49,6 +59,7 @@
     "chai": "^6.2.2",
     "eslint": "^10.8.1",
     "globals": "^17.9.0",
+    "http-server": "^14.1.1",
     "mocha": "^11.8.0",
     "rollup": "^4.62.4",
     "rollup-plugin-import-css": "^4.2.1",

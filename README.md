@@ -50,6 +50,11 @@
 - [mpy-cross-wasm](https://github.com/vshymanskyy/mpy-cross-wasm) - Code validation and `.mpy` compilation, MIT
 - [mpy-tool](https://github.com/micropython/micropython/blob/master/tools/mpy-tool.py) - MPY bytecode disassembler - MIT
 - [python-minifier](https://github.com/dflook/python-minifier) - Code minifier, MIT
+- [@mp-typing/lsp-client](https://www.npmjs.com/package/@mp-typing/lsp-client) - LSP integration for CodeMirror 6, MIT
+- [@mp-typing/pyright-worker](https://www.npmjs.com/package/@mp-typing/pyright-worker) - Web Worker providing Pyright and MicroPython stubs, MIT
+    - [pyright](https://www.npmjs.com/package/pyright) - Static type checker for Python, MIT
+    - [micropython-stubs](https://github.com/josverl/micropython-stubs) - MicroPython type stubs, MIT
+
 
 ## Forks and derivative projects
 

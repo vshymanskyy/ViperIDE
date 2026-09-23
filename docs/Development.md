@@ -22,6 +22,7 @@ npm install --include=dev
 | `docs/` | User and contributor documentation |
 | `packages/viper-tools/` | MicroPython helper package metadata and files |
 | `mcp/` | MCP server for controlling ViperIDE from an AI client |
+| `src/typechecking/` | Application-owned adapter around the reusable type-checking packages (see [Type-Checking](Type-Checking.md)) |
 | `build.py` | Production build script used by GitHub Pages deployment |
 | `rollup.config.mjs` | Rollup bundle configuration |
 
@@ -78,6 +79,77 @@ Start the watcher:
 npm start
 ```
 
+### Build with local CodeMirror packages
+
+To test changes from a local `stubs_playground` checkout without changing
+ViperIDE's registry dependencies or lockfile, pass its path to `build:local`:
+
+```sh
+npm run build:local -- ../stubs_playground
+```
+
+Build and start the local development server in one command:
+
+```sh
+npm run start:local -- ../stubs_playground
+```
+
+Open <http://localhost:10001/?vm=1>. Rollup watches ViperIDE source files; stop
+the server with Ctrl+C. Restart the command after changing package sources so
+the local Pyright worker is rebuilt.
+
+Build with the local packages and run the full Playwright browser suite:
+
+```sh
+npm run test:local -- ../stubs_playground
+```
+
+The path may be absolute or relative to the directory where npm is invoked. It
+may identify the workspace root, its `packages` directory, either package
+directory, or either package's `package.json`. The command builds the local
+Pyright worker in development mode, bundles the local LSP client source, and
+copies the local worker assets into ViperIDE's `build/` directory.
+`test:local` runs the Chromium Playwright suite against that generated build.
+
+Normal `npm run build` builds against the registry versions installed in
+`node_modules`.
+
+### Client-owned type-stub overlays
+
+ViperIDE owns the release lifecycle of stubs for modules bundled with
+ViperIDE, including `viper-tools-stubs`.
+
+| ViperIDE release process | Reusable type-checking backend |
+|---|---|
+| Selects and obtains the type-only wheel. | Defines the generic `extraStubArchives` contract. |
+| Vendors or publishes the archive. | Forwards host-provided archive metadata. |
+| Computes and supplies its byte size, SHA-256, URL/data, and allowed origins. | Validates integrity and rejects unsafe or non-type-only content. |
+| Owns the user setting, default, restart behavior, errors, and update cadence. | Mounts accepted stubs under `/extra/<package>` and configures Pyright. |
+
+The backend does not build, publish, select, or bundle ViperIDE wheels. Its npm
+artifacts and runtime manifest remain client-neutral. Adding or updating a
+ViperIDE overlay changes ViperIDE's assets and configuration only; it does not
+require rebuilding or releasing the worker.
+
+The standalone `viper-tools-stubs` project produces a normal wheel with
+`uv build`. ViperIDE's release process is responsible for turning the selected
+wheel into a deployed, integrity-described asset and passing it through
+`extraStubArchives`.
+
+## Browser tests
+
+The Playwright tests in `test/browser/` need a current `build/` directory.
+Install Chromium once, then run the suite against the current build:
+
+```sh
+npx playwright install chromium
+npm run test:browser
+```
+
+Use `npm run test:browser:ui` for Playwright's interactive runner. The suite is
+configured for Chromium and starts a local static server for `build/` on port
+10001. If the build is missing or stale, run `npm run build` first.
+
 
 ## Linting
 
@@ -87,7 +159,7 @@ Run ESLint directly:
 npx eslint
 ```
 
-The ESLint configuration ignores `build/`, `src/websocket_relay.cjs`, and `mcp/`.
+The ESLint configuration ignores generated build and Playwright output, `src/websocket_relay.cjs`, and `mcp/`.
 
 ## Translations
 
