@@ -7,12 +7,14 @@ import css from 'rollup-plugin-import-css'
 import serve from 'rollup-plugin-serve'
 import sourcemaps from 'rollup-plugin-sourcemaps2';
 import fs from 'fs'
+import 'dotenv/config'
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 
 // build.py passes this via the environment. When running Rollup directly,
 // default to the local development server.
 const BASE_URL = process.env.VIPER_IDE_BASE_URL || 'http://localhost:10001'
+const CORS_PROXY_TOKEN = process.env.CORS_PROXY_TOKEN || ''
 
 const copyHtml = (src, dst) => {
   let data = fs.readFileSync(src, 'utf8').
@@ -54,6 +56,7 @@ const stripMicroPythonNodeCli = () => ({
 copyHtml('src/ViperIDE.html',  'build/index.html')
 copyHtml('src/benchmark.html', 'build/benchmark.html')
 copyHtml('src/bridge.html',    'build/bridge.html')
+copyHtml('src/flasher.html',   'build/flasher.html')
 
 const common = (args, name) => ({
   output: {
@@ -78,7 +81,11 @@ const common = (args, name) => ({
       output: `${name}.css`,
       minify: !args.configDebug,
     }),
-    resolve(),
+    // Without this, a dual node/browser package (e.g. esptool-js's atob-lite dependency)
+    // resolves to its Node entry point - which reaches for the global Buffer, undefined
+    // in this browser bundle ("Buffer is not defined", surfaced once esptool-js decodes
+    // the base64-encoded flasher stub right after connecting).
+    resolve({ browser: true }),
     commonjs(),
     json({
       compact: true
@@ -89,6 +96,7 @@ const common = (args, name) => ({
         VIPER_IDE_VERSION:  '"' + pkg.version + '"',
         VIPER_IDE_BUILD:    Date.now(),
         VIPER_IDE_BASE_URL: '"' + BASE_URL + '"',
+        CORS_PROXY_TOKEN:   '"' + CORS_PROXY_TOKEN + '"',
       }
     }),
     args.configDebug && sourcemaps(),
@@ -110,4 +118,7 @@ export default args => [{
 },{
   input: './src/app_worker.js',
   ...common(args, 'app_worker')
+},{
+  input: './src/flasher.js',
+  ...common(args, 'flasher')
 }]

@@ -6,7 +6,7 @@
  * This includes no assurances about being fit for any specific purpose.
  */
 
-import { fetchJSON, fetchText, fetchArrayBuffer, splitPath } from './utils.js'
+import { fetchJSON, fetchText, fetchArrayBuffer, splitPath, corsProxyUrl } from './utils.js'
 import { compilePython } from './python_utils.js'
 
 const MIP_INDEXES = [{
@@ -62,7 +62,7 @@ function rewriteUrl(url, { base=null, branch=null } = {}) {
     } else if (url.startsWith('gitlab:')) {
         url = url.slice(7).split('/')
         //url = 'https://cdn.statically.io/gl/' + url[0] + '/' + url[1] + '/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
-        url = 'https://cors.sh/https://gitlab.com/' + url[0] + '/' + url[1] + '/-/raw/' + (branch || 'HEAD') + '/' + url.slice(2).join('/');
+        url = corsProxyUrl('https://gitlab.com/' + url[0] + '/' + url[1] + '/-/raw/' + (branch || 'HEAD') + '/' + url.slice(2).join('/'));
     } else if (url.startsWith('https://')) {
         // OK, use it as is
     } else {

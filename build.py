@@ -5,6 +5,22 @@ import json, glob, gzip, tarfile, subprocess
 from os import remove, path, makedirs
 from shutil import copyfile as cp, copytree, rmtree
 
+def load_dotenv(env_path=".env"):
+    if os.path.isfile(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    key, val = line.split("=", 1)
+                    key = key.strip()
+                    val = val.strip().strip("\"'")
+                    if key and key not in os.environ:
+                        os.environ[key] = val
+
+load_dotenv()
+
 # Base URL the IDE is deployed at. It is substituted into the JS (as the
 # VIPER_IDE_BASE_URL constant) and into the HTML at build time.
 # CI workflows set VIPER_IDE_BASE_URL explicitly for production builds.
@@ -78,12 +94,16 @@ def combine(dst):
     ).replace(
         '<link rel="stylesheet" href="./viper_lib.css">', '<style>\n' + readfile('build/viper_lib.css') + '\n</style>'
     ).replace(
+        '<link rel="stylesheet" href="./flasher.css">', '<style>\n' + readfile('build/flasher.css') + '\n</style>'
+    ).replace(
         '<script src="./app.js"></script>', '<script>\n' + readfile('build/app.js') + '\n</script>'
     ).replace(
         '<script src="./viper_lib.js"></script>', '<script>\n' + readfile('build/viper_lib.js') + '\n</script>'
+    ).replace(
+        '<script src="./flasher.js"></script>', '<script>\n' + readfile('build/flasher.js') + '\n</script>'
     )
 
-    for asset in ("app.css", "viper_lib.css", "app.js", "viper_lib.js"):
+    for asset in ("app.css", "viper_lib.css", "flasher.css", "app.js", "viper_lib.js", "flasher.js"):
         if f'{BASE_URL}/{asset}"' in combined:
             raise Exception(f"{dst}: failed to inline {asset}")
 
@@ -128,11 +148,12 @@ if __name__ == "__main__":
     combine("build/index.html")
     combine("build/bridge.html")
     combine("build/benchmark.html")
+    combine("build/flasher.html")
 
     # Cleanup
     #remove_files("build/translations.json")
-    remove_files("build/app.css", "build/viper_lib.css")
-    remove_files("build/app.js", "build/viper_lib.js")
+    remove_files("build/app.css", "build/viper_lib.css", "build/flasher.css")
+    remove_files("build/app.js", "build/viper_lib.js", "build/flasher.js")
 
     # Add assets from packages
     cp("node_modules/@micropython/micropython-webassembly-pyscript/micropython.wasm", "./build/assets/micropython.wasm")

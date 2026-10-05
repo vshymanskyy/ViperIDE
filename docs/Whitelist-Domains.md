@@ -5,8 +5,9 @@ To ensure the correct functionality of the ViperIDE web app, IT departments are 
 
 - `viper-ide.org` - the main IDE server (currently hosted on GitHub Pages)
 - `hub.viper-ide.org` - the collaborative features and remote device connection services
-- `micropython.org` - MicroPython package index / library manager
+- `micropython.org` - MicroPython package index / library manager, and official firmware images (used by the [Flasher](https://viper-ide.org/flasher.html))
 - `raw.githubusercontent.com`, `gitlab.com` - additional MicroPython packages
+- `pro.cors.lol` - relays the requests above to `micropython.org` and `gitlab.com`, which do not send CORS headers of their own
 
 These domains must be allowed at least on the following levels (the list is not exhaustive):
 

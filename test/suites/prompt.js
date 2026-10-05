@@ -26,7 +26,7 @@ class FakeTransport extends Transport {
 /* Runs fn against a transport whose buffer already holds `data`. */
 async function withBuffer(data, fn) {
     const port = new FakeTransport()
-    const release = await port.startTransaction()
+    const { release } = await port.startTransaction()
     try {
         port.receiveCallback(data)
         return await fn(port)
@@ -76,7 +76,7 @@ describe('readUntil with alternative endings', () => {
 
     it('an ending split across chunks is still found', async () => {
         const port = new FakeTransport()
-        const release = await port.startTransaction()
+        const { release } = await port.startTransaction()
         try {
             const pending = port.readUntil(PROMPTS, 5000)
             port.receiveCallback('\r\n--')
@@ -208,7 +208,7 @@ describe('REPL prompt detection', () => {
     it('a running board is interrupted on the way into raw mode', async () => {
         if (!ctx.caps.interrupt) { skip('the wasm REPL cannot be interrupted while running') }
 
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await toPrompt(ctx.port)
             await ctx.port.write('while 1: pass\r\n\r\n')
@@ -236,7 +236,7 @@ describe('REPL prompt detection', () => {
     it('what an interrupted program printed still reaches the terminal', async () => {
         if (!ctx.caps.interrupt) { skip('the wasm REPL cannot be interrupted while running') }
 
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await toPrompt(ctx.port)
             await ctx.port.write(`while 1: print('tick')\r\n\r\n`)

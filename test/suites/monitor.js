@@ -198,7 +198,7 @@ describe('ReplMonitor', () => {
 describe('Transport read-abort', () => {
 
     it('abortReads() makes a pending read throw promptly', async () => {
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             const pending = assert.rejects(
                 () => ctx.port.readUntil('\x00never\x00', 60000), /Timeout/)
@@ -214,7 +214,7 @@ describe('Transport read-abort', () => {
     })
 
     it('the next transaction clears the abort and reads again', async () => {
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await toPrompt(ctx.port)
         } finally {

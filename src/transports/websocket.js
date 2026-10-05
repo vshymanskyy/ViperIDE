@@ -84,7 +84,7 @@ export class WebSocketREPL extends Transport {
             this.disconnectCallback()
         }
 
-        const release = await this.startTransaction()
+        const { release } = await this.startTransaction()
         try {
             try {
                 this.socket.send('')

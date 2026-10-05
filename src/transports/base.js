@@ -20,7 +20,6 @@ export class Transport {
         this.receiveCallback = () => {}
         this.disconnectCallback = () => {}
         this.writeChunk = 128
-        this.emit = false
         this.info = {}
         /* Whether this transport still knows enough about the device to open it
            again on its own. Access is granted to a device, not to a connection, so
@@ -105,29 +104,48 @@ export class Transport {
 
     /*
      * Transaction API
+     *
+     * A transaction takes exclusive ownership of the receive stream: incoming data
+     * is buffered into `receivedData` for the protocol reads (readUntil, readExactly)
+     * to consume.
+     *
+     * The returned handle exposes:
+     *   release()      - end the transaction; any unread data in the buffer is handed
+     *                    to the outer callback. Call flushInput() first to discard it.
+     *   forward(data)  - send data to the outer callback (the terminal) without
+     *                    affecting the buffer. Use for already-consumed data that
+     *                    should be displayed.
+     *
+     * For real-time streaming during a read, pass an `emit` callback to readUntil().
      */
 
     async startTransaction() {
         const release = await this.mutex.acquire()
         this._readsAborted = false
-        this.prevRecvCbk = this.receiveCallback
+        const outerCallback = this.receiveCallback
         this.inTransaction = true
         this.receivedData = ''
+
         this.receiveCallback = (data) => {
             this.receivedData += data
-            if (this.emit && this.prevRecvCbk) { this.prevRecvCbk(data) }
         }
 
-        return () => {
-            if (this.prevRecvCbk) {
-                this.receiveCallback = this.prevRecvCbk
-                this.receiveCallback(this.receivedData)
-            }
-            this.receivedData = null
-            this.inTransaction = false
-
-            release()
+        const handle = {
+            release: () => {
+                if (this.receivedData) {
+                    outerCallback(this.receivedData)
+                }
+                this.receiveCallback = outerCallback
+                this.receivedData = null
+                this.inTransaction = false
+                release()
+            },
+            /* Send data to the outer callback (the terminal). */
+            forward: (data) => {
+                if (data) { outerCallback(data) }
+            },
         }
+        return handle
     }
 
     async flushInput() {
@@ -168,16 +186,35 @@ export class Transport {
 
     /* `endings` is one string, or a list of alternatives - whichever turns up first
        in the buffer wins. Alternatives are needed because the prompt a board answers
-       with is not fixed: see REPL_PROMPTS in rawmode.js. */
-    async readUntil(endings, timeout=5000) {
+       with is not fixed: see REPL_PROMPTS in rawmode.js.
+       When `emit` is a function, data confirmed to precede the ending is forwarded to
+       it incrementally - safe for real-time terminal display without leaking protocol
+       bytes that follow the ending in the same transport chunk.
+
+       Options (third argument - a function is treated as `emit` for backward compat):
+         emit         - streaming callback as described above.
+         peek         - called every poll with the current buffer contents. If it
+                        returns a truthy value, the read terminates immediately and
+                        returns the current buffer (without consuming it).
+         hardTimeout  - when true the deadline does NOT extend on new data, and a
+                        timeout returns null instead of throwing. */
+    async readUntil(endings, timeout=5000, opts=null) {
+        if (typeof opts === 'function') { opts = { emit: opts } }
+        const { emit = null, peek = null, hardTimeout = false } = opts || {}
+
         if (!Array.isArray(endings)) { endings = [endings] }
         if (!this.inTransaction) {
             throw new Error('Not in transaction')
         }
+        const maxEndLen = Math.max(...endings.map(e => e.length))
+        let emitted = 0
         let endTime = Date.now() + timeout
         while (timeout <= 0 || (Date.now() < endTime)) {
             if (this._readsAborted) {
                 throw new Error('Timeout: transport closed')
+            }
+            if (peek && peek(this.receivedData)) {
+                return this.receivedData
             }
             /* The earliest ending wins, not the first one listed: reading past one
                match to reach another would swallow whatever sits between them. */
@@ -191,14 +228,30 @@ export class Transport {
             if (end >= 0) {
                 const res = this.receivedData.substring(0, end)
                 this.receivedData = this.receivedData.substring(end)
+                if (emit) {
+                    const endingLen = endings.reduce((best, e) =>
+                        res.endsWith(e) ? e.length : best, 0)
+                    const contentEnd = end - endingLen
+                    if (contentEnd > emitted) {
+                        emit(res.substring(emitted, contentEnd))
+                    }
+                }
                 return res
+            }
+            if (emit) {
+                const safe = this.receivedData.length - (maxEndLen - 1)
+                if (safe > emitted) {
+                    emit(this.receivedData.substring(emitted, safe))
+                    emitted = safe
+                }
             }
             const prev_avail = this.receivedData.length
             await sleep(10)
-            if (this.receivedData.length > prev_avail) {
+            if (!hardTimeout && this.receivedData.length > prev_avail) {
                 endTime = Date.now() + timeout
             }
         }
+        if (hardTimeout) { return null }
         throw new Error('Timeout reached before finding the ending sequence')
     }
 }

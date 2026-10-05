@@ -30,6 +30,7 @@
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",
     "codemirror": "^6.0.2",
+    "esptool-js": "^0.7.0",
     "github-fork-ribbon-css": "^0.2.3",
     "i18next": "^26.3.6",
     "i18next-browser-languagedetector": "^8.2.1",
@@ -37,7 +38,8 @@
     "peerjs": "^1.5.5",
     "toastr": "^2.1.4",
     "ua-parser-js": "^2.0.10",
-    "web-serial-polyfill": "^1.0.15"
+    "web-serial-polyfill": "^1.0.15",
+    "webdfu": "1.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -47,6 +49,7 @@
     "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-terser": "^1.0.0",
     "chai": "^6.2.2",
+    "dotenv": "^18.0.5",
     "eslint": "^10.8.1",
     "globals": "^17.9.0",
     "mocha": "^11.8.0",

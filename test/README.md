@@ -61,7 +61,7 @@ package manager a device descriptor whose `sys.path` points there - **the board'
   Ctrl-C recovery from a busy loop, soft reboot, `getDeviceInfo`/`getFsStats`.
 - **Files / text** - ASCII, empty, no trailing newline, CRLF and lone CR, UTF-8, Python
   sources full of quotes and backslashes, 4000-character lines, truncating overwrites.
-- **Files / binary** - all 256 byte values, raw-REPL control bytes (`0x01`–`0x05`) as
+- **Files / binary** - all 256 byte values, raw-REPL control bytes (`0x01`-`0x05`) as
   *content*, pseudo-random blobs, sizes straddling the 128-byte chunk boundary, `.mpy`
   headers, `direct` writes, and the atomic-write temp file being cleaned up.
 - **Files / directories** - `makePath` nesting and idempotency, `touchFile`, `removeFile`
@@ -79,7 +79,7 @@ package manager a device descriptor whose `sys.path` points there - **the board'
   reinstalls, and the error paths.
 
 A test that cannot run because of a board limitation rather than a defect calls
-`skip(reason)` and is reported as **pending**, with the reason appended to its title —
+`skip(reason)` and is reported as **pending**, with the reason appended to its title -
 e.g. a filesystem that refuses a name, or a port without `statvfs`. `skip()` works from
 any depth, including the board helpers a test calls; a `before` hook that has to skip its
 whole suite uses `skipSuite(this, reason)` instead. Only mismatches (a name that comes
@@ -118,7 +118,7 @@ is what let them catch `pyStr()` mangling a control character.
 ## Writing a test
 
 Suites are plain Mocha `describe`/`it`, with the connected board in the `ctx` object that
-the root hooks fill in. Read its fields inside a test or hook, never at module scope —
+the root hooks fill in. Read its fields inside a test or hook, never at module scope -
 Mocha's own per-suite context is not an option here, because arrow functions do not bind
 `this`.
 

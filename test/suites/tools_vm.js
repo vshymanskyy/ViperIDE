@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Smoke tests for python-minifier and mpy-tool running inside the MicroPython
- * WASM VM — the same way ViperIDE uses them at runtime.
+ * WASM VM - the same way ViperIDE uses them at runtime.
  */
 
 import { assert } from 'chai'

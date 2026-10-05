@@ -138,7 +138,7 @@ for i in range(5):
     })
 
     it('friendly REPL echoes typed statements', async () => {
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await toPrompt(ctx.port)
             await ctx.port.write('print(2 ** 10)\r\n')
@@ -152,7 +152,7 @@ for i in range(5):
     it('Ctrl-C recovers a board stuck in a busy loop', async () => {
         if (!ctx.caps.interrupt) { skip('the wasm REPL cannot be interrupted while running') }
 
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await toPrompt(ctx.port)
             await ctx.port.write('while 1: pass\r\n')
@@ -173,7 +173,7 @@ for i in range(5):
      * it in when it is plugged in while a program of its own is going.
      */
     async function startAtRepl(code) {
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await toPrompt(ctx.port)
             /* A compound statement puts the friendly REPL into continuation mode and
@@ -286,7 +286,7 @@ for i in range(5):
         await withRaw(ctx.port, raw => raw.exec(`pass`))
 
         let banner
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await ctx.port.write('\x04')
             banner = await ctx.port.readUntil('soft reboot\r\n', 10000)

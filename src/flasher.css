@@ -1,0 +1,340 @@
+/*
+ * SPDX-FileCopyrightText: 2024 Volodymyr Shymanskyy
+ * SPDX-License-Identifier: MIT
+ */
+
+.steps {
+    max-width: 640px;
+}
+
+/*
+ * Accordion steps
+ *
+ * Each step is a header (always visible - title, plus a one-line recap once collapsed)
+ * over a body. The body's height is animated via the grid-template-rows trick (0fr <->
+ * 1fr on a single-row grid) rather than max-height: that needs no measured/guessed
+ * pixel value and still collapses a body of any size to exactly 0.
+ * flasher.js drives .collapsed to roll a finished step up when the next one opens;
+ * clicking a header only ever opens it back up (never collapses it from here), so an
+ * earlier choice stays reachable without a click on the step you're currently using
+ * accidentally rolling it up on you.
+ */
+.step-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    cursor: default;
+    user-select: none;
+    padding: 2px 0;
+}
+
+.step.collapsed .step-header {
+    cursor: pointer;
+}
+
+.step-title {
+    font-weight: 600;
+}
+
+.step-recap {
+    display: none;
+    opacity: 0.75;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.step.collapsed .step-recap {
+    display: inline;
+}
+
+/* An icon in front of a recap's text (the chosen family's), sized to the text. */
+.step-recap img, .step-recap svg {
+    height: 1.1em;
+    width: auto;
+    margin-right: 6px;
+    vertical-align: -0.2em;
+}
+
+.step-recap svg {
+    color: #3b88c3;
+}
+
+/* .button-row (app_common.css) sets display after .hidden does, at the same specificity,
+   and so wins: without this a hidden button row - the Flash controls, the download
+   button - would stay on screen. */
+.button-row.hidden {
+    display: none;
+}
+
+/* A step that was skipped because it cannot work here: its recap says why, in amber. */
+.step.warning .step-recap {
+    color: #f0ad4e;
+    opacity: 1;
+}
+
+.step-body-wrap {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--animation);
+}
+
+.step.collapsed .step-body-wrap {
+    grid-template-rows: 0fr;
+}
+
+.step-body {
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Three columns at most - the 140px cards are fixed-width, so the grid never needs more
+   than the cards' own widths, and below 470px it drops to two rather than overflow. */
+.family-row {
+    display: grid;
+    grid-template-columns: repeat(4, 140px);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+@media (max-width: 650px) {
+    .family-row {
+        grid-template-columns: repeat(2, 140px);
+    }
+}
+
+/*
+ * The same card look (background, radius, padding, icon colour) under two layouts:
+ * .family-btn stacks icon over a short label, fixed-width so three sit in a row;
+ * .action-btn is a single line (icon beside the label, which here runs much longer -
+ * "Connect via USB / Serial"), fixed at 400px so Connect and Flash line up underneath.
+ */
+.card-btn {
+    position: relative;   /* lets #btn-flash layer a progress fill behind its content - see below */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 6px;
+    background: var(--bg-color-edit);
+    font-size: 1rem;
+}
+
+/* A positioned ::before paints above plain in-flow content regardless of DOM order -
+   only another positioned element paints over it (in tree order), so the icon/label
+   need lifting onto that same layer to stay above #btn-flash's fill below. `> *`, not
+   `> i, > span`: FontAwesome's dom.watch() replaces the <i> with an <svg> (class
+   svg-inline--fa, not a tag this could keep matching by name), which used to fall back
+   to painting under the fill while the still-untouched <span> stayed above it - the
+   bug this rule is actually here to prevent. */
+.card-btn > * {
+    position: relative;
+    z-index: 1;
+}
+
+.card-btn i {
+    font-size: 1.8rem;
+    color: #3b88c3;
+}
+
+/* Sized to match .card-btn i above, so a logo - the "Open ViperIDE" button's, or a
+   vendor's on a family card (assets/vendors, all 512x512) - sits the same as every
+   icon-led card-btn around it rather than at the image's own native size. */
+.btn-logo {
+    height: 1.8rem;
+    width: auto;
+}
+
+.family-btn {
+    flex-direction: column;
+    width: 140px;
+}
+
+.family-btn.selected {
+    box-shadow: inset 0 0 0 2px var(--accent-color);
+}
+
+.action-btn {
+    width: 400px;
+}
+
+/* A deliberately secondary look next to .action-btn: erasing is its own small, plain
+   action beside the big primary one, not another card competing with it for attention. */
+.small-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--bg-color-edit);
+    font-size: 0.85rem;
+}
+
+.small-btn i {
+    color: #e0a040;   /* a warm, "be careful" tone - short of the alarm red of an error */
+}
+
+.board-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 8px 0;
+}
+.board-row .form-grid {
+    flex: 1 1 auto;
+    margin: 0;
+}
+.board-img {
+    flex: none;
+    width: 96px;
+    height: 96px;
+    box-sizing: border-box;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.board-img img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.board-img img.placeholder { opacity: 0.2; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 6px 10px;
+    align-items: center;
+    margin: 8px 0;
+    max-width: 480px;
+}
+
+.hint {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 6px;
+}
+
+#file-local {
+    max-width: 55vw;
+}
+
+/*
+ * The Flash button doubles as its own progress bar: a fill behind the icon/label,
+ * width driven by the --progress custom property flasher.js sets as esptool-js reports
+ * real bytes-written progress. Only exists at all while .flashing - otherwise this is
+ * a plain .card-btn, not a slightly-different-looking one stuck at 0%.
+ *
+ * It stays `disabled` the whole time (flasher.js - a second click mid-flash must not
+ * start another one), but the generic button:disabled in app_common.css would wash the
+ * fill out to 40% opacity on top of its own - a progress bar has no business looking
+ * greyed out. This button alone keeps its normal look while disabled.
+ */
+#btn-flash.flashing:disabled {
+    opacity: 1;
+    cursor: progress;
+}
+
+#btn-flash.flashing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: var(--progress, 0%);
+    background: var(--accent-color);
+    opacity: 0.45;
+    transition: width 0.2s ease-out;
+}
+
+/* Drive writes report no midpoint (see flasher.js) - a moving stripe reads as "still
+   going" without claiming a percentage that isn't known. */
+#btn-flash.flashing.indeterminate::before {
+    width: 100%;
+    background: repeating-linear-gradient(135deg,
+        var(--accent-color) 0, var(--accent-color) 10px,
+        transparent 10px, transparent 20px);
+    background-size: 28px 100%;
+    animation: progress-stripes 1s linear infinite;
+}
+
+@keyframes progress-stripes {
+    to { background-position: 28px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #btn-flash.flashing.indeterminate::before {
+        animation: none;
+    }
+}
+
+/*
+ * Log drawer
+ *
+ * Slides in from the right rather than sitting inline - the connect/pick/flash flow
+ * above is the interface; the log is detail for when something needs explaining.
+ * Kept in normal flow (never display:none) and only translated off-screen, so xterm's
+ * FitAddon always sees a real size to fit into, open or not.
+ */
+
+/* The report-a-bug link and the log button, side by side in the top right corner. */
+.top-actions {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+}
+
+.top-action {
+    /* The same look for the link and the button: the global button rule's padding and
+       size, which an <a> does not get on its own. */
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    background: var(--bg-color-edit);
+    border-radius: 6px;
+    line-height: 1;
+    font-size: 1.3rem;
+}
+
+.log-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(480px, 92vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-color-edit);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4);
+    transform: translateX(100%);
+    transition: transform var(--animation);
+    z-index: 30;
+}
+
+.log-drawer.open {
+    transform: translateX(0);
+}
+
+.log-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 4px 4px 12px;
+    font-weight: 600;
+    border-bottom: 1px solid #ffffff22;
+    flex: 0 0 auto;
+}
+
+.log-term {
+    flex: 1 1 auto;
+    min-height: 0;   /* lets the flex child shrink - otherwise it never gets smaller
+                         than its content, and FitAddon never sees a reason to shrink it */
+    padding: 4px;
+}
