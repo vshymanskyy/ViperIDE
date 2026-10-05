@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys
+import os, re, sys
 import json, glob, gzip, tarfile, subprocess
 from os import remove, path, makedirs
 from shutil import copyfile as cp, copytree, rmtree
@@ -87,6 +87,15 @@ def vendor_pypi_package(spec, dest):
     for meta in glob.glob("*.dist-info", root_dir=dest):
         rmtree(path.join(dest, meta), ignore_errors=True)
 
+def patch_python_minifier(dest):
+    # Newer MicroPython rejects "f(kw=x, *args)" ("* arg after kwarg"), which
+    # python-minifier's ast_compat shim uses. Pass the value positionally.
+    p = path.join(dest, "python_minifier", "ast_compat.py")
+    src = readfile(p)
+    fixed = re.sub(r"Constant\(value=(s|n|literal_eval\('\.\.\.'\)), \*args", r"Constant(\1, *args", src)
+    with open(p, 'w', encoding='utf-8', newline='') as f:
+        f.write(fixed)
+
 def combine(dst):
     # Insert CSS and JS into HTML
     combined = readfile(dst).replace(
@@ -127,6 +136,7 @@ if __name__ == "__main__":
     gen_manifest("./src/manifest.json", "build/manifest.json")
 
     vendor_pypi_package("python-minifier==3.2.0", "src/tools_vfs/lib")
+    patch_python_minifier("src/tools_vfs/lib")
     gen_tar("src/tools_vfs", "build/assets/tools_vfs.tar.gz")
     gen_tar("src/vm_vfs", "build/assets/vm_vfs.tar.gz")
 
