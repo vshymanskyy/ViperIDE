@@ -9,6 +9,7 @@
   - [`Bluetooth LE`](Bluetooth-REPL.md)
   - [`P2P/WebRTC Bridge`](https://viper-ide.org/bridge.html)
   - [`Virtual Device`](https://viper-ide.org/?vm=1)
+- [**Firmware Flasher**](https://viper-ide.org/flasher.html) - install MicroPython on your board
 - **File Editor**
   - Syntax highlighting for `.py`, `.json`, `.inf`, `.toml`, `.pem`
   - Auto expand/minify of `.json` files

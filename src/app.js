@@ -25,7 +25,7 @@ import { addUpdateHandler, createNewEditor, getEditorFromElement } from './edito
 import { displayOpenFile, createTab, getTabFileName, getTabEditorElement } from './editor_tabs.js'
 import { serial as webSerialPolyfill } from 'web-serial-polyfill'
 import { WebSerial, WebBluetooth, WebSocketREPL, WebRTCTransport } from './transports/index.js'
-import { MpRawMode, getActivePrompt } from './rawmode.js'
+import { MpRawMode, getActivePrompt, withRawMode } from './rawmode.js'
 import { ReplMonitor } from './repl_monitor.js'
 import { getPkgIndexes, rawInstallPkg, fetchPkgReadme } from './package_mgr.js'
 import { ConnectionUID } from './connection_uid.js'
@@ -550,38 +550,38 @@ async function completeDeviceInit() {
     // TODO: detect WDT and disable it temporarily
     const firstTime = !sessionInitialized
     let ok = false
-    let raw = null
     try {
-        raw = await MpRawMode.begin(port)
-        await _raw_ensureDevInfo(raw)
+        ok = await withRawMode(port, async (raw) => {
+            await _raw_ensureDevInfo(raw)
 
-        if (firstTime) {
-            toastr.success(sanitizeHTML(devInfo.machine + '\n' + devInfo.version), 'Device connected')
-            analytics.track('Device Connected', devInfo)
-            console.log('Device info', devInfo)
-        }
-
-        /* An install link that had no board to act on when it arrived - either
-           it opened the app, or it was handed to a window that was sitting
-           with nothing connected. Cleared either way, so it fires once */
-        if (window.pkg_install_url) {
-            const pkg = window.pkg_install_url
-            window.pkg_install_url = null
-            await _raw_installPkg(raw, pkg)
-            analytics.track('Quick Install Completed', { url: pkg })
-        }
-
-        await _raw_updateFileTree(raw)
-
-        if (firstTime) {
-            if        (fsCache.has('/main.py')) {
-                await _raw_loadFile(raw, '/main.py')
-            } else if (fsCache.has('/code.py')) {
-                await _raw_loadFile(raw, '/code.py')
+            if (firstTime) {
+                toastr.success(sanitizeHTML(devInfo.machine + '\n' + devInfo.version), 'Device connected')
+                analytics.track('Device Connected', devInfo)
+                console.log('Device info', devInfo)
             }
-        }
-        sessionInitialized = true
-        ok = true
+
+            /* An install link that had no board to act on when it arrived - either
+               it opened the app, or it was handed to a window that was sitting
+               with nothing connected. Cleared either way, so it fires once */
+            if (window.pkg_install_url) {
+                const pkg = window.pkg_install_url
+                window.pkg_install_url = null
+                await _raw_installPkg(raw, pkg)
+                analytics.track('Quick Install Completed', { url: pkg })
+            }
+
+            await _raw_updateFileTree(raw)
+
+            if (firstTime) {
+                if        (fsCache.has('/main.py')) {
+                    await _raw_loadFile(raw, '/main.py')
+                } else if (fsCache.has('/code.py')) {
+                    await _raw_loadFile(raw, '/code.py')
+                }
+            }
+            sessionInitialized = true
+            return true
+        })
     } catch (err) {
         if (deviceState === 'reconnecting') {
             /* The port dropped out from under the init - the reconnect already
@@ -590,10 +590,6 @@ async function completeDeviceInit() {
             report('Device is not responding', new Error(`Ensure that:\n- You're using a recent version of MicroPython\n- The correct device is selected`))
         } else {
             report('Error reading device info', err)
-        }
-    } finally {
-        if (raw) {
-            try { await raw.end() } catch (_err) { /* device may have disconnected */ }
         }
     }
 
@@ -626,12 +622,9 @@ let selectedFn = null
 
 export async function refreshFileTree() {
     if (!portReady()) return;
-    const raw = await MpRawMode.begin(port)
-    try {
+    await withRawMode(port, async (raw) => {
         await _raw_updateFileTree(raw)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
 }
 
 export async function createNewFile(path) {
@@ -643,8 +636,7 @@ export async function createNewFile(path) {
                       `  folder/myfile.py   - a file in a new folder\n` +
                       `  folder/            - just the folder`)
     if (fn == null || fn == '') return
-    const raw = await MpRawMode.begin(port)
-    try {
+    await withRawMode(port, async (raw) => {
         if (fn.endsWith('/')) {
             const full = joinPath(path, fn.slice(0, -1))
             await raw.makePath(full)
@@ -663,23 +655,18 @@ export async function createNewFile(path) {
             await _raw_loadFile(raw, full)
         }
         await _raw_updateFileTree(raw)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
 }
 
 export async function removeFile(path) {
     if (!portReady()) return;
     if (!confirm(`Remove ${path}?`)) return
-    const raw = await MpRawMode.begin(port)
-    try {
+    await withRawMode(port, async (raw) => {
         await raw.removeFile(path)
         fsCache.removed(path)
         document.dispatchEvent(new CustomEvent("fileRemoved", {detail: {path: path}}))
         await _raw_updateFileTree(raw)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
 }
 
 export async function removeDir(path) {
@@ -687,15 +674,12 @@ export async function removeDir(path) {
     const inside = fsCache.countUnder(path)
     if (!confirm(inside ? `Remove ${path} and the ${inside} item(s) inside it?`
                         : `Remove ${path}?`)) return
-    const raw = await MpRawMode.begin(port)
-    try {
+    await withRawMode(port, async (raw) => {
         await raw.removeTree(path)
         fsCache.removedTree(path)
         document.dispatchEvent(new CustomEvent("dirRemoved", {detail: {path: path}}))
         await _raw_updateFileTree(raw)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
 }
 
 /* Moves a file or folder into another folder of the same device */
@@ -744,20 +728,19 @@ async function _movePath(src, dst, dstDir, { makesPath = false } = {}) {
         toastr.error(`${dst} already exists`)
         return
     }
-    const raw = await MpRawMode.begin(port)
-    try {
-        if (makesPath) { await raw.makePath(dstDir) }
-        await raw.movePath(src, dst)
-        // Ahead of the event, so both listeners see an already-migrated cache
-        fsCache.renamed(src, dst)
-        document.dispatchEvent(new CustomEvent("fileRenamed", {detail: {old: src, new: dst}}))
-        fileTreeView.expand(dstDir)
-        await _raw_updateFileTree(raw)
-    } catch (err) {
-        report('Cannot move', err)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    await withRawMode(port, async (raw) => {
+        try {
+            if (makesPath) { await raw.makePath(dstDir) }
+            await raw.movePath(src, dst)
+            // Ahead of the event, so both listeners see an already-migrated cache
+            fsCache.renamed(src, dst)
+            document.dispatchEvent(new CustomEvent("fileRenamed", {detail: {old: src, new: dst}}))
+            fileTreeView.expand(dstDir)
+            await _raw_updateFileTree(raw)
+        } catch (err) {
+            report('Cannot move', err)
+        }
+    })
 }
 
 /* Uploads files (and folders, where the browser exposes them) dropped onto the
@@ -777,36 +760,36 @@ async function uploadDroppedFiles(dataTransfer, dstDir) {
 
     toastr.info(`Uploading ${files.length} file(s)...`)
     let uploaded = 0
-    const raw = await MpRawMode.begin(port)
-    try {
-        for (const item of items) {
-            if (item.dir) {
-                await raw.makePath(item.path)
-                continue
-            }
-            const [dirname, _] = splitPath(item.path)
-            if (dirname) { await raw.makePath(dirname) }
-            await raw.writeFile(item.path, new Uint8Array(await item.file.arrayBuffer()))
-            /* Deliberately not cached: telling the cache the path changed is
-               what makes the refresh below notice, so a file that is open in an
-               editor gets reloaded (or flagged) instead of quietly diverging. */
-            fsCache.invalidate(item.path)
-            uploaded++
-        }
-        toastr.success(`Uploaded ${uploaded} file(s)`)
-        analytics.track('Files Uploaded', { count: uploaded })
-    } catch (err) {
-        report('Upload failed', err)
-    } finally {
-        // A failed batch still leaves files on the device, so always refresh
+    await withRawMode(port, async (raw) => {
         try {
-            fileTreeView.expand(dstDir)
-            await _raw_updateFileTree(raw)
-        } catch (_err) {
-            // Device is gone; a stale tree is the least of the problems
+            for (const item of items) {
+                if (item.dir) {
+                    await raw.makePath(item.path)
+                    continue
+                }
+                const [dirname, _] = splitPath(item.path)
+                if (dirname) { await raw.makePath(dirname) }
+                await raw.writeFile(item.path, new Uint8Array(await item.file.arrayBuffer()))
+                /* Deliberately not cached: telling the cache the path changed is
+                   what makes the refresh below notice, so a file that is open in an
+                   editor gets reloaded (or flagged) instead of quietly diverging. */
+                fsCache.invalidate(item.path)
+                uploaded++
+            }
+            toastr.success(`Uploaded ${uploaded} file(s)`)
+            analytics.track('Files Uploaded', { count: uploaded })
+        } catch (err) {
+            report('Upload failed', err)
+        } finally {
+            // A failed batch still leaves files on the device, so always refresh
+            try {
+                fileTreeView.expand(dstDir)
+                await _raw_updateFileTree(raw)
+            } catch (_err) {
+                // Device is gone; a stale tree is the least of the problems
+            }
         }
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
 }
 
 /*
@@ -895,12 +878,12 @@ function prepareDownload(node) {
         // A refresh landing while the bytes are on the wire makes them useless,
         // however fresh the result looks by the time it arrives
         const gen = fsCache.currentGeneration()
-        const raw = await MpRawMode.begin(port)
         try {
-            stageBytes(node.path, await _raw_readForDownload(raw, node), gen)
+            await withRawMode(port, async (raw) => {
+                stageBytes(node.path, await _raw_readForDownload(raw, node), gen)
+            })
         } finally {
             downloadsInFlight.delete(node.path)
-            try { await raw.end() } catch (_err) { /* device may have disconnected */ }
         }
     })()
     downloadsInFlight.set(node.path, task)
@@ -1293,12 +1276,9 @@ function makeCoalesced(ms) {
 export async function fileClick(fn) {
     if (!portReady()) return;
 
-    const raw = await MpRawMode.begin(port)
-    try {
+    await withRawMode(port, async (raw) => {
         await _raw_loadFile(raw, fn)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
 
     fileTreeSelect(fn)
 }
@@ -1354,13 +1334,10 @@ export async function saveAndCompile() {
     const mpy = await compilePython(savedFn, savedText, devInfo)
     const mpyFn = savedFn.replace(/\.py$/, '.mpy')
 
-    const raw = await MpRawMode.begin(port)
-    try {
+    await withRawMode(port, async (raw) => {
         await fsCache.writeFile(raw, mpyFn, mpy)
         await _raw_updateFileTree(raw)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
 
     analytics.track('File Compiled')
     toastr.success(`Compiled to ${mpyFn}`)
@@ -1387,12 +1364,9 @@ export async function showDisassembly() {
                 toastr.warning('Device disconnected')
                 return
             }
-            const raw = await MpRawMode.begin(port)
-            try {
-                bytes = await fsCache.readFile(raw, fn)
-            } finally {
-                try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-            }
+            bytes = await withRawMode(port, async (raw) => {
+                return await fsCache.readFile(raw, fn)
+            })
         }
         dis = await disassembleMPY(bytes)
     } else {
@@ -1683,8 +1657,7 @@ export async function saveCurrentFile() {
         }
     }
 
-    const raw = await MpRawMode.begin(port)
-    try {
+    await withRawMode(port, async (raw) => {
         /* The one write that goes through the cache rather than around it. It
            records the new size too, so the refresh below finds nothing changed
            and does not offer to reload the file over what was just written. */
@@ -1693,9 +1666,7 @@ export async function saveCurrentFile() {
         fsCache.rebaseView(savedFn, savedText)
         stageDownload(savedFn)
         await _raw_updateFileTree(raw)
-    } finally {
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-    }
+    })
     // Success
     analytics.track('File Saved')
     toastr.success('File Saved')
@@ -1720,8 +1691,11 @@ async function openWelcomeTab() {
 
 Connect your device and start creating! 🤖👨‍💻🕹️
 
-> No device?  
+> **No device?**  
 > 👉 Open a [virtual device](${VIPER_IDE_BASE_URL}/?vm=1) and explore some examples.
+
+> **New board, no MicroPython on it yet?**  
+> 👉 Use the [Firmware Flasher](${VIPER_IDE_BASE_URL}/flasher.html) to install it.
 
 ## More about ViperIDE
 
@@ -1764,7 +1738,7 @@ export async function reboot(mode = 'hard') {
        but not while the port itself is gone */
     if (!port || deviceState === 'reconnecting') return;
 
-    const release = await port.startTransaction()
+    const { release } = await port.startTransaction()
     try {
         if (mode === 'soft') {
             await port.write('\r\x03\x03\x04')
@@ -1804,43 +1778,39 @@ export async function runCurrentFile() {
        an interrupt, a reboot, a banner - and everything watching the terminal has to
        know that traffic is the app's own. */
     setRunMode(true)
-    let raw
     try {
-        raw = await MpRawMode.begin(port, soft_reboot)
+        await withRawMode(port, async (raw) => {
+            try {
+                const emit = true
+                await sleep(10)
+                await raw.exec(editor.state.doc.toString(), timeout, emit)
+            } catch (err) {
+                if (err.message.includes('KeyboardInterrupt')) {
+                    // Interrupted manually
+                } else {
+                    const backtrace = parseStackTrace(err.message)
+                    if (backtrace) {
+                        console.log(backtrace)
+                    }
+                    toastr.error(sanitizeHTML(backtrace.summary), backtrace.type)
+                }
+            }
+        }, { softReboot: soft_reboot })
     } catch (err) {
         setRunMode(false)
         throw err
     }
-    try {
-        const emit = true
-        await sleep(10)
-        await raw.exec(editor.state.doc.toString(), timeout, emit)
-    } catch (err) {
-        if (err.message.includes('KeyboardInterrupt')) {
-            // Interrupted manually
-        } else {
-            const backtrace = parseStackTrace(err.message)
-            if (backtrace) {
-                console.log(backtrace)
-            }
-            toastr.error(sanitizeHTML(backtrace.summary), backtrace.type)
-            return
-        }
-    } finally {
-        port.emit = false
-        try { await raw.end() } catch (_err) { /* device may have disconnected */ }
-        setRunMode(false)
-        term.write('\r\n' + getActivePrompt())
-        await deviceRanCode({ mayRefresh: true })
-        /* The run drove the board through raw mode and back out to a prompt, so it is
-           listening - whatever decided otherwise while it was in flight was reading
-           the app's own traffic. Undone here because the only other way out of a busy
-           state is fresh terminal traffic for the monitor to notice, and a board
-           sitting quietly at a prompt produces none: it would take the user pressing
-           Stop, on a board that was never running anything. */
-        if (port && deviceState !== 'reconnecting' && isBusyState()) {
-            await completeDeviceInit()
-        }
+    setRunMode(false)
+    term.write('\r\n' + getActivePrompt())
+    await deviceRanCode({ mayRefresh: true })
+    /* The run drove the board through raw mode and back out to a prompt, so it is
+       listening - whatever decided otherwise while it was in flight was reading
+       the app's own traffic. Undone here because the only other way out of a busy
+       state is fresh terminal traffic for the monitor to notice, and a board
+       sitting quietly at a prompt produces none: it would take the user pressing
+       Stop, on a board that was never running anything. */
+    if (port && deviceState !== 'reconnecting' && isBusyState()) {
+        await completeDeviceInit()
     }
     // Success
     analytics.track('Script Run')
@@ -1920,16 +1890,15 @@ export async function installPkg(pkg, { version=null } = {}) {
         toastr.info('Connect yout device first')
         return false
     }
-    const raw = await MpRawMode.begin(port)
     try {
-        await _raw_installPkg(raw, pkg, { version })
-        await _raw_updateFileTree(raw)
-        return true
+        return await withRawMode(port, async (raw) => {
+            await _raw_installPkg(raw, pkg, { version })
+            await _raw_updateFileTree(raw)
+            return true
+        })
     } catch (err) {
         report('Installing failed', err)
         return false
-    } finally {
-        await raw.end()
     }
 }
 

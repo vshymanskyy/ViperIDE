@@ -34,7 +34,7 @@ const PROMPT = '--> '
 /* Which REPL is answering. Ctrl-C rather than Enter: it gets a prompt back out of a
    board that is running something, and out of one that is not. */
 async function atAiorepl() {
-    const release = await ctx.port.startTransaction()
+    const { release } = await ctx.port.startTransaction()
     try {
         await ctx.port.write('\x03')
         const at = await ctx.port.readUntil(REPL_PROMPTS, 5000)
@@ -81,7 +81,7 @@ describe('aiorepl', () => {
     it('leaving raw mode lands back on the aiorepl prompt', async () => {
         await withRaw(ctx.port, raw => raw.exec(`pass`))
 
-        const release = await ctx.port.startTransaction()
+        const { release } = await ctx.port.startTransaction()
         try {
             await ctx.port.write('\r')
             assert.include(await ctx.port.readUntil(PROMPT, 5000), PROMPT)

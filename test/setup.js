@@ -12,6 +12,7 @@
  * `--bail`, `--reporter`, `--dry-run` and friends are the interface.
  */
 
+import 'dotenv/config'
 import { assert, config, use } from 'chai'
 import Pending from 'mocha/lib/pending.js'
 
@@ -19,6 +20,10 @@ import { MicroPythonWASM, makeSerialTransport, listSerialPorts, WebSocketREPL }
     from '../src/transports/node.mjs'
 import { loadMicroPython } from '@micropython/micropython-webassembly-pyscript/micropython.mjs'
 import { withRaw, rmTree, mkdirp } from './board.js'
+
+if (!process.env.CORS_PROXY_TOKEN) {
+  process.env.CORS_PROXY_TOKEN = 'test-token'
+}
 
 /*
  * Options

@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VIPER_IDE_BASE_URL: https://viper-ide.org
+      CORS_PROXY_TOKEN: ${{ secrets.CORS_PROXY_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7

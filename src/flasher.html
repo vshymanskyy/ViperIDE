@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${VIPER_IDE_DESCR}">
+    <meta property="og:description" content="${VIPER_IDE_DESCR}">
+    <title>ViperIDE Flasher</title>
+    <link rel="icon" type="image/png" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
+    <link rel="apple-touch-icon" sizes="512x512" href="${VIPER_IDE_BASE_URL}/assets/favicon.png"/>
+
+    <link rel="stylesheet" href="./flasher.css">
+</head>
+<body class="page">
+    <div class="top-actions">
+        <a id="btn-report-bug" class="top-action" href="https://github.com/vshymanskyy/ViperIDE/issues" target="_blank" rel="noopener" title="Report a bug"><i class="fa-solid fa-bug"></i></a>
+        <button id="btn-log-toggle" class="top-action" title="Show log"><i class="fa-solid fa-terminal"></i></button>
+    </div>
+
+    <h1>ViperIDE Flasher</h1>
+    <p>Install official <a class="link" href="https://micropython.org" target="_blank">MicroPython</a> firmware on your board.</p>
+
+    <p>
+        ⚠️ Flashing may <b>erase all data on your board</b>. In rare cases, it may brick your device. Proceed with caution.<br/>
+        Do not disconnect your board or close this page during the flashing process.
+    </p>
+
+    <ol class="steps">
+        <li class="step" id="step-family">
+            <div class="step-header">
+                <span class="step-title">Select your board family</span>
+                <span class="step-recap"></span>
+            </div>
+            <div class="step-body-wrap"><div class="step-body">
+                <div class="family-row" id="family-row">
+                    <button class="card-btn family-btn" data-family="esp32">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/espressif.png" alt="">
+                        <span>ESP32/ESP8266</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="rp2">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/rpi.png" alt="">
+                        <span>RP2040/RP2350</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="nrf52">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/nordic.png" alt="">
+                        <span>nRF52, nRF91, micro:bit</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="samd">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/microchip.png" alt="">
+                        <span>SAMD21/SAMD51</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="teensy">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/pjrc.png" alt="">
+                        <span>Teensy 4.0/4.1</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="stm32dfu">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/stm.png" alt="">
+                        <span>STM32<br/>(USB DFU)</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="stm32link">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/stm2.png" alt="">
+                        <span>STM32 Nucleo,<br/>Discovery</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="arduino">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/arduino.png" alt="">
+                        <span>Portenta, Giga, Nicla, Opta</span>
+                    </button>
+                    <button class="card-btn family-btn" data-family="w600">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/vendors/wm.png" alt="">
+                        <span>WinnerMicro W60x</span>
+                    </button>
+                </div>
+            </div></div>
+        </li>
+        <li class="step hidden" id="step-connect">
+            <div class="step-header">
+                <span class="step-title">Connect your board</span>
+                <span class="step-recap"></span>
+            </div>
+            <div class="step-body-wrap"><div class="step-body">
+                <span id="connect-instructions"></span><br>
+                <span class="button-row">
+                    <button id="btn-connect" class="card-btn action-btn"><i class="fa-solid fa-plug"></i> <span id="btn-connect-label">Connect</span></button>
+                </span>
+                <div class="hint" id="connect-hint"></div>
+                <div class="hint"><a class="link" href="#" id="link-manual">...or skip connecting - just show me the firmware files</a></div>
+            </div></div>
+        </li>
+        <li class="step hidden" id="step-firmware">
+            <div class="step-header">
+                <span class="step-title">Choose the firmware to install</span>
+                <span class="step-recap"></span>
+            </div>
+            <div class="step-body-wrap"><div class="step-body">
+                <div class="board-row">
+                    <div class="board-img"><img id="board-img" alt="" referrerpolicy="no-referrer" data-placeholder="${VIPER_IDE_BASE_URL}/assets/chip.png"></div>
+                    <div class="form-grid">
+                        <label for="sel-board">Board</label>
+                        <select id="sel-board"></select>
+
+                        <label for="sel-variant" id="label-variant">Variant</label>
+                        <select id="sel-variant"></select>
+
+                        <label for="sel-release">Version</label>
+                        <select id="sel-release"></select>
+                    </div>
+                </div>
+                <!-- Only when there is no Flash step (this browser cannot connect, or the
+                     user skipped connecting): the file is all that is on offer. -->
+                <span class="button-row hidden" id="download-direct">
+                    <a class="card-btn action-btn" id="btn-download" target="_blank" rel="noopener"><i class="fa-solid fa-download"></i> <span id="btn-download-label">Download</span></a>
+                </span>
+            </div></div>
+        </li>
+        <li class="step hidden" id="step-flash">
+            <div class="step-header">
+                <span class="step-title">Flash the firmware</span>
+                <span class="step-recap"></span>
+            </div>
+            <div class="step-body-wrap"><div class="step-body">
+                <span class="button-row" id="flash-controls">
+                    <span id="erase-controls" class="hidden">
+                        Erase flash (recommended on first install): <button id="btn-erase" class="small-btn"><span id="btn-erase-label">Erase</span></button><br/><br/>
+                    </span>
+                    <button id="btn-flash" class="card-btn action-btn"><i class="fa-solid fa-bolt"></i> <span id="btn-flash-label">Flash</span></button>
+                </span>
+                <div class="hint hidden" id="fallback-details">
+                    Having trouble downloading automatically?<br/>
+                    <a class="link" id="link-download" target="_blank" rel="noopener">Download the firmware file</a> yourself,
+                    then pick it here: <input type="file" id="file-local" accept=".bin,.uf2,.hex,.dfu,.fls">
+                </div>
+            </div></div>
+        </li>
+        <li class="step hidden" id="step-done">
+            <div class="step-header">
+                <span class="step-title">Open ViperIDE</span>
+                <span class="step-recap"></span>
+            </div>
+            <div class="step-body-wrap"><div class="step-body">
+                <span class="button-row">
+                    <a class="card-btn action-btn" href="${VIPER_IDE_BASE_URL}/" target="_blank">
+                        <img class="btn-logo" src="${VIPER_IDE_BASE_URL}/assets/logo_1024.png" alt="">
+                        <span>Open ViperIDE and enjoy!</span>
+                    </a>
+                </span>
+            </div></div>
+        </li>
+    </ol>
+
+    <div id="log-drawer" class="log-drawer">
+        <div class="log-drawer-header">
+            <span>Log</span>
+            <button id="btn-log-close" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="xterm-log" class="log-term"></div>
+    </div>
+
+    <script src="./flasher.js"></script>
+</body>
+</html>
