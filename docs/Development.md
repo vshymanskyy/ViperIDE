@@ -53,7 +53,7 @@ Build-time configurations and secrets can be specified in a local `.env` file (c
 | Variable | Description | Default |
 |---|---|---|
 | `VIPER_IDE_BASE_URL` | Base URL where assets and workers are served | `http://localhost:10001` |
-| `CORS_PROXY_TOKEN` | Access token for the `pro.cors.lol` relay proxy (used for CORS-less endpoints like `micropython.org` firmware and `gitlab.com` packages) | `""` |
+| `CORS_PROXY` | Full endpoint of the relay proxy; `{}` is replaced by the target url | `""` |
 
 Both Rollup and `build.py` automatically load variables from `.env` if present.
 

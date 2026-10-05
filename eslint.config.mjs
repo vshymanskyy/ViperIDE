@@ -25,7 +25,7 @@ export default [
         VIPER_IDE_VERSION:  "readonly",
         VIPER_IDE_BUILD:    "readonly",
         VIPER_IDE_BASE_URL: "readonly",
-        CORS_PROXY_TOKEN:   "readonly",
+        CORS_PROXY_BLOB:    "readonly",
       }
     }
   }

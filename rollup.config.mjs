@@ -8,13 +8,14 @@ import serve from 'rollup-plugin-serve'
 import sourcemaps from 'rollup-plugin-sourcemaps2';
 import fs from 'fs'
 import 'dotenv/config'
+import { generateBlob } from './src/corsproxy.mjs'
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 
 // build.py passes this via the environment. When running Rollup directly,
 // default to the local development server.
 const BASE_URL = process.env.VIPER_IDE_BASE_URL || 'http://localhost:10001'
-const CORS_PROXY_TOKEN = process.env.CORS_PROXY_TOKEN || ''
+const CORS_PROXY = process.env.CORS_PROXY || ''
 
 const copyHtml = (src, dst) => {
   let data = fs.readFileSync(src, 'utf8').
@@ -96,7 +97,7 @@ const common = (args, name) => ({
         VIPER_IDE_VERSION:  '"' + pkg.version + '"',
         VIPER_IDE_BUILD:    Date.now(),
         VIPER_IDE_BASE_URL: '"' + BASE_URL + '"',
-        CORS_PROXY_TOKEN:   '"' + CORS_PROXY_TOKEN + '"',
+        CORS_PROXY_BLOB:    '"' + generateBlob(CORS_PROXY) + '"',
       }
     }),
     args.configDebug && sourcemaps(),

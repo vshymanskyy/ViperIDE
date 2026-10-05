@@ -20,10 +20,9 @@ import { MicroPythonWASM, makeSerialTransport, listSerialPorts, WebSocketREPL }
     from '../src/transports/node.mjs'
 import { loadMicroPython } from '@micropython/micropython-webassembly-pyscript/micropython.mjs'
 import { withRaw, rmTree, mkdirp } from './board.js'
+import { generateBlob } from '../src/corsproxy.mjs'
 
-if (!process.env.CORS_PROXY_TOKEN) {
-  process.env.CORS_PROXY_TOKEN = 'test-token'
-}
+process.env.CORS_PROXY_BLOB = generateBlob(process.env.CORS_PROXY || 'https://cors.sh/{}')
 
 /*
  * Options
