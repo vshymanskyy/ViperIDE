@@ -29,7 +29,10 @@ if not BASE_URL:
     BASE_URL = os.environ["VIPER_IDE_BASE_URL"] = "http://localhost:10001"
 
 def run(cmd):
-    subprocess.run(cmd, shell=isinstance(cmd, str), check=True)
+    import shlex
+    if isinstance(cmd, str):
+        cmd = shlex.split(cmd)
+    subprocess.run(cmd, shell=False, check=True)
 
 def readfile(fn):
     with open(fn, 'r', encoding='utf-8') as f:
