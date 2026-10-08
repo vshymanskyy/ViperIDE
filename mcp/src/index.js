@@ -297,7 +297,7 @@ mcp.tool(
             const wsUrl = `ws://localhost:${idePort}/serial/${encodeURIComponent(port_path)}`
             // Fire and forget - connection + raw mode handshake can take 20+ seconds
             // which exceeds Claude Desktop's API timeout. Return immediately.
-            bridge.call('connect_device', { type: 'ws', url: wsUrl })
+            bridge.call('connect_device', { type: 'ws', url: wsUrl, password: 'serial' })
                 .catch(err => console.error('[ViperIDE MCP] connect_serial error:', err.message))
             return textResult({
                 url: wsUrl,
