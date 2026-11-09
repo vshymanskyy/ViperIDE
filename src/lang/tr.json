@@ -1,0 +1,51 @@
+{
+    "translation": {
+        "example": {
+            "hello": "Merhaba",
+            "comment-colors": "Her harfi farklı bir renk ile yaz",
+            "comment-count": "1'den 10'a kadar say"
+        },
+        "tool": {
+            "run": "Dosyayı Çalıştır",
+            "save": "Dosyayı Kaydet",
+            "fullscreen": "Tam Ekran",
+            "clear": "Temizle",
+            "conn": {
+                "ws": "WebREPL ile bağlan",
+                "ble": "Bluetooth ile bağlan",
+                "usb": "USB/Serial ile bağlan"
+            },
+            "terminal": "Terminal"
+        },
+        "menu": {
+            "package-mgr": "Paket Yöneticisi",
+            "file-mgr": "Dosya Yöneticisi",
+            "settings": "Ayarlar"
+        },
+        "files": {
+            "no-files": "dosya yok",
+            "connect": "bağlan",
+            "used": "kullanımda"
+        },
+        "settings": {
+            "conn": "bağlantı",
+            "editor": "editör",
+            "other": "diğer",
+            "interrupt-running-code": "Çalışan kodu duraklat",
+            "force-serial-poly": "WebSerial yerine WebUSB kullan",
+            "expand-minify-json": "JSON'ı otomatik olarak kısalt (auto-minify)",
+            "use-word-wrap": "Uzun cümleleri alt satıra al (Word wrap)",
+            "render-markdown": "Markdown gösterici",
+            "refresh-after-run": "Çalıştırdıktan sonra dosyaları tazele",
+            "auto-soft-reset": "otomatik hafif reset at",
+            "use-natural-sort": "Doğal sıralama",
+            "lang": "Dil",
+            "zoom": "Yakınlaştır",
+            "install-package-source": ".py → .mpy derleme işlemini atla"
+        },
+        "about": {
+            "cta": "ViperIDE'yi sevdiyseniz lütfen <a id='gh-star'>bize GitHub yıldızı ver</a> ⭐ ve bizi sosyal ağlarda yay 📢",
+            "report-bug": "Ayrıca bulduğun <a id='gh-issues'>bug'ları bildirebilirsin</a> 🐞"
+        }
+    }
+}

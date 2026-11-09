@@ -3,7 +3,7 @@
 """
 
 I have a translations JSON file. Please add entries for:
-ar el es he id ja uk nl pt ru zh-TW zh-CN de fr hi it ko pl ro sv
+ar el es he id ja uk nl pt ru zh-TW zh-CN de fr hi it ko tr pl ro sv
 
 {
   "en": {
